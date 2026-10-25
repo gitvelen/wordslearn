@@ -211,6 +211,9 @@ const ok = (c, n) => { c ? PASS++ : FAIL++; log((c ? '✓' : '✗ FAIL'), n); };
   ok(bodyTxt.includes('关') && bodyTxt.includes('🏅'), '完成屏含闯关统计');
   await page.waitForTimeout(500);
   ok(reportReq >= 1, `完成触发学习日报 POST（${reportReq} 次）`);
+  await page.waitForTimeout(600);
+  const sc = await page.evaluate(() => window.__vm.scoreState);
+  ok(sc && sc.today != null && sc.today > 0 && sc.today <= 100, `完成屏积分已结算展示（${sc && sc.today} 分）`);
   await page.click('button:has-text("退出")'); await page.waitForTimeout(400);
 
   // ================= junior（三关 + 跟读）——用临时账号 jrsmoke，勿动生产 mido ==================

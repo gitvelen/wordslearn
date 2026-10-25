@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS daily_logs (
   review_done INTEGER DEFAULT 0,
   minutes     INTEGER DEFAULT 0,
   report_sent INTEGER DEFAULT 0,                 -- 1=当日学习日报已邮件发送（防重发）
+  score       INTEGER,                           -- 当日积分（完成事件时一次性结算，NULL=未结算）
   UNIQUE(user_id, date)
 );
 
@@ -187,6 +188,8 @@ def _migrate(conn):
     dl_cols = [r["name"] for r in conn.execute("PRAGMA table_info(daily_logs)")]
     if "report_sent" not in dl_cols:
         conn.execute("ALTER TABLE daily_logs ADD COLUMN report_sent INTEGER DEFAULT 0")
+    if "score" not in dl_cols:
+        conn.execute("ALTER TABLE daily_logs ADD COLUMN score INTEGER")
 
 
 def init_db():

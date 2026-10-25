@@ -272,3 +272,8 @@ label { display: block; margin: 10px 0; font-size: 15px; }
 .zh-stem { font-size: 40px; }
 .word-emoji.xl { font-size: 84px; }
 .big-hint { font-size: 22px; margin: 10px 0; }
+
+/* ===== v2.3 完成屏积分 ===== */
+.score-banner { font-size: 20px; font-weight: 700; color: #2f3852; margin: 6px 0 2px; }
+.score-banner b { font-size: 30px; color: #f5a623; }
+.score-banner .sub { font-size: 13px; font-weight: 400; color: #98a1b9; margin-left: 6px; }

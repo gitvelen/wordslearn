@@ -173,6 +173,26 @@ check('日报发送（SMTP 未配置→不发送不置位）', s == 200 and r['s
 flag = db.execute("SELECT report_sent FROM daily_logs WHERE user_id=? AND date=?", (uid, TODAY_STR)).fetchone()
 check('未配置时 report_sent 不置位（可重试）', flag and flag['report_sent'] == 0)
 
+# ---- 积分：100 分制，首结算为准 ----
+# 埋点造的关卡数据：首答 2 题 1 错（-5），补测 1 对（+2）→ 60+35+2=97
+sc = db.execute("SELECT score FROM daily_logs WHERE user_id=? AND date=?", (uid, TODAY_STR)).fetchone()
+check('完成事件结算积分 97（60底+40质-5错+2补测）', sc and sc['score'] == 97, sc['score'] if sc else None)
+s, r = api(cj, '/api/score')
+check('/api/score 今日+累计+明细', s == 200 and r['today'] == 97 and r['total'] >= 97
+      and r['detail']['errors'] == 1 and r['detail']['retry_ok'] == 1, r)
+db.execute("INSERT INTO quiz_log(user_id, date, phase, level, word_id, quiz_type, correct, retry) "
+           "VALUES(?,?,?,?,?,?,0,0)", (uid, TODAY_STR, 'gate', 1, wid0, 'word_zh'))   # 事后补错题
+db.commit()
+s, r = api(cj, '/api/report/daily', 'POST')
+check('积分首结算为准（补错题不重算）', db.execute("SELECT score FROM daily_logs WHERE user_id=? AND date=?",
+      (uid, TODAY_STR)).fetchone()['score'] == 97)
+rep2 = json.loads(json.dumps(rep))   # preview 复习词汇板块
+s, r = api(cj, '/api/report/preview')
+check('日报含今日复习词汇板块', s == 200 and len(r['report']['review_words']) >= 1
+      and all('ok' in w for w in r['report']['review_words']),
+      [(w['word'], w['ok']) for w in r['report'].get('review_words', [])])
+check('日报含今日得分', 'score' in r['report'] and r['report']['score'] is not None, r['report'].get('score'))
+
 # ================= 画像 B：junior（1A）=================
 uname_j, uid_j, cj_j = mk_user('jr', '1A')
 s, r = api(cj_j, '/api/me')

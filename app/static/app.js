@@ -22,6 +22,7 @@ const app = Vue.createApp({
       // iOS 每次页面重载都重置媒体解锁——解锁标记不能跨刷新保留，否则刷新后全部播放被静默吞掉
       audioReady: false,
       cardLocked: false,   // 新词卡片注视期（进卡 2.5s 内不可点「下一个」）
+      scoreState: null,    // 积分：{today, total, detail}（完成事件结算后回填）
       // 表格确认（v4.1 摸底）：basic 快测 → table 速选 → verify 验证 → done
       confirm: { phase: 'basic', words: [], page: 0, known: {}, quiz: [], qidx: 0,
                  picked: null, pickedOk: null, result: null, knownCount: 0,
@@ -397,8 +398,13 @@ const app = Vue.createApp({
       this.buildQueue();
       if (this.todayPhaseDone()) {
         await this.loadMe();
-        this.api('/api/report/daily', { method: 'POST' }).catch(() => {});   // 重开时发现当日已完成：补发日报（服务端幂等）
+        this.api('/api/report/daily', { method: 'POST' })   // 重开时发现当日已完成：补发日报（服务端幂等）
+          .catch(() => {}).finally(() => this.loadScore());
       }
+    },
+
+    async loadScore() {   // 完成屏积分展示（服务端结算值，前端不可算分防刷）
+      try { this.scoreState = await this.api('/api/score'); } catch (e) {}
     },
     buildQueue() {
       /* v2.1 结构：热身 → 新词卡片连播（纯呈现） → 复习组（沉淀间隔）→ 分关测验（题型分批，
@@ -519,7 +525,8 @@ const app = Vue.createApp({
       this.today.spellCells = [];
       if (this.todayPhaseDone()) {
         await this.loadMe(); this.playSfx(true);
-        this.api('/api/report/daily', { method: 'POST' }).catch(() => {});   // 完成事件：触发学习日报
+        this.api('/api/report/daily', { method: 'POST' })   // 完成事件：结算积分 + 学习日报
+          .catch(() => {}).finally(() => this.loadScore());
       }
     },
 

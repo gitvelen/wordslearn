@@ -179,9 +179,26 @@ def quiz_log(body: QuizLogIn, request: Request):
 
 @app.post("/api/report/daily")
 def report_daily(request: Request):
-    """当日学习完成事件：生成并邮件发送学习日报（幂等，未完成不发送）。"""
+    """当日学习完成事件：结算积分 + 生成并邮件发送学习日报（幂等，未完成不发送）。"""
     user = auth.current_user(request)
     return report.send_daily_report(user["id"])
+
+
+@app.get("/api/score")
+def score(request: Request):
+    """今日积分与累计（完成事件结算后才有值；明细实时算供完成屏展示）。"""
+    user = auth.current_user(request)
+    uid = user["id"]
+    db = database.get_db()
+    try:
+        today = db.execute("SELECT score FROM daily_logs WHERE user_id=? AND date=?",
+                           (uid, report._today())).fetchone()
+        total = db.execute("SELECT COALESCE(SUM(score),0) t FROM daily_logs WHERE user_id=? AND score IS NOT NULL",
+                           (uid,)).fetchone()["t"]
+        detail = report.compute_daily_score(db, uid, report._today())
+        return {"today": today["score"] if today else None, "total": total, "detail": detail}
+    finally:
+        db.close()
 
 
 @app.get("/api/report/preview")

@@ -1,14 +1,22 @@
-"""每日学习报告：聚合当日全部作答（quiz_log）→ HTML 邮件 → SMTP 发送。
+"""每日学习报告 + 每日积分：聚合当日全部作答（quiz_log）→ HTML 邮件 → SMTP 发送。
 
 触发：前端走完当日队列（或重开时发现队列已完成）→ POST /api/report/daily。
 幂等：daily_logs.report_sent=1 防重发；SMTP 未配置/发送失败不置位（下次完成事件重试）。
-收件人与凭证：app/data/smtp.json（gitignored）：
-  {"host": "smtp.qq.com", "port": 465, "user": "velenh@qq.com", "pass": "授权码", "to": "velenh@qq.com"}
+发件与凭证：app/data/smtp.json（gitignored，pass 为网易/腾讯邮箱「授权码」非登录密码）：
+  {"host": "smtp.126.com", "port": 465, "user": "weilingme@126.com", "pass": "授权码",
+   "to": "velenh@qq.com"}
+
+每日积分（100 分制，完成事件时一次性结算且首结算为准——刷新重刷不改变当日分）：
+  完成当日任务 60 分（保底：奖励「出现与完成」本身，保护吃力日子的习惯）
+  + 闯关测验质量 40 分：五关首答每错一题 -5（扣完为止）
+  + 错词补测通过每题返 2 分（恒低于首答 5 分/题——诚实作答永远最优，故意答错刷补测必亏）
+  热身/复习不计分（热身明示不算成绩；复习答错已有调度回炉）。
 """
 import json
 import smtplib
 from datetime import date, timedelta
 from email.mime.text import MIMEText
+from email.header import Header
 from pathlib import Path
 
 from database import get_db, DB_PATH
@@ -20,9 +28,45 @@ GATE_NAMES_JR = {1: "认词", 2: "听音", 3: "选词"}
 TYPE_LABEL = {"word_zh": "看词选义", "listen_zh": "听音选义", "zh_word": "中文选词",
               "cloze": "句子挖空", "spell": "听写拼写", "emoji": "听音选词", "sense": "选义项"}
 
+SCORE_BASE = 60        # 完成保底分
+SCORE_QUALITY = 40     # 质量分满分（闯关首答）
+SCORE_WRONG_COST = 5   # 每题首答错误扣分
+SCORE_RETRY_BACK = 2   # 补测通过返分（< SCORE_WRONG_COST，防故意答错刷补测）
+
 
 def _today() -> str:
     return date.today().isoformat()
+
+
+# ---------- 每日积分 ----------
+def compute_daily_score(db, user_id, day):
+    """从 quiz_log 计算当日积分明细（只算闯关测验首答/补测）。"""
+    rows = db.execute("""SELECT correct, retry FROM quiz_log
+                         WHERE user_id=? AND date=? AND phase='gate'""", (user_id, day)).fetchall()
+    errors = sum(1 for r in rows if not r["retry"] and not r["correct"])
+    retry_ok = sum(1 for r in rows if r["retry"] and r["correct"])
+    quality = max(0, SCORE_QUALITY - SCORE_WRONG_COST * errors) + SCORE_RETRY_BACK * retry_ok
+    total = min(100, SCORE_BASE + quality)
+    return {"total": total, "base": SCORE_BASE, "errors": errors,
+            "retry_ok": retry_ok, "quality": quality}
+
+
+def settle_daily_score(user_id, day=None):
+    """完成事件结算：首结算为准（score IS NULL 才写），返回结算后分值。"""
+    day = day or _today()
+    db = get_db()
+    try:
+        row = db.execute("SELECT score FROM daily_logs WHERE user_id=? AND date=?",
+                         (user_id, day)).fetchone()
+        if row and row["score"] is not None:
+            return row["score"]
+        detail = compute_daily_score(db, user_id, day)
+        db.execute("UPDATE daily_logs SET score=? WHERE user_id=? AND date=?",
+                   (detail["total"], user_id, day))
+        db.commit()
+        return detail["total"]
+    finally:
+        db.close()
 
 
 def record_quiz(user_id, entries):
@@ -83,8 +127,22 @@ def build_daily_report(user_id, day=None):
         new_words = db.execute("""SELECT w.id, w.word FROM user_word_state s JOIN words w ON w.id=s.word_id
                                   WHERE s.user_id=? AND s.first_learned_date=? ORDER BY w.id""",
                                (user_id, day)).fetchall()
+        # 今日复习词汇（复习轮出现过的词 + 对错结果）
+        review_words = []
+        seen = {}
+        for r in qrows:
+            if r["phase"] != "review":
+                continue
+            e = seen.setdefault(r["word_id"], {"word": r["word"], "ok": True})
+            if not r["correct"]:
+                e["ok"] = False
         defs = _word_defs(db, [r["id"] for r in new_words]
-                          + list({r["word_id"] for r in qrows if not r["correct"]}))
+                          + list({r["word_id"] for r in qrows if not r["correct"]})
+                          + list(seen))
+        for wid, e in seen.items():
+            e["def"] = defs.get(wid, "")
+            review_words.append(e)
+        review_words.sort(key=lambda x: x["ok"])   # 有错的排前（家长重点）
         # 分轮统计
         rounds = []
         for phase, label in (("warmup", "晨间热身"), ("review", "复习轮")):
@@ -145,11 +203,17 @@ def build_daily_report(user_id, day=None):
             else:
                 break
         tips = _build_tips(rounds, wrong_map, weak_types, junior)
+        # 积分：已结算用结算值；未结算（preview 场景）现场估算
+        score = log["score"] if log and log["score"] is not None else None
+        score_detail = compute_daily_score(db, user_id, day)
         return {"user": uname, "date": day, "streak": streak, "junior": junior,
                 "new_done": log["new_done"] if log else 0,
                 "review_done": (log["review_done"] if log else 0) or 0,
                 "minutes": minutes, "rounds": rounds,
+                "score": score if score is not None else score_detail["total"],
+                "score_detail": score_detail,
                 "new_words": [{"word": r["word"], "def": defs.get(r["id"], "")} for r in new_words],
+                "review_words": review_words,
                 "weak_types": [{"label": TYPE_LABEL.get(t, t), "n": s["n"], "ok": s["ok"]} for t, s in weak_types],
                 "wrong_words": [{"word": w, "def": v["def"], "rounds": v["rounds"]}
                                 for w, v in sorted(wrong_map.items())],
@@ -195,6 +259,11 @@ def render_html(rep):
         f"<td style='padding:6px 10px;border-bottom:1px solid #eee'>{('、'.join(r['wrong_words'][:6]) or '—')}</td></tr>"
         for r in rep["rounds"])
     new_html = "、".join(f"<b>{w['word']}</b>({w['def']})" for w in rep["new_words"]) or "—"
+    rvw_html = "".join(
+        f"<tr><td style='padding:6px 10px;border-bottom:1px solid #eee'><b>{w['word']}</b></td>"
+        f"<td style='padding:6px 10px;border-bottom:1px solid #eee'>{w['def']}</td>"
+        f"<td style='padding:6px 10px;border-bottom:1px solid #eee'>{'✓ 通过' if w['ok'] else '<b style=\"color:#e05252\">✗ 有错</b>'}</td></tr>"
+        for w in rep["review_words"]) or "<tr><td colspan='3' style='padding:10px;color:#999'>今天没有复习任务</td></tr>"
     wrong_html = "".join(
         f"<tr><td style='padding:6px 10px;border-bottom:1px solid #eee'><b>{w['word']}</b></td>"
         f"<td style='padding:6px 10px;border-bottom:1px solid #eee'>{w['def']}</td>"
@@ -209,7 +278,8 @@ def render_html(rep):
     return f"""<div style="font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;max-width:640px;margin:0 auto;color:#2a2f3a">
 <div style="background:linear-gradient(135deg,#5b7cfa,#7c9bff);border-radius:12px;padding:18px 20px;color:#fff">
 <div style="font-size:18px;font-weight:700">🪐 单词星球 · 每日学习报告</div>
-<div style="font-size:14px;margin-top:6px;opacity:.9">{rep['user']} · {rep['date']} · 连续学习 {rep['streak']} 天 🔥</div></div>
+<div style="font-size:14px;margin-top:6px;opacity:.9">{rep['user']} · {rep['date']} · 连续学习 {rep['streak']} 天 🔥</div>
+<div style="font-size:14px;margin-top:6px">今日得分 <b style="font-size:20px">{rep['score']}</b> / 100 ⭐</div></div>
 <table style="width:100%;border-collapse:collapse;margin:14px 0;background:#fff;border-radius:10px">
 <tr><td style="padding:12px 10px;text-align:center"><b style="font-size:20px">{rep['new_done']}</b><br><span style="font-size:12px;color:#888">新学单词</span></td>
 <td style="padding:12px 10px;text-align:center"><b style="font-size:20px">{rep['review_done']}</b><br><span style="font-size:12px;color:#888">复习通过</span></td>
@@ -217,6 +287,9 @@ def render_html(rep):
 <td style="padding:12px 10px;text-align:center"><b style="font-size:20px">{rep['minutes'] or '—'}</b><br><span style="font-size:12px;color:#888">用时(分)</span></td></tr></table>
 <h3 style="font-size:15px;margin:16px 0 6px">📚 今日新词（{len(rep['new_words'])} 个）</h3>
 <div style="font-size:13px;line-height:1.9;background:#fff;border-radius:10px;padding:10px 14px">{new_html}</div>
+<h3 style="font-size:15px;margin:16px 0 6px">🔁 今日复习（{len(rep['review_words'])} 个）</h3>
+<table style="width:100%;border-collapse:collapse;background:#fff;border-radius:10px;font-size:13px">
+<tr style="color:#888;font-size:12px"><th style="padding:8px 10px;text-align:left">单词</th><th style="padding:8px 10px;text-align:left">释义</th><th style="padding:8px 10px;text-align:left">结果</th></tr>{rvw_html}</table>
 <h3 style="font-size:15px;margin:16px 0 6px">📊 各轮表现（首答正确率）</h3>
 <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:10px;font-size:13px">
 <tr style="color:#888;font-size:12px"><th style="padding:8px 10px;text-align:left">轮次</th><th>题数</th><th>正确率</th><th>补测</th><th style="text-align:left">错词</th></tr>{rows_html}</table>
@@ -235,37 +308,50 @@ def _smtp_conf():
     if not SMTP_CONF.exists():
         return None
     try:
-        return json.loads(SMTP_CONF.read_text())
+        cfg = json.loads(SMTP_CONF.read_text())
     except (ValueError, OSError):
         return None
+    # pass 为空视为未配置（占位文件），避免每次完成都白跑一次 SMTP 登录
+    if not (cfg.get("host") and cfg.get("user") and cfg.get("pass")):
+        return None
+    return cfg
 
 
 def send_daily_report(user_id):
-    """完成事件入口：无学习不送；已送幂等跳过；未配置/失败不置位（可重试）。"""
+    """完成事件入口：先结算积分（首结算为准），再发邮件。
+    无学习不送；已送幂等跳过；未配置/失败不置 report_sent（可重试，积分已结算不重算）。"""
     day = _today()
     db = get_db()
     try:
         log = db.execute("SELECT * FROM daily_logs WHERE user_id=? AND date=?", (user_id, day)).fetchone()
         if not log or (log["new_done"] == 0 and not (log["review_done"] or 0)):
             return {"sent": False, "reason": "当日无学习记录，不发送"}
-        if log["report_sent"]:
-            return {"sent": False, "reason": "今日报告已发送过"}
+    finally:
+        db.close()
+    score = settle_daily_score(user_id, day)
+    db = get_db()
+    try:
+        sent_flag = db.execute("SELECT report_sent FROM daily_logs WHERE user_id=? AND date=?",
+                               (user_id, day)).fetchone()["report_sent"]
     finally:
         db.close()
     rep = build_daily_report(user_id, day)
     summary = {"new_done": rep["new_done"], "wrong": len(rep["wrong_words"]),
-               "streak": rep["streak"], "rounds": [(r["label"], r["acc"]) for r in rep["rounds"]]}
+               "streak": rep["streak"], "score": score,
+               "rounds": [(r["label"], r["acc"]) for r in rep["rounds"]]}
+    if sent_flag:
+        return {"sent": False, "reason": "今日报告已发送过", "summary": summary}
     cfg = _smtp_conf()
     if not cfg:
-        return {"sent": False, "reason": "SMTP 未配置（app/data/smtp.json），报告已生成未发送",
+        return {"sent": False, "reason": "SMTP 未配置（app/data/smtp.json，pass=邮箱授权码），报告已生成未发送",
                 "summary": summary}
-    subject = (f"【单词星球】{rep['user']} {day[5:]} 学习日报 · "
+    subject = (f"【单词星球】{rep['user']} {day[5:]} 学习日报 · {score}分 · "
                f"新词{rep['new_done']} 错词{len(rep['wrong_words'])} 🔥{rep['streak']}天")
     html = render_html(rep)
     try:
         msg = MIMEText(html, "html", "utf-8")
-        msg["Subject"] = subject
-        msg["From"] = cfg["user"]
+        msg["Subject"] = Header(subject, "utf-8")
+        msg["From"] = f"单词星球 <{cfg['user']}>"
         msg["To"] = cfg.get("to") or cfg["user"]
         with smtplib.SMTP_SSL(cfg["host"], int(cfg.get("port", 465)), timeout=15) as s:
             s.login(cfg["user"], cfg["pass"])
