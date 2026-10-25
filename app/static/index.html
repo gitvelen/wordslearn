@@ -224,7 +224,7 @@
       <h2>今日任务完成！</h2>
       <div v-if="scoreState && scoreState.today != null" class="score-banner">
         ⭐ 今日得分 <b>{{scoreState.today}}</b><span class="sub">/100</span>
-        <span class="sub">（完成 60 + 答题 {{Math.max(0, scoreState.today - 60)}} · 累计 {{scoreState.total}} 分）</span>
+        <span class="sub">（{{scoreState.detail.errors ? '错了 ' + scoreState.detail.errors + ' 题，扣 ' + scoreState.detail.errors + ' 分' : '全对，一分没扣！'}} · 累计 {{scoreState.total}} 分）</span>
       </div>
       <div class="stat-row">
         <div class="stat"><b>{{today.doneNew}}</b><span>新学单词</span></div>
@@ -463,6 +463,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b16"></script>
+<script src="/app.js?v=b17"></script>
 </body>
 </html>

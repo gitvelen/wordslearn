@@ -18,10 +18,18 @@ TODAY = datetime.date.today().isoformat()
 def main():
     db = sqlite3.connect(DB)
     db.row_factory = sqlite3.Row
-    uid = db.execute("SELECT id FROM users WHERE username='test'").fetchone()['id']
+    # 临时用户（绕开发信护栏），测完清理
+    import bcrypt as _bcrypt
+    old = db.execute("SELECT id FROM users WHERE username='wl_rt'").fetchone()  # wl_rt 不在 e2e_ 前缀内
+    if old:
+        db.execute("DELETE FROM quiz_log WHERE user_id=?", (old['id'],))
+        db.execute("DELETE FROM daily_logs WHERE user_id=?", (old['id'],))
+        db.execute("DELETE FROM users WHERE id=?", (old['id'],))
+    uid = db.execute("INSERT INTO users(username,password_hash) VALUES('wl_rt', ?)",
+                     (_bcrypt.hashpw(b'x', _bcrypt.gensalt()).decode(),)).lastrowid
     wid = db.execute("SELECT id FROM words LIMIT 1").fetchone()['id']
     # 造当日数据：2 复习（1 错）+ 关卡 2 首答（1 错）+ 1 补测（对）
-    # → 积分 = 60 + max(0, 40-5*1) + 2*1 = 97
+    # → 积分 = 100 - 1×1 = 99（补测不返分）
     db.execute("INSERT INTO daily_logs(user_id, date, new_done, review_done) VALUES(?,?,1,2) "
                "ON CONFLICT(user_id, date) DO UPDATE SET new_done=1, review_done=2, report_sent=0, score=NULL", (uid, TODAY))
     db.execute("DELETE FROM quiz_log WHERE user_id=? AND date=?", (uid, TODAY))
@@ -53,9 +61,9 @@ def main():
             subj = ''.join(p.decode(c or 'utf-8') if isinstance(p, bytes) else p
                            for p, c in decode_header(m['Subject']))
             body = m.get_payload(decode=True).decode('utf-8')
-            subj_ok = '学习日报' in subj and '97分' in subj and TODAY[5:] in subj
+            subj_ok = '学习日报' in subj and '99分' in subj and TODAY[5:] in subj
             html_ok = ('每日学习报告' in body and '听写' in body and '给家长的建议' in body
-                       and '今日复习' in body and '今日得分' in body and '97' in body)
+                       and '今日复习' in body and '今日得分' in body and '99' in body)
             print('✓ 发送成功：126发件→QQ收件，主题含得分，HTML 含复习板块', '(subj:', subj_ok, 'html:', html_ok, ')')
             assert subj_ok and html_ok
 
@@ -64,8 +72,8 @@ def main():
             row = db.execute("SELECT report_sent, score FROM daily_logs WHERE user_id=? AND date=?",
                              (uid, TODAY)).fetchone()
             db.close()
-            assert row['report_sent'] == 1 and row['score'] == 97
-            print('✓ report_sent 置位 + 积分结算 97（60+40-5+2）')
+            assert row['report_sent'] == 1 and row['score'] == 99
+            print('✓ report_sent 置位 + 积分结算 99（100-1）')
 
             out2 = report.send_daily_report(uid)
             assert out2['sent'] is False and '已发送' in out2['reason'], out2
@@ -76,8 +84,9 @@ def main():
         # 恢复 126 占位配置（pass 空=未配置态）
         open(SMTP_CONF, 'w').write('{"host": "smtp.126.com", "port": 465, "user": "weilingme@126.com", "pass": "", "to": "velenh@qq.com"}')
         db = sqlite3.connect(DB)
-        db.execute("DELETE FROM quiz_log WHERE user_id=? AND date=?", (uid, TODAY))
-        db.execute("UPDATE daily_logs SET report_sent=0, score=NULL WHERE user_id=? AND date=?", (uid, TODAY))
+        db.execute("DELETE FROM quiz_log WHERE user_id=?", (uid,))
+        db.execute("DELETE FROM daily_logs WHERE user_id=?", (uid,))
+        db.execute("DELETE FROM users WHERE id=?", (uid,))
         db.commit()
         db.close()
     print('✅ ALL PASS (report 发送路径单测)')

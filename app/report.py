@@ -7,9 +7,8 @@
    "to": "velenh@qq.com"}
 
 每日积分（100 分制，完成事件时一次性结算且首结算为准——刷新重刷不改变当日分）：
-  完成当日任务 60 分（保底：奖励「出现与完成」本身，保护吃力日子的习惯）
-  + 闯关测验质量 40 分：五关首答每错一题 -5（扣完为止）
-  + 错词补测通过每题返 2 分（恒低于首答 5 分/题——诚实作答永远最优，故意答错刷补测必亏）
+  完成当日任务当天即 100 分；闯关测验每答错一题（首答）扣 1 分，扣到 0 为止。
+  补测通过不返分（补测本就强制「测到对为止」，无需分数激励）。
   热身/复习不计分（热身明示不算成绩；复习答错已有调度回炉）。
 """
 import json
@@ -22,16 +21,16 @@ from pathlib import Path
 from database import get_db, DB_PATH
 
 SMTP_CONF = DB_PATH.parent / "smtp.json"          # app/data/smtp.json
+SMTP_SKIP_USERS = ("test", "jrsmoke")             # 测试账号：照常结算积分，但不发真邮件（防 e2e/冒烟骚扰家长邮箱）
+SMTP_SKIP_PREFIX = "e2e_"                        # e2e 临时用户前缀
 
 GATE_NAMES_STD = {1: "认词", 2: "听音", 3: "回想", 4: "听写", 5: "用词"}
 GATE_NAMES_JR = {1: "认词", 2: "听音", 3: "选词"}
 TYPE_LABEL = {"word_zh": "看词选义", "listen_zh": "听音选义", "zh_word": "中文选词",
               "cloze": "句子挖空", "spell": "听写拼写", "emoji": "听音选词", "sense": "选义项"}
 
-SCORE_BASE = 60        # 完成保底分
-SCORE_QUALITY = 40     # 质量分满分（闯关首答）
-SCORE_WRONG_COST = 5   # 每题首答错误扣分
-SCORE_RETRY_BACK = 2   # 补测通过返分（< SCORE_WRONG_COST，防故意答错刷补测）
+SCORE_FULL = 100       # 完成当日任务当天即满分
+SCORE_WRONG_COST = 1   # 闯关首答每错一题扣分
 
 
 def _today() -> str:
@@ -40,15 +39,12 @@ def _today() -> str:
 
 # ---------- 每日积分 ----------
 def compute_daily_score(db, user_id, day):
-    """从 quiz_log 计算当日积分明细（只算闯关测验首答/补测）。"""
+    """当日积分：完成即 100，闯关首答每错一题 -1（0 分保底）。补测不返分。"""
     rows = db.execute("""SELECT correct, retry FROM quiz_log
                          WHERE user_id=? AND date=? AND phase='gate'""", (user_id, day)).fetchall()
     errors = sum(1 for r in rows if not r["retry"] and not r["correct"])
-    retry_ok = sum(1 for r in rows if r["retry"] and r["correct"])
-    quality = max(0, SCORE_QUALITY - SCORE_WRONG_COST * errors) + SCORE_RETRY_BACK * retry_ok
-    total = min(100, SCORE_BASE + quality)
-    return {"total": total, "base": SCORE_BASE, "errors": errors,
-            "retry_ok": retry_ok, "quality": quality}
+    total = max(0, SCORE_FULL - SCORE_WRONG_COST * errors)
+    return {"total": total, "errors": errors}
 
 
 def settle_daily_score(user_id, day=None):
@@ -323,9 +319,11 @@ def send_daily_report(user_id):
     day = _today()
     db = get_db()
     try:
-        log = db.execute("SELECT * FROM daily_logs WHERE user_id=? AND date=?", (user_id, day)).fetchone()
+        log = db.execute("""SELECT l.*, u.username FROM daily_logs l JOIN users u ON u.id=l.user_id
+                            WHERE l.user_id=? AND l.date=?""", (user_id, day)).fetchone()
         if not log or (log["new_done"] == 0 and not (log["review_done"] or 0)):
             return {"sent": False, "reason": "当日无学习记录，不发送"}
+        uname = log["username"]
     finally:
         db.close()
     score = settle_daily_score(user_id, day)
@@ -341,6 +339,8 @@ def send_daily_report(user_id):
                "rounds": [(r["label"], r["acc"]) for r in rep["rounds"]]}
     if sent_flag:
         return {"sent": False, "reason": "今日报告已发送过", "summary": summary}
+    if uname in SMTP_SKIP_USERS or uname.startswith(SMTP_SKIP_PREFIX):
+        return {"sent": False, "reason": "测试账号不发信", "summary": summary}
     cfg = _smtp_conf()
     if not cfg:
         return {"sent": False, "reason": "SMTP 未配置（app/data/smtp.json，pass=邮箱授权码），报告已生成未发送",
