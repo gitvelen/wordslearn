@@ -33,18 +33,10 @@ const ok = (c, n) => { c ? PASS++ : FAIL++; log((c ? '✓' : '✗ FAIL'), n); };
   }, t);
   const answer = async (correct) => {
     const s = await vm();
-    const spellOk = async (txt) => {   // 输入框可能因上一题自动推进未渲染——先等可用
-      const ok2 = await page.evaluate(() => {
-        const el = document.querySelector('.spell-input');
-        return !!(el && !el.disabled);
-      });
-      if (!ok2) { await page.waitForTimeout(400); }
-      await page.evaluate((t) => {
-        const el = document.querySelector('.spell-input');
-        if (el && !el.disabled) { el.value = t; el.dispatchEvent(new Event('input', { bubbles: true })); }
-      }, txt);
-      const btn = await page.locator('button:has-text("提交")').count();
-      if (btn) await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => x.textContent.includes('提交')); if (b && !b.disabled) b.click(); });
+    const spellOk = async (txt) => {   // 拼写格：经 vm 钩子填充（格子可能因自动推进刚渲染，稍等）
+      await page.waitForTimeout(200);
+      await page.evaluate((t) => { window.__vm.spellType(t); }, txt);
+      await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => x.textContent.includes('提交')); if (b && !b.disabled) b.click(); });
     };
     if (correct) {
       const c = await clickOpt(s.qAnswer);
@@ -114,7 +106,7 @@ const ok = (c, n) => { c ? PASS++ : FAIL++; log((c ? '✓' : '✗ FAIL'), n); };
   ok(s.view === 'today' && s.cur, 'test 进入 today 有任务');
 
   let cards = 0, reviews = 0, quizLevels = [], gates = [], wrongPopupDone = false, quizWrongDone = false;
-  let firstGatePassed = false;
+  let firstGatePassed = false, mutedChecked = false, emptySpellChecked = false;
   for (let step = 0; step < 400; step++) {
     s = await vm();
     if (!s.cur) break;
@@ -139,6 +131,20 @@ const ok = (c, n) => { c ? PASS++ : FAIL++; log((c ? '✓' : '✗ FAIL'), n); };
       }
     } else if (cur.type === 'quiz') {
       quizLevels.push(cur.level);
+      // zh_word/cloze 不显示 🔊（读出目标词=报答案）
+      if ((s.qtype === 'zh_word' || s.qtype === 'cloze') && !mutedChecked) {
+        mutedChecked = true;
+        const n = await page.locator('.quiz-card .btn.round').count();
+        ok(n === 0, `${s.qtype} 题无 🔊 按钮（防听音猜答案）`);
+      }
+      // 空拼写提交不判错
+      if (s.qtype === 'spell' && !emptySpellChecked) {
+        emptySpellChecked = true;
+        await page.evaluate(() => { window.__vm.spellSubmit(); });
+        const fb = await page.evaluate(() => window.__vm.today.feedback);
+        ok(fb === null, '空拼写提交不判错（无反馈不推进）');
+        await page.waitForTimeout(300);
+      }
       // 第 1 关第 1 题故意答错（验证关末重测闭环），其余全对
       if (cur.level === 1 && !quizWrongDone) {
         quizWrongDone = true;

@@ -238,9 +238,17 @@ label { display: block; margin: 10px 0; font-size: 15px; }
 .quiz-stem { font-size: 26px; font-weight: 700; color: #2f3852; margin: 6px 0;
              word-break: break-word; line-height: 1.35; }
 .quiz-stem.word-xl { font-size: 44px; }
-.spell-input { margin-top: 10px; width: 90%; font-size: 24px; letter-spacing: 2px;
-               padding: 12px; border: 2px solid #d5dcf0; border-radius: 12px; text-align: center; }
-.spell-input:focus { outline: none; border-color: #5b7cfa; }
+.spell-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+             margin-top: 12px; padding: 0 8px; }
+.spell-cell { width: 46px; height: 56px; font-size: 26px; font-weight: 700; text-align: center;
+              border: none; border-bottom: 3px solid #5b7cfa; border-radius: 6px 6px 0 0;
+              background: #f2f5fd; color: #2f3852; caret-color: #5b7cfa; padding: 0; }
+.spell-cell:focus { outline: none; background: #e8edfc; border-bottom-color: #ffa940; }
+.spell-cell:disabled { opacity: .85; }
+.spell-sep { width: 18px; height: 56px; display: flex; align-items: flex-end; justify-content: center;
+             font-size: 24px; font-weight: 700; color: #98a1b9; }
+.spell-sep.gap { width: 20px; border-bottom: 3px solid #d5dcf0; height: 8px; align-self: flex-end;
+                 margin: 0 2px 0; border-radius: 2px; }
 
 /* ===== v4.2 词条弹层 / 跟读 / 词形 ===== */
 .modal-mask {

@@ -1,6 +1,7 @@
-/* wordslearn 前端逻辑（Vue3 CDN 版）v4.1
+/* wordslearn 前端逻辑（Vue3 CDN 版）
    流程：年级 → 目标 → 表格确认（速选+验证轮）→ 建计划 → 今日任务
-   今日任务 = 热身轮（昨日词，不提交）→ 波次交错（每5新词插一组复习）→ 当日重现轮 */
+   今日任务 = 热身轮（昨日词，不提交）→ 新词卡片连播 → 复习组 → 分关测验（刷新可恢复）
+   音频原则：每题进题自动读一遍，答后不重播；zh_word/cloze 禁朗读（防听音猜答案） */
 const app = Vue.createApp({
   data() {
     return {
@@ -10,7 +11,7 @@ const app = Vue.createApp({
       loginErr: '',
       toast: { show: false, msg: '', type: 'info' },
       planForm: { target_words: 900, days: 60 },
-      today: null,
+      today: null, todayErr: false,
       cal: { month: '', days: [] },
       audioCtx: null,
       // 词条弹层（复习答错看卡 / 词典查看）
@@ -46,7 +47,9 @@ const app = Vue.createApp({
     curItem() { return (this.today && this.todayQueue[this.today.qIdx]) || null; },
     todayPct() {
       if (!this.today || !this.today.queue.length) return 0;
-      return Math.min(100, Math.round(this.today.qIdx / this.today.queue.length * 100));
+      // 分母用建队快照：错词重插只加长队列不改分母，进度条单调不回跳
+      const total = this._len0 || this.today.queue.length;
+      return Math.min(100, Math.round(this.today.qIdx / total * 100));
     },
     calOffset() {
       if (!this.cal.days.length) return 0;
@@ -79,14 +82,21 @@ const app = Vue.createApp({
   watch: {
     curItem(w) {
       if (!w || this.learnIntro) return;   // intro 未解锁时不自动播
-      this.$nextTick(() => this.autoPlayItem(w));
-      // 听写关：自动聚焦输入框（iPad 键盘不收起）
-      if (w.type === 'quiz' && w.item.quiz && w.item.quiz.quiz_type === 'spell') {
-        this.$nextTick(() => {
-          const el = document.querySelector('.spell-input');
-          if (el) el.focus();
-        });
+      // 拼写题：按答案字母数初始化格子
+      if ((w.type === 'quiz' || w.type === 'review') && w.item.quiz &&
+          w.item.quiz.quiz_type === 'spell') {
+        const n = (w.item.quiz.answer.match(/[a-zA-Z]/g) || []).length;
+        this.today.spellCells = Array(n).fill('');
       }
+      this.$nextTick(() => {
+        this.autoPlayItem(w);
+        this.prefetchAudio();
+        // 听写关：自动聚焦第一格（iPad 键盘不收起）
+        if (w.item && w.item.quiz && w.item.quiz.quiz_type === 'spell') {
+          const el = document.querySelector('.spell-cell');
+          if (el) el.focus();
+        }
+      });
     },
   },
 
@@ -123,7 +133,7 @@ const app = Vue.createApp({
       this._toastTimer = setTimeout(() => { this.toast.show = false; }, 2600);
     },
 
-    // 正误音效：WebAudio 合成，零外部文件
+    // 正误音效：WebAudio 合成，零外部文件（短促：对=两声叮咚 0.16s，错=低音 0.16s）
     playSfx(ok) {
       try {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -131,17 +141,17 @@ const app = Vue.createApp({
         if (!this.audioCtx) this.audioCtx = new AC();
         if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
         const ctx = this.audioCtx;
-        const notes = ok ? [[660, 0], [880, 0.09]] : [[240, 0], [180, 0.13]];
-        for (const [freq, delay] of notes) {
+        const notes = ok ? [[880, 0, 0.08], [1175, 0.07, 0.09]] : [[240, 0, 0.16]];
+        for (const [freq, delay, dur] of notes) {
           const o = ctx.createOscillator(), g = ctx.createGain();
           o.connect(g); g.connect(ctx.destination);
           o.type = ok ? 'sine' : 'triangle';
           o.frequency.value = freq;
           const t0 = ctx.currentTime + delay;
           g.gain.setValueAtTime(0.001, t0);
-          g.gain.exponentialRampToValueAtTime(ok ? 0.12 : 0.1, t0 + 0.02);
-          g.gain.exponentialRampToValueAtTime(0.001, t0 + (ok ? 0.22 : 0.32));
-          o.start(t0); o.stop(t0 + (ok ? 0.25 : 0.38));
+          g.gain.exponentialRampToValueAtTime(ok ? 0.12 : 0.1, t0 + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+          o.start(t0); o.stop(t0 + dur + 0.02);
         }
       } catch (e) { /* 音频不可用时静默 */ }
     },
@@ -358,12 +368,20 @@ const app = Vue.createApp({
 
     // ---------- 今日任务 ----------
     async loadToday() {
-      const r = await this.api('/api/today');
+      this.todayErr = false;
+      let r;
+      try {
+        r = await this.api('/api/today');
+      } catch (e) {
+        this.todayErr = true;   // 加载失败≠任务完成：显示重试卡片，绝不假装"今日完成"
+        return;
+      }
       this.today = {
         plan: r.plan,
-        warmup: r.warmup || [], new: r.new || [], review: r.review || [],
+        warmup: r.warmup || [], new: r.new || [], learnedToday: r.learned_today || [],
+        review: r.review || [],
         queue: [], qIdx: 0,
-        answered: false, feedback: null, picked: null, spellInput: '',
+        answered: false, feedback: null, picked: null, spellCells: [],
         doneNew: 0, doneReview: 0, doneQuiz: 0, requeuedCount: 0,
         gateWrong: {},
       };
@@ -373,12 +391,15 @@ const app = Vue.createApp({
     buildQueue() {
       /* v2.1 结构：热身 → 新词卡片连播（纯呈现） → 复习组（沉淀间隔）→ 分关测验（题型分批，
       各关词序独立打乱）→ 关末结算（错词同题型重测）。
-      standard 五关：认词/听音/回想/听写/用词(reinforce)；junior 三关：认词/听音/选词。 */
+      关卡覆盖「今天待学 + 今天已学」（learnedToday）——中途刷新页面关卡不丢。
+      standard 五关：认词/听音/回想/听写/用词(组词)；junior 三关：认词/听音/选词。 */
       const q = [];
       for (const w of this.today.warmup) q.push({ type: 'warmup', item: w });
       this.today.new.forEach((n, i) => q.push({ type: 'newcard', item: n, _i: i + 1 }));
       for (const rv of this.today.review) q.push({ type: 'review', item: rv });
 
+      const todayAll = [...this.today.new, ...this.today.learnedToday];   // 今日全部新词
+      this.today.newAll = todayAll;
       const junior = this.isJunior;
       const gates = junior
         ? [['word_zh', '认词'], ['listen_zh', '听音'], ['_pick', '选词']]
@@ -386,7 +407,7 @@ const app = Vue.createApp({
            ['spell', '听写'], ['_reinforce', '用词']];
       gates.forEach(([t, name], gi) => {
         const items = [];
-        this.today.new.forEach(n => {
+        todayAll.forEach(n => {
           let quiz = null;
           if (t === '_reinforce') quiz = n.reinforce;
           else if (t === '_pick') quiz = (n.quizzes || []).find(x => x.quiz_type === 'emoji')
@@ -407,6 +428,8 @@ const app = Vue.createApp({
       });
       this.today.queue = q;
       this.today.gateWrong = {};      // level → Set(word_id)（本关未过关词）
+      this.today.doneNew = this.today.learnedToday.length;   // 刷新恢复：已学卡计入统计
+      this._len0 = q.length;          // 进度条分母快照（todayPct 用）
     },
     todayPhaseDone() { return this.today && this.today.qIdx >= this.today.queue.length; },
     autoPlayItem(w) {
@@ -437,6 +460,11 @@ const app = Vue.createApp({
     quizShowSpell(w) {
       return w.item.quiz && w.item.quiz.quiz_type === 'spell';
     },
+    // 答案含目标词读音的题型（看中文选英文/句子挖空）：朗读=报答案，禁 🔊
+    quizMuted(w) {
+      const t = w && w.item && w.item.quiz && w.item.quiz.quiz_type;
+      return t === 'zh_word' || t === 'cloze';
+    },
     quizStemText(w) {
       const q = w.item.quiz;
       if (!q) return '';
@@ -461,20 +489,17 @@ const app = Vue.createApp({
     },
     isGateItem(w) { return w && w.type === 'quiz'; },
 
-    autoNext(delay) {   // 答对自动下一题（听写关先重播单词音）
+    autoNext(delay) {   // 答对自动下一题（统一只读一遍：进题自动播，答后不重播）
       clearTimeout(this._autoTimer);
-      const w = this.curItem;
-      const extra = (w && w.type === 'quiz' && w.item.quiz.quiz_type === 'spell') ? 500 : 0;
-      if (extra && this.today.feedback && this.today.feedback.ok) this.playWord(w.item.word);
       this._autoTimer = setTimeout(() => {
         if (this.today && this.today.answered) this.advance();
-      }, delay + extra);
+      }, delay);
     },
     async advance() {   // 队列推进（自动/手动共用；防重由调用方的 locking 负责）
       if (!this.today) return;
       this.today.qIdx++;
       this.today.answered = false; this.today.feedback = null; this.today.picked = null;
-      this.today.spellInput = '';
+      this.today.spellCells = [];
       if (this.todayPhaseDone()) { await this.loadMe(); this.playSfx(true); }
     },
 
@@ -511,15 +536,57 @@ const app = Vue.createApp({
       const q = w.item.quiz;
       this.afterReviewAnswer(opt === q.answer, opt, null);
     },
+    // 拼写逐格输入：字母格待填；空格/连字符/撇号显示为固定分隔（同纸面听写画横线）
+    spellSlots(w) {
+      const q = w && w.item && w.item.quiz;
+      if (!q) return [];
+      const slots = []; let li = 0;
+      for (const ch of q.answer) {
+        if (/[a-zA-Z]/.test(ch)) slots.push({ t: 'L', i: li++ });
+        else slots.push({ t: 'S', ch });
+      }
+      return slots;
+    },
+    spellCellInput(e, i) {
+      // 单格只收字母（过滤输入法上屏的汉字/标点/联想词），满格自动跳下一格
+      const el = e.target;
+      const v = (el.value || '').replace(/[^a-zA-Z]/g, '');
+      this.today.spellCells[i] = v.slice(-1) || '';
+      el.value = this.today.spellCells[i];
+      if (this.today.spellCells[i]) {
+        const cells = [...document.querySelectorAll('.spell-cell')];
+        if (cells[i + 1]) cells[i + 1].focus();
+        else el.blur();   // 填到最后一格：收起键盘露出提交按钮
+      }
+    },
+    spellCellKey(e, i) {
+      // 空格上按退格 → 回上一格（继续删）
+      if (e.key === 'Backspace' && !this.today.spellCells[i]) {
+        const cells = [...document.querySelectorAll('.spell-cell')];
+        if (cells[i - 1]) { cells[i - 1].focus(); e.preventDefault(); }
+      }
+    },
+    spellType(text) {   // 测试钩子：直接填充拼写格（绕过键盘事件）
+      const cells = this.today.spellCells || [];
+      const t = (text || '').replace(/[^a-zA-Z]/g, '').slice(0, cells.length);
+      for (let i = 0; i < cells.length; i++) cells[i] = t[i] || '';
+      this.today.spellCells = [...cells];
+    },
     spellSubmit() {
       if (this.today.answered || this.locking) return;
+      const w = this.curItem;
+      if (!w || !w.item.quiz) return;
+      const typed = (this.today.spellCells || []).join('').trim();
+      if (!typed) {   // 空提交不判错：防误触回车把没答的题记成错词
+        this.showToast('先听一听，把单词拼出来吧', 'info');
+        return;
+      }
       this.locking = true;
       try {
-        const w = this.curItem;
-        const q = w.item.quiz;
-        const ok = (this.today.spellInput || '').trim().toLowerCase() === q.answer.toLowerCase();
-        if (w.type === 'quiz') { this.afterQuizAnswer(ok, this.today.spellInput, true); }
-        else { this.afterReviewAnswer(ok, this.today.spellInput, true); }
+        const letters = (w.item.quiz.answer.match(/[a-zA-Z]/g) || []).join('');
+        const ok = typed.toLowerCase() === letters.toLowerCase();
+        if (w.type === 'quiz') { this.afterQuizAnswer(ok, typed, true); }
+        else { this.afterReviewAnswer(ok, typed, true); }
       } finally { this.locking = false; }
     },
     afterReviewAnswer(ok, picked, isSpell) {
@@ -573,33 +640,36 @@ const app = Vue.createApp({
       return [...ids];
     },
     gateRetry() {
-      const g = this.curItem;
-      const level = g._level;
-      const wrongIds = this.gateWrongWords(level);
-      // 用今日 new 的原题重建（同关同题型）
-      const retry = [];
-      for (const n of this.today.new) {
-        if (!wrongIds.includes(n.id)) continue;
-        let quiz = null;
-        const t = this.isJunior
-          ? ['word_zh', 'listen_zh', '_pick'][level - 1]
-          : ['word_zh', 'listen_zh', 'zh_word', 'spell', '_reinforce'][level - 1];
-        if (t === '_reinforce') quiz = n.reinforce;
-        else if (t === '_pick') quiz = (n.quizzes || []).find(x => x.quiz_type === 'emoji')
-            || (n.quizzes || []).find(x => x.quiz_type === 'zh_word');
-        else quiz = (n.quizzes || []).find(x => x.quiz_type === t);
-        if (quiz) retry.push({ type: 'quiz', item: { ...n, quiz }, _level: level, _retry: true });
-      }
-      // 移除当前 gate，重测题紧随其后；重测完会再遇 gate（此时若清空则放行）
-      this.today.queue.splice(this.today.qIdx, 1, ...retry, g);
+      if (this.locking) return;   // 防双击 splice 两次
+      this.locking = true;
+      try {
+        const g = this.curItem;
+        const level = g._level;
+        const wrongIds = this.gateWrongWords(level);
+        // 用今日全部新词的原题重建（同关同题型；learnedToday 刷新恢复场景同覆盖）
+        const retry = [];
+        for (const n of (this.today.newAll || this.today.new)) {
+          if (!wrongIds.includes(n.id)) continue;
+          let quiz = null;
+          const t = this.isJunior
+            ? ['word_zh', 'listen_zh', '_pick'][level - 1]
+            : ['word_zh', 'listen_zh', 'zh_word', 'spell', '_reinforce'][level - 1];
+          if (t === '_reinforce') quiz = n.reinforce;
+          else if (t === '_pick') quiz = (n.quizzes || []).find(x => x.quiz_type === 'emoji')
+              || (n.quizzes || []).find(x => x.quiz_type === 'zh_word');
+          else quiz = (n.quizzes || []).find(x => x.quiz_type === t);
+          if (quiz) retry.push({ type: 'quiz', item: { ...n, quiz }, _level: level, _retry: true });
+        }
+        // 移除当前 gate，重测题紧随其后；重测完会再遇 gate（此时若清空则放行）
+        this.today.queue.splice(this.today.qIdx, 1, ...retry, g);
+      } finally { this.locking = false; }
     },
 
     async itemNext() {
-      // 通用「继续」：gate/热身错题/其他停顿态
-      const w = this.curItem;
-      if (w.type === 'gate') { await this.advance(); return; }
-      if (w.type === 'warmup') { await this.advance(); return; }
-      await this.advance();
+      // 通用「继续」：gate/热身错题/其他停顿态（locking 防双击连跳两题）
+      if (this.locking) return;
+      this.locking = true;
+      try { await this.advance(); } finally { this.locking = false; }
     },
     optClass(opt) {
       if (!this.today || !this.today.answered) return '';
@@ -638,21 +708,57 @@ const app = Vue.createApp({
 
     // ---------- 音频 ----------
     playWord(word) {
+      // 单音频管理：播新的先停旧的（杜绝重叠双读）；远程加载悬挂 2.5s 超时转 TTS（杜绝无声卡死）
+      if (this._curAudio) { try { this._curAudio.pause(); } catch (e) {} this._curAudio = null; }
       const a = new Audio('/audio/' + encodeURIComponent(word) + '.mp3');
-      a.onerror = () => this.speakTTS(word);
-      a.play().catch(() => this.speakTTS(word));
+      this._curAudio = a;
+      let settled = false;
+      const fallback = () => {
+        if (settled) return;
+        settled = true;
+        try { a.pause(); } catch (e) {}
+        this.speakTTS(word);
+      };
+      const timer = setTimeout(fallback, 2500);
+      a.onerror = fallback;
+      a.play()
+        .then(() => { if (!settled) { settled = true; clearTimeout(timer); } })
+        .catch(fallback);
+      return a;   // 调用方（跟读）可监听 ended
+    },
+    prefetchAudio() {
+      // 预取后续 2 题的单词音频：队列在前端已知，弱网下进题即播
+      if (!this.today) return;
+      this._pf = this._pf || {};
+      for (let k = 1; k <= 2; k++) {
+        const it = this.todayQueue[this.today.qIdx + k];
+        const w = it && it.item && it.item.word;
+        if (w && !this._pf[w]) {
+          this._pf[w] = 1;
+          try {
+            const p = new Audio('/audio/' + encodeURIComponent(w) + '.mp3');
+            p.preload = 'auto';
+            p.load();
+          } catch (e) {}
+        }
+      }
     },
     speakTTS(text) {
       if (!('speechSynthesis' in window)) return;
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'en-US'; u.rate = 0.85;
-      speechSynthesis.cancel(); speechSynthesis.speak(u);
+      // iOS：cancel 后同步 speak 会静默丢句；resume + 短延迟是标准 workaround
+      try { speechSynthesis.resume(); } catch (e) {}
+      speechSynthesis.cancel();
+      setTimeout(() => { try { speechSynthesis.speak(u); } catch (e) {} }, 50);
     },
     speakZh(text) {
       if (!('speechSynthesis' in window)) return;
       const u = new SpeechSynthesisUtterance((text || '').replace(/\|/g, '；'));
       u.lang = 'zh-CN'; u.rate = 0.9;
-      speechSynthesis.cancel(); speechSynthesis.speak(u);
+      try { speechSynthesis.resume(); } catch (e) {}
+      speechSynthesis.cancel();
+      setTimeout(() => { try { speechSynthesis.speak(u); } catch (e) {} }, 50);
     },
     playSentence(word, order, text) {   // 例句朗读：edge-tts 音频优先（AriaNeural），无文件回退浏览器 TTS
       const a = new Audio('/audio/sent/' + encodeURIComponent(word) + '__' + order + '.mp3');
@@ -693,7 +799,7 @@ const app = Vue.createApp({
     // ---------- 跟读（junior，录音回放自比，不打分）----------
     async startRecord() {
       this.rec = { state: 'recording', url: '', err: '' };
-      this.playWord(this.curItem.item.word);          // 先听标准音
+      const a = this.playWord(this.curItem.item.word);   // 先听标准音，播完再录
       try {
         if (!navigator.mediaDevices || !window.MediaRecorder) throw new Error('unsupported');
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -706,8 +812,19 @@ const app = Vue.createApp({
           setTimeout(() => new Audio(this.rec.url).play().catch(() => {}), 300);   // 录完自动回放
         };
         this._recorder = rec;
-        setTimeout(() => { if (rec.state === 'recording') rec.start(); }, 900);   // 等标准音播完再录
-        setTimeout(() => this.stopRecord(), 7000);   // 最长 7s 自动停
+        let started = false;
+        const go = () => {   // 标准音 ended 后开录；音频被 TTS 兜底/失败时靠超时兜底
+          if (started || this._recorder !== rec) return;
+          started = true;
+          try { rec.start(); } catch (e) {}
+          setTimeout(() => this.stopRecord(), 7000);   // 最长 7s 自动停（从开录起算）
+        };
+        if (a) {
+          a.addEventListener('ended', go, { once: true });
+          setTimeout(go, 3500);
+        } else {
+          setTimeout(go, 900);
+        }
       } catch (e) {
         this.rec = { state: 'idle', url: '', err: '麦克风用不了，先跟读给爸爸妈妈听吧～' };
       }

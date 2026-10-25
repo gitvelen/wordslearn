@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="单词星球">
-<link rel="stylesheet" href="/style.css?v=b6">
+<link rel="stylesheet" href="/style.css?v=b7">
 </head>
 <body>
 <div id="app">
@@ -207,6 +207,16 @@
     </div>
   </template>
 
+  <!-- 加载失败：重试（绝不因网络错误显示假"完成"） -->
+  <template v-else-if="todayErr">
+    <div class="card done-card">
+      <div class="done-emoji">📡</div>
+      <h2>网络开小差了</h2>
+      <p class="sub">今天的任务还没加载出来</p>
+      <button class="btn primary big" @click="loadToday">再试一次 →</button>
+    </div>
+  </template>
+
   <!-- 完成屏 -->
   <template v-else-if="!curItem">
     <div class="card done-card">
@@ -294,7 +304,7 @@
       </template>
       <template v-else>
         <div class="done-emoji">💪</div>
-        <h2>这一关对了 {{today.new.length - gateWrongWords(curItem._level).length}} / {{today.new.length}}</h2>
+        <h2>这一关对了 {{(today.newAll || today.new).length - gateWrongWords(curItem._level).length}} / {{(today.newAll || today.new).length}}</h2>
         <p class="sub">错的词马上再测一遍，测到对为止</p>
         <button class="btn primary big" @click="gateRetry">把错的再来一遍 →</button>
       </template>
@@ -317,10 +327,18 @@
              :class="{'word-xl': curItem.item.quiz.quiz_type!=='cloze'}">{{quizStemText(curItem)}}</div>
         <div v-if="curItem.item.quiz.quiz_type==='listen_zh' || curItem.item.quiz.quiz_type==='spell'"
              class="quiz-hint">👂 听音作答</div>
-        <button class="btn round" @click="playWord(curItem.item.word)">🔊</button>
-        <input v-if="quizShowSpell(curItem)" v-model="today.spellInput" class="spell-input"
-               placeholder="拼写出这个单词" autocomplete="off" autocapitalize="off"
-               @keyup.enter="spellSubmit" :disabled="today.answered">
+        <button v-if="!quizMuted(curItem)" class="btn round" @click="playWord(curItem.item.word)">🔊</button>
+        <!-- 拼写：每字母一格（杜绝输入法联想上屏），空格/连字符显示为分隔 -->
+        <div v-if="quizShowSpell(curItem)" class="spell-row">
+          <template v-for="(s, si) in spellSlots(curItem)" :key="si">
+            <input v-if="s.t==='L'" class="spell-cell" :value="today.spellCells[s.i] || ''"
+                   autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+                   :disabled="today.answered"
+                   @input="spellCellInput($event, s.i)" @keydown="spellCellKey($event, s.i)"
+                   @keyup.enter="spellSubmit">
+            <span v-else class="spell-sep" :class="{gap: s.ch===' '}">{{ s.ch===' ' ? '' : s.ch }}</span>
+          </template>
+        </div>
       </template>
     </div>
     <div class="quiz-grid" v-if="curItem.item.quiz && !quizShowSpell(curItem)">
@@ -341,9 +359,9 @@
     </div>
     <!-- 手动「下一题」仅在需要停留时出现：复习重现答错 / 拉取弹层失败兜底 -->
     <button v-if="today.answered && !today.feedback.ok && curItem.type==='review' && !wordDetail"
-            class="btn primary big" @click="advance">下一题 →</button>
+            class="btn primary big" @click="itemNext">下一题 →</button>
     <button v-if="today.answered && today.feedback.ok === false && curItem.type==='quiz' && !wordDetail"
-            class="btn primary big" @click="advance">下一题 →</button>
+            class="btn primary big" @click="itemNext">下一题 →</button>
     <button v-if="today.answered" class="btn ghost" @click="openWordDetail(curItem.item.id, 'view')">📖 再看看这个词</button>
   </template>
 
@@ -441,6 +459,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b13"></script>
+<script src="/app.js?v=b14"></script>
 </body>
 </html>

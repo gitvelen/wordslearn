@@ -82,8 +82,9 @@ def get_quiz(db, word_id, word, definition_zh, stage, user_id=None, junior=False
     return _gen_fallback_quiz(db, word, definition_zh, stage)
 
 
-def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None):
-    """按题型精确取题（learn 题型序列用）：排除已用，耗尽复用，题库缺该题型返回 None。"""
+def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None, mark_used=True):
+    """按题型精确取题（learn 题型序列用）：排除已用，耗尽复用，题库缺该题型返回 None。
+    mark_used=False 供用词关借用 cloze 题而不消耗正式 d5 复习的防重复配额。"""
     rows = db.execute("""SELECT id, quiz_type, stem, options, answer FROM word_quiz
                          WHERE word_id=? AND stage=? AND quiz_type=?""",
                       (word_id, stage, quiz_type)).fetchall()
@@ -95,7 +96,7 @@ def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None):
             "SELECT quiz_id FROM user_quiz_used WHERE user_id=?", (user_id,))}
     pool = [r for r in rows if r["id"] not in used] or rows
     r = random.choice(pool)
-    if user_id:
+    if user_id and mark_used:
         db.execute("INSERT OR IGNORE INTO user_quiz_used(user_id, quiz_id) VALUES(?,?)",
                    (user_id, r["id"]))
     return {"quiz_id": r["id"], "quiz_type": r["quiz_type"], "stage": stage,
@@ -118,6 +119,22 @@ def get_learn_quizzes(db, user_id, word_id, word, definition_zh, junior, emoji=N
         q = _gen_fallback_quiz(db, word, definition_zh, "learn")
         return [q] if q else []
     return out
+
+
+def _new_word_item(db, r, user_id, junior):
+    """新词条目装配：词卡信息 + 首学题 + 用词关题（new 与 learned_today 共用）。"""
+    item = _word_brief(db, r, user_id, junior)
+    item["quizzes"] = get_learn_quizzes(db, user_id, r["id"], r["word"],
+                                        r["definition_zh"], junior, r["emoji"])
+    # 用词关题：组词（cloze 挖空）优先——当天学的词当天练用词；无 cloze 的词退化 d5/d2。
+    # 借题不记 user_quiz_used，不消耗正式复习的防重复配额。
+    item["reinforce"] = (
+        (None if junior else _quiz_by_type(db, r["id"], "d5", "cloze", user_id, mark_used=False))
+        or get_quiz(db, r["id"], r["word"], r["definition_zh"], "d5",
+                    user_id, junior, mark_used=False)
+        or get_quiz(db, r["id"], r["word"], r["definition_zh"], "d2",
+                    user_id, junior, mark_used=False))
+    return item
 
 
 # ---------- 表格确认（v4.1 摸底）----------
@@ -427,17 +444,15 @@ def get_today_queue(user_id):
             ORDER BY p.seq LIMIT ?""", (plan["id"], user_id, new_allowance)).fetchall()
         new_items = []
         for r in new_words:
-            item = _word_brief(db, r, user_id, junior)
-            item["quizzes"] = get_learn_quizzes(db, user_id, r["id"], r["word"],
-                                                r["definition_zh"], junior, r["emoji"])
-            # 巩固轮备用题：当日新词学完后的二次提取（前端在主循环后编排）。
-            # 借用 d5/d2 题池但不记 user_quiz_used——不消耗正式复习的防重复配额。
-            item["reinforce"] = (
-                get_quiz(db, r["id"], r["word"], r["definition_zh"], "d5",
-                         user_id, junior, mark_used=False)
-                or get_quiz(db, r["id"], r["word"], r["definition_zh"], "d2",
-                            user_id, junior, mark_used=False))
-            new_items.append(item)
+            new_items.append(_new_word_item(db, r, user_id, junior))
+        # 今日已学词（first_learned_date=今天）：前端刷新后据此重建关卡（中途退出不丢测验）
+        learned_words = db.execute("""
+            SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
+            FROM plan_words p JOIN words w ON w.id=p.word_id
+            JOIN user_word_state s ON s.user_id=? AND s.word_id=w.id
+            WHERE p.plan_id=? AND s.first_learned_date=?
+            ORDER BY p.seq""", (user_id, plan["id"], t_str)).fetchall()
+        learned_items = [_new_word_item(db, r, user_id, junior) for r in learned_words]
         review = db.execute("""
             SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji, s.stage
             FROM user_word_state s JOIN words w ON w.id=s.word_id
@@ -451,7 +466,7 @@ def get_today_queue(user_id):
                                     stage_key, user_id, junior) or None
             review_items.append(item)
         return {"plan": dict(plan), "warmup": warmup_items, "new": new_items,
-                "review": review_items}
+                "learned_today": learned_items, "review": review_items}
     finally:
         db.close()
 
