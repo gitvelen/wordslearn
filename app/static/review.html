@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>内容校对工作台 · wordslearn</title>
+<style>
+body { font-family: -apple-system, "PingFang SC", sans-serif; margin: 0; background: #f5f7fc; color: #2f3852; }
+header { background: #fff; padding: 14px 22px; border-bottom: 2px solid #e3e8f4; position: sticky; top: 0; z-index: 9; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+h1 { font-size: 18px; margin: 0; }
+input#q { padding: 8px 12px; border: 1px solid #d5dcf0; border-radius: 8px; font-size: 14px; width: 180px; }
+label.only-low { font-size: 13px; color: #555e75; user-select: none; }
+.stats { font-size: 13px; color: #7a86a3; }
+main { max-width: 900px; margin: 18px auto; padding: 0 14px; }
+.wcard { background: #fff; border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; border-left: 4px solid #52a447; }
+.wcard.low { border-left-color: #f5a623; }
+.whead { display: flex; align-items: baseline; gap: 10px; }
+.wword { font-size: 20px; font-weight: 800; }
+.wphon { color: #9aa3b8; font-size: 13px; }
+.wbadge { font-size: 11px; background: #f5a623; color: #fff; border-radius: 6px; padding: 2px 7px; }
+.sense { margin-top: 10px; padding: 8px 10px; background: #f6f8fd; border-radius: 8px; }
+.sline { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.spos { color: #5b7cfa; font-weight: 700; font-size: 13px; }
+.szh { font-size: 15px; font-weight: 600; }
+.sen { color: #7a86a3; font-size: 13px; font-style: italic; }
+.ex { margin-top: 5px; font-size: 14px; }
+.exzh { color: #98a1b9; font-size: 12px; }
+.actions { margin-top: 8px; display: flex; gap: 8px; }
+button { border: none; border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
+.b-ok { background: #e8f6e5; color: #2e7d32; }
+.b-bad { background: #fdecea; color: #c62828; }
+button:disabled { opacity: .4; cursor: default; }
+#exporter { position: fixed; bottom: 18px; right: 18px; background: #5b7cfa; color: #fff; padding: 12px 20px; font-size: 15px; box-shadow: 0 6px 18px rgba(91,124,250,.4); }
+.hint { color: #7a86a3; font-size: 13px; margin: 10px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📖 内容校对工作台</h1>
+  <input id="q" placeholder="搜索单词…">
+  <label class="only-low"><input type="checkbox" id="onlyLow"> 只看低置信</label>
+  <span class="stats" id="stats"></span>
+</header>
+<main>
+  <p class="hint">🟠 橙色边=低置信（生成时拿不准，请重点看）；🟢 绿色边=已通过。改动会保存在本地，「导出修订」生成 JSONL 文件发回即可生效。</p>
+  <div id="list"></div>
+</main>
+<button id="exporter" onclick="doExport()">导出修订</button>
+<script src="/review_data.js?v=1"></script>
+<script>
+/* review_data.js 定义: REVIEW = [{word, phonetic_uk, seg, confidence, senses:[{sense_order,pos,definition_zh,definition_en,example_en,example_zh}]}] */
+const verdict = JSON.parse(localStorage.getItem('wl_review_verdict') || '{}');   // word -> 'ok' | 'bad'
+const edits = JSON.parse(localStorage.getItem('wl_review_edits') || '{}');       // word -> {senses:[...]}
+let filterQ = '', onlyLow = false;
+
+function data() {
+  return (window.REVIEW || []).filter(w =>
+    (!onlyLow || w.confidence === 'low') &&
+    (!filterQ || w.word.toLowerCase().includes(filterQ)));
+}
+function render() {
+  const list = document.getElementById('list');
+  const ws = data();
+  document.getElementById('stats').textContent =
+    `共 ${ws.length} 词 · 待审 ${ws.filter(w => !verdict[w.word]).length}`;
+  list.innerHTML = ws.map(w => {
+    const senses = (edits[w.word] && edits[w.word].senses) || w.senses;
+    return `<div class="wcard ${w.confidence === 'low' ? 'low' : ''}" id="c-${w.word}">
+      <div class="whead"><span class="wword">${w.word}</span>
+        <span class="wphon">${w.phonetic_uk || ''}</span>
+        ${w.confidence === 'low' ? '<span class="wbadge">低置信</span>' : ''}
+        <span style="flex:1"></span><span>${verdict[w.word] === 'ok' ? '✅' : verdict[w.word] === 'bad' ? '❌' : ''}</span></div>
+      ${senses.map(s => `<div class="sense">
+        <div class="sline"><span class="spos">${s.pos || ''}</span><span class="szh">${s.definition_zh}</span><span class="sen">${s.definition_en || ''}</span></div>
+        <div class="ex">📝 ${s.example_en}</div><div class="exzh">${s.example_zh || ''}</div></div>`).join('')}
+      <div class="actions">
+        <button class="b-ok" onclick="mark('${w.word}','ok')">✓ 通过</button>
+        <button class="b-bad" onclick="mark('${w.word}','bad')">✗ 有问题（联系修改）</button>
+      </div></div>`;
+  }).join('') || '<p class="hint">没有匹配的词</p>';
+}
+function mark(w, v) { verdict[w] = v; localStorage.setItem('wl_review_verdict', JSON.stringify(verdict)); render(); }
+function doExport() {
+  const out = [];
+  for (const w of window.REVIEW || []) {
+    const senses = (edits[w.word] && edits[w.word].senses) || w.senses;
+    if (!verdict[w.word] || verdict[w.word] === 'ok') {
+      for (const s of senses) out.push({ word: w.word, ...s, confidence: w.confidence });
+    }
+    // bad 的词不导出（待人工改后再进）
+  }
+  const blob = new Blob([out.map(l => JSON.stringify(l)).join('\n')], { type: 'application/x-ndjson' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'word_senses_reviewed.jsonl';
+  a.click();
+}
+document.getElementById('q').oninput = e => { filterQ = e.target.value.trim().toLowerCase(); render(); };
+document.getElementById('onlyLow').onchange = e => { onlyLow = e.target.checked; render(); };
+render();
+</script>
+</body>
+</html>

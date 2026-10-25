@@ -1,0 +1,2914 @@
+{
+"world": {
+"wd_id": "wd_166711",
+"grade": "primary_1_3"
+},
+"natural": {
+"wd_id": "wd_99320",
+"grade": "primary_1_3"
+},
+"cow": {
+"wd_id": "wd_35874",
+"grade": "primary_1_3"
+},
+"sing": {
+"wd_id": "wd_136161",
+"grade": "primary_1_3"
+},
+"ear": {
+"wd_id": "wd_47512",
+"grade": "primary_1_3"
+},
+"rubber": {
+"wd_id": "wd_128551",
+"grade": "primary_1_3"
+},
+"pencil": {
+"wd_id": "wd_110274",
+"grade": "primary_1_3"
+},
+"ruler": {
+"wd_id": "wd_128743",
+"grade": "primary_1_3"
+},
+"book": {
+"wd_id": "wd_19297",
+"grade": "primary_1_3"
+},
+"noon": {
+"wd_id": "wd_101707",
+"grade": "primary_1_3"
+},
+"after": {
+"wd_id": "wd_3188",
+"grade": "primary_1_3"
+},
+"parent": {
+"wd_id": "wd_108687",
+"grade": "primary_1_3"
+},
+"photograph": {
+"wd_id": "wd_111998",
+"grade": "primary_1_3"
+},
+"photo": {
+"wd_id": "wd_111947",
+"grade": "primary_1_3"
+},
+"everyone": {
+"wd_id": "wd_52569",
+"grade": "primary_1_3"
+},
+"july": {
+"wd_id": "wd_81514",
+"grade": "primary_1_3"
+},
+"may": {
+"wd_id": "wd_92473",
+"grade": "primary_1_3"
+},
+"march": {
+"wd_id": "wd_91517",
+"grade": "primary_1_3"
+},
+"children": {
+"wd_id": "wd_27929",
+"grade": "primary_1_3"
+},
+"party": {
+"wd_id": "wd_109044",
+"grade": "primary_1_3"
+},
+"class": {
+"wd_id": "wd_29514",
+"grade": "primary_1_3"
+},
+"zoo": {
+"wd_id": "wd_168321",
+"grade": "primary_1_3"
+},
+"cinema": {
+"wd_id": "wd_28977",
+"grade": "primary_1_3"
+},
+"toe": {
+"wd_id": "wd_152479",
+"grade": "primary_1_3"
+},
+"enjoy": {
+"wd_id": "wd_50347",
+"grade": "primary_1_3"
+},
+"yourself": {
+"wd_id": "wd_167833",
+"grade": "primary_1_3"
+},
+"talk": {
+"wd_id": "wd_147568",
+"grade": "primary_1_3"
+},
+"leg": {
+"wd_id": "wd_85713",
+"grade": "primary_1_3"
+},
+"knee": {
+"wd_id": "wd_83203",
+"grade": "primary_1_3"
+},
+"finger": {
+"wd_id": "wd_56571",
+"grade": "primary_1_3"
+},
+"arm": {
+"wd_id": "wd_8937",
+"grade": "primary_1_3"
+},
+"shoulder": {
+"wd_id": "wd_135119",
+"grade": "primary_1_3"
+},
+"grow": {
+"wd_id": "wd_66355",
+"grade": "primary_1_3"
+},
+"fun": {
+"wd_id": "wd_60824",
+"grade": "primary_1_3"
+},
+"ski": {
+"wd_id": "wd_136611",
+"grade": "primary_1_3"
+},
+"picnic": {
+"wd_id": "wd_112443",
+"grade": "primary_1_3"
+},
+"rainbow": {
+"wd_id": "wd_121596",
+"grade": "primary_1_3"
+},
+"river": {
+"wd_id": "wd_127414",
+"grade": "primary_1_3"
+},
+"mountain": {
+"wd_id": "wd_97436",
+"grade": "primary_1_3"
+},
+"sea": {
+"wd_id": "wd_131843",
+"grade": "primary_1_3"
+},
+"sky": {
+"wd_id": "wd_136824",
+"grade": "primary_1_3"
+},
+"home": {
+"wd_id": "wd_71485",
+"grade": "primary_1_3"
+},
+"today": {
+"wd_id": "wd_152463",
+"grade": "primary_1_3"
+},
+"game": {
+"wd_id": "wd_61564",
+"grade": "primary_1_3"
+},
+"shape": {
+"wd_id": "wd_134205",
+"grade": "primary_1_3"
+},
+"angle": {
+"wd_id": "wd_6487",
+"grade": "primary_1_3"
+},
+"rectangle": {
+"wd_id": "wd_123237",
+"grade": "primary_1_3"
+},
+"triangle": {
+"wd_id": "wd_154596",
+"grade": "primary_1_3"
+},
+"scarf": {
+"wd_id": "wd_130815",
+"grade": "primary_1_3"
+},
+"hat": {
+"wd_id": "wd_68486",
+"grade": "primary_1_3"
+},
+"wall": {
+"wd_id": "wd_163299",
+"grade": "primary_1_3"
+},
+"sorry": {
+"wd_id": "wd_139284",
+"grade": "primary_1_3"
+},
+"button": {
+"wd_id": "wd_22650",
+"grade": "primary_1_3"
+},
+"foil": {
+"wd_id": "wd_58361",
+"grade": "primary_1_3"
+},
+"robot": {
+"wd_id": "wd_127573",
+"grade": "primary_1_3"
+},
+"strong": {
+"wd_id": "wd_143621",
+"grade": "primary_1_3"
+},
+"bitter": {
+"wd_id": "wd_17599",
+"grade": "primary_1_3"
+},
+"sour": {
+"wd_id": "wd_139431",
+"grade": "primary_1_3"
+},
+"coffee": {
+"wd_id": "wd_30893",
+"grade": "primary_1_3"
+},
+"salt": {
+"wd_id": "wd_129717",
+"grade": "primary_1_3"
+},
+"lemon": {
+"wd_id": "wd_85898",
+"grade": "primary_1_3"
+},
+"shop": {
+"wd_id": "wd_134932",
+"grade": "primary_1_3"
+},
+"pie": {
+"wd_id": "wd_112509",
+"grade": "primary_1_3"
+},
+"food": {
+"wd_id": "wd_58545",
+"grade": "primary_1_3"
+},
+"story": {
+"wd_id": "wd_143040",
+"grade": "primary_1_3"
+},
+"feel": {
+"wd_id": "wd_55403",
+"grade": "primary_1_3"
+},
+"glass": {
+"wd_id": "wd_63741",
+"grade": "primary_1_3"
+},
+"pineapple": {
+"wd_id": "wd_112873",
+"grade": "primary_1_3"
+},
+"raindrop": {
+"wd_id": "wd_121601",
+"grade": "primary_1_3"
+},
+"spinner": {
+"wd_id": "wd_140361",
+"grade": "primary_1_3"
+},
+"spin": {
+"wd_id": "wd_140311",
+"grade": "primary_1_3"
+},
+"use": {
+"wd_id": "wd_160216",
+"grade": "primary_1_3"
+},
+"circle": {
+"wd_id": "wd_29044",
+"grade": "primary_1_3"
+},
+"else": {
+"wd_id": "wd_49070",
+"grade": "primary_1_3"
+},
+"plane": {
+"wd_id": "wd_113463",
+"grade": "primary_1_3"
+},
+"aero": {
+"wd_id": "wd_2891",
+"grade": "primary_1_3"
+},
+"aeroplane": {
+"wd_id": "wd_2950",
+"grade": "primary_1_3"
+},
+"sunflower": {
+"wd_id": "wd_145104",
+"grade": "primary_1_3"
+},
+"bud": {
+"wd_id": "wd_21694",
+"grade": "primary_1_3"
+},
+"plant": {
+"wd_id": "wd_113529",
+"grade": "primary_1_3"
+},
+"root": {
+"wd_id": "wd_127998",
+"grade": "primary_1_3"
+},
+"trunk": {
+"wd_id": "wd_155389",
+"grade": "primary_1_3"
+},
+"branch": {
+"wd_id": "wd_20264",
+"grade": "primary_1_3"
+},
+"leaf": {
+"wd_id": "wd_85362",
+"grade": "primary_1_3"
+},
+"end": {
+"wd_id": "wd_49919",
+"grade": "primary_1_3"
+},
+"duck": {
+"wd_id": "wd_46837",
+"grade": "primary_1_3"
+},
+"chick": {
+"wd_id": "wd_27802",
+"grade": "primary_1_3"
+},
+"ant": {
+"wd_id": "wd_6978",
+"grade": "primary_1_3"
+},
+"ladybird": {
+"wd_id": "wd_84043",
+"grade": "primary_1_3"
+},
+"tube": {
+"wd_id": "wd_155550",
+"grade": "primary_1_3"
+},
+"pupil": {
+"wd_id": "wd_119759",
+"grade": "primary_1_3"
+},
+"why": {
+"wd_id": "wd_165379",
+"grade": "primary_1_3"
+},
+"round": {
+"wd_id": "wd_128338",
+"grade": "primary_1_3"
+},
+"boat": {
+"wd_id": "wd_18741",
+"grade": "primary_1_3"
+},
+"plum": {
+"wd_id": "wd_114166",
+"grade": "primary_1_3"
+},
+"some": {
+"wd_id": "wd_138976",
+"grade": "primary_1_3"
+},
+"buy": {
+"wd_id": "wd_22702",
+"grade": "primary_1_3"
+},
+"supermarket": {
+"wd_id": "wd_145320",
+"grade": "primary_1_3"
+},
+"toy": {
+"wd_id": "wd_153527",
+"grade": "primary_1_3"
+},
+"peach": {
+"wd_id": "wd_109779",
+"grade": "primary_1_3"
+},
+"read": {
+"wd_id": "wd_122423",
+"grade": "primary_1_3"
+},
+"who": {
+"wd_id": "wd_165283",
+"grade": "primary_1_3"
+},
+"where": {
+"wd_id": "wd_164941",
+"grade": "primary_1_3"
+},
+"classroom": {
+"wd_id": "wd_29563",
+"grade": "primary_1_3"
+},
+"playground": {
+"wd_id": "wd_113847",
+"grade": "primary_1_3"
+},
+"hall": {
+"wd_id": "wd_67535",
+"grade": "primary_1_3"
+},
+"toilet": {
+"wd_id": "wd_152536",
+"grade": "primary_1_3"
+},
+"library": {
+"wd_id": "wd_86517",
+"grade": "primary_1_3"
+},
+"school": {
+"wd_id": "wd_131071",
+"grade": "primary_1_3"
+},
+"mice": {
+"wd_id": "wd_94229",
+"grade": "primary_1_3"
+},
+"nose": {
+"wd_id": "wd_101848",
+"grade": "primary_1_3"
+},
+"eye": {
+"wd_id": "wd_53933",
+"grade": "primary_1_3"
+},
+"well": {
+"wd_id": "wd_164494",
+"grade": "primary_1_3"
+},
+"picture": {
+"wd_id": "wd_112480",
+"grade": "primary_1_3"
+},
+"family": {
+"wd_id": "wd_54605",
+"grade": "primary_1_3"
+},
+"meet": {
+"wd_id": "wd_92983",
+"grade": "primary_1_3"
+},
+"me": {
+"wd_id": "wd_92600",
+"grade": "primary_1_3"
+},
+"sister": {
+"wd_id": "wd_136385",
+"grade": "primary_1_3"
+},
+"brother": {
+"wd_id": "wd_21355",
+"grade": "primary_1_3"
+},
+"mother": {
+"wd_id": "wd_97251",
+"grade": "primary_1_3"
+},
+"grandmother": {
+"wd_id": "wd_65452",
+"grade": "primary_1_3"
+},
+"father": {
+"wd_id": "wd_55036",
+"grade": "primary_1_3"
+},
+"grandfather": {
+"wd_id": "wd_65437",
+"grade": "primary_1_3"
+},
+"bow": {
+"wd_id": "wd_19888",
+"grade": "primary_1_3"
+},
+"again": {
+"wd_id": "wd_3266",
+"grade": "primary_1_3"
+},
+"friend": {
+"wd_id": "wd_60128",
+"grade": "primary_1_3"
+},
+"short": {
+"wd_id": "wd_134985",
+"grade": "primary_1_3"
+},
+"tall": {
+"wd_id": "wd_147612",
+"grade": "primary_1_3"
+},
+"thin": {
+"wd_id": "wd_150518",
+"grade": "primary_1_3"
+},
+"fat": {
+"wd_id": "wd_55008",
+"grade": "primary_1_3"
+},
+"count": {
+"wd_id": "wd_35477",
+"grade": "primary_1_3"
+},
+"six": {
+"wd_id": "wd_136476",
+"grade": "primary_1_3"
+},
+"four": {
+"wd_id": "wd_59477",
+"grade": "primary_1_3"
+},
+"three": {
+"wd_id": "wd_150801",
+"grade": "primary_1_3"
+},
+"two": {
+"wd_id": "wd_156299",
+"grade": "primary_1_3"
+},
+"one": {
+"wd_id": "wd_104376",
+"grade": "primary_1_3"
+},
+"jam": {
+"wd_id": "wd_80388",
+"grade": "primary_1_3"
+},
+"name": {
+"wd_id": "wd_98938",
+"grade": "primary_1_3"
+},
+"please": {
+"wd_id": "wd_113906",
+"grade": "primary_1_3"
+},
+"board": {
+"wd_id": "wd_18684",
+"grade": "primary_1_3"
+},
+"blackboard": {
+"wd_id": "wd_17767",
+"grade": "primary_1_3"
+},
+"door": {
+"wd_id": "wd_45409",
+"grade": "primary_1_3"
+},
+"close": {
+"wd_id": "wd_30074",
+"grade": "primary_1_3"
+},
+"open": {
+"wd_id": "wd_104650",
+"grade": "primary_1_3"
+},
+"sit": {
+"wd_id": "wd_136400",
+"grade": "primary_1_3"
+},
+"stand": {
+"wd_id": "wd_141561",
+"grade": "primary_1_3"
+},
+"stick": {
+"wd_id": "wd_142487",
+"grade": "primary_1_3"
+},
+"bread": {
+"wd_id": "wd_20454",
+"grade": "primary_1_3"
+},
+"shake": {
+"wd_id": "wd_134075",
+"grade": "primary_1_3"
+},
+"hungry": {
+"wd_id": "wd_72830",
+"grade": "primary_1_3"
+},
+"rattle": {
+"wd_id": "wd_122184",
+"grade": "primary_1_3"
+},
+"tire": {
+"wd_id": "wd_151735",
+"grade": "primary_1_3"
+},
+"thirsty": {
+"wd_id": "wd_150646",
+"grade": "primary_1_3"
+},
+"love": {
+"wd_id": "wd_88879",
+"grade": "primary_1_3"
+},
+"paper": {
+"wd_id": "wd_108279",
+"grade": "primary_1_3"
+},
+"piece": {
+"wd_id": "wd_112515",
+"grade": "primary_1_3"
+},
+"find": {
+"wd_id": "wd_56515",
+"grade": "primary_1_3"
+},
+"blow": {
+"wd_id": "wd_18419",
+"grade": "primary_1_3"
+},
+"tea": {
+"wd_id": "wd_148364",
+"grade": "primary_1_3"
+},
+"cup": {
+"wd_id": "wd_37623",
+"grade": "primary_1_3"
+},
+"idea": {
+"wd_id": "wd_73911",
+"grade": "primary_1_3"
+},
+"carnation": {
+"wd_id": "wd_24895",
+"grade": "primary_1_3"
+},
+"balloon": {
+"wd_id": "wd_12889",
+"grade": "primary_1_3"
+},
+"letter": {
+"wd_id": "wd_86185",
+"grade": "primary_1_3"
+},
+"make": {
+"wd_id": "wd_90387",
+"grade": "primary_1_3"
+},
+"drive": {
+"wd_id": "wd_46417",
+"grade": "primary_1_3"
+},
+"basketball": {
+"wd_id": "wd_13809",
+"grade": "primary_1_3"
+},
+"coat": {
+"wd_id": "wd_30535",
+"grade": "primary_1_3"
+},
+"sweater": {
+"wd_id": "wd_146088",
+"grade": "primary_1_3"
+},
+"shirt": {
+"wd_id": "wd_134768",
+"grade": "primary_1_3"
+},
+"past": {
+"wd_id": "wd_109213",
+"grade": "primary_1_3"
+},
+"road": {
+"wd_id": "wd_127464",
+"grade": "primary_1_3"
+},
+"fast": {
+"wd_id": "wd_54956",
+"grade": "primary_1_3"
+},
+"cross": {
+"wd_id": "wd_36852",
+"grade": "primary_1_3"
+},
+"mouth": {
+"wd_id": "wd_97511",
+"grade": "primary_1_3"
+},
+"wait": {
+"wd_id": "wd_163159",
+"grade": "primary_1_3"
+},
+"go": {
+"wd_id": "wd_64259",
+"grade": "primary_1_3"
+},
+"light": {
+"wd_id": "wd_86771",
+"grade": "primary_1_3"
+},
+"fruit": {
+"wd_id": "wd_60482",
+"grade": "primary_1_3"
+},
+"park": {
+"wd_id": "wd_108765",
+"grade": "primary_1_3"
+},
+"tail": {
+"wd_id": "wd_147094",
+"grade": "primary_1_3"
+},
+"long": {
+"wd_id": "wd_88302",
+"grade": "primary_1_3"
+},
+"lovely": {
+"wd_id": "wd_88920",
+"grade": "primary_1_3"
+},
+"snake": {
+"wd_id": "wd_137888",
+"grade": "primary_1_3"
+},
+"giraffe": {
+"wd_id": "wd_63458",
+"grade": "primary_1_3"
+},
+"cake": {
+"wd_id": "wd_23286",
+"grade": "primary_1_3"
+},
+"pizza": {
+"wd_id": "wd_113304",
+"grade": "primary_1_3"
+},
+"hamburger": {
+"wd_id": "wd_67663",
+"grade": "primary_1_3"
+},
+"banana": {
+"wd_id": "wd_12993",
+"grade": "primary_1_3"
+},
+"chicken": {
+"wd_id": "wd_27813",
+"grade": "primary_1_3"
+},
+"fish": {
+"wd_id": "wd_56918",
+"grade": "primary_1_3"
+},
+"carrot": {
+"wd_id": "wd_25055",
+"grade": "primary_1_3"
+},
+"salad": {
+"wd_id": "wd_129528",
+"grade": "primary_1_3"
+},
+"together": {
+"wd_id": "wd_152514",
+"grade": "primary_1_3"
+},
+"survey": {
+"wd_id": "wd_145773",
+"grade": "primary_1_3"
+},
+"hop": {
+"wd_id": "wd_71914",
+"grade": "primary_1_3"
+},
+"skate": {
+"wd_id": "wd_136532",
+"grade": "primary_1_3"
+},
+"beep": {
+"wd_id": "wd_15548",
+"grade": "primary_1_3"
+},
+"stop": {
+"wd_id": "wd_142928",
+"grade": "primary_1_3"
+},
+"listen": {
+"wd_id": "wd_87481",
+"grade": "primary_1_3"
+},
+"ship": {
+"wd_id": "wd_134699",
+"grade": "primary_1_3"
+},
+"car": {
+"wd_id": "wd_24474",
+"grade": "primary_1_3"
+},
+"bus": {
+"wd_id": "wd_22407",
+"grade": "primary_1_3"
+},
+"train": {
+"wd_id": "wd_153815",
+"grade": "primary_1_3"
+},
+"sad": {
+"wd_id": "wd_129289",
+"grade": "primary_1_3"
+},
+"smooth": {
+"wd_id": "wd_137779",
+"grade": "primary_1_3"
+},
+"rough": {
+"wd_id": "wd_128284",
+"grade": "primary_1_3"
+},
+"hard": {
+"wd_id": "wd_68104",
+"grade": "primary_1_3"
+},
+"soft": {
+"wd_id": "wd_138580",
+"grade": "primary_1_3"
+},
+"watch": {
+"wd_id": "wd_163765",
+"grade": "primary_1_3"
+},
+"butterfly": {
+"wd_id": "wd_22628",
+"grade": "primary_1_3"
+},
+"pear": {
+"wd_id": "wd_109825",
+"grade": "primary_1_3"
+},
+"outside": {
+"wd_id": "wd_106316",
+"grade": "primary_1_3"
+},
+"beautiful": {
+"wd_id": "wd_15273",
+"grade": "primary_1_3"
+},
+"blue": {
+"wd_id": "wd_18513",
+"grade": "primary_1_3"
+},
+"black": {
+"wd_id": "wd_17696",
+"grade": "primary_1_3"
+},
+"brown": {
+"wd_id": "wd_21386",
+"grade": "primary_1_3"
+},
+"pink": {
+"wd_id": "wd_112920",
+"grade": "primary_1_3"
+},
+"purple": {
+"wd_id": "wd_119881",
+"grade": "primary_1_3"
+},
+"white": {
+"wd_id": "wd_165140",
+"grade": "primary_1_3"
+},
+"cut": {
+"wd_id": "wd_38010",
+"grade": "primary_1_3"
+},
+"color": {
+"wd_id": "wd_31415",
+"grade": "primary_1_3"
+},
+"zebra": {
+"wd_id": "wd_168025",
+"grade": "primary_1_3"
+},
+"yellow": {
+"wd_id": "wd_167568",
+"grade": "primary_1_3"
+},
+"tree": {
+"wd_id": "wd_154436",
+"grade": "primary_1_3"
+},
+"window": {
+"wd_id": "wd_165744",
+"grade": "primary_1_3"
+},
+"van": {
+"wd_id": "wd_160712",
+"grade": "primary_1_3"
+},
+"umbrella": {
+"wd_id": "wd_156794",
+"grade": "primary_1_3"
+},
+"grass": {
+"wd_id": "wd_65580",
+"grade": "primary_1_3"
+},
+"meat": {
+"wd_id": "wd_92708",
+"grade": "primary_1_3"
+},
+"hippo": {
+"wd_id": "wd_70853",
+"grade": "primary_1_3"
+},
+"fox": {
+"wd_id": "wd_59528",
+"grade": "primary_1_3"
+},
+"table": {
+"wd_id": "wd_146884",
+"grade": "primary_1_3"
+},
+"star": {
+"wd_id": "wd_141724",
+"grade": "primary_1_3"
+},
+"moon": {
+"wd_id": "wd_96804",
+"grade": "primary_1_3"
+},
+"sun": {
+"wd_id": "wd_145039",
+"grade": "primary_1_3"
+},
+"queen": {
+"wd_id": "wd_120766",
+"grade": "primary_1_3"
+},
+"spoon": {
+"wd_id": "wd_140700",
+"grade": "primary_1_3"
+},
+"plate": {
+"wd_id": "wd_113636",
+"grade": "primary_1_3"
+},
+"bowl": {
+"wd_id": "wd_19931",
+"grade": "primary_1_3"
+},
+"pig": {
+"wd_id": "wd_112581",
+"grade": "primary_1_3"
+},
+"orange": {
+"wd_id": "wd_105044",
+"grade": "primary_1_3"
+},
+"chair": {
+"wd_id": "wd_26805",
+"grade": "primary_1_3"
+},
+"desk": {
+"wd_id": "wd_41654",
+"grade": "primary_1_3"
+},
+"box": {
+"wd_id": "wd_19963",
+"grade": "primary_1_3"
+},
+"net": {
+"wd_id": "wd_100062",
+"grade": "primary_1_3"
+},
+"mouse": {
+"wd_id": "wd_97483",
+"grade": "primary_1_3"
+},
+"seesaw": {
+"wd_id": "wd_132465",
+"grade": "primary_1_3"
+},
+"azyme": {
+"wd_id": "wd_12051",
+"grade": "primary_1_3"
+},
+"azygous": {
+"wd_id": "wd_12050",
+"grade": "primary_1_3"
+},
+"azygos": {
+"wd_id": "wd_12049",
+"grade": "primary_1_3"
+},
+"azusa": {
+"wd_id": "wd_12048",
+"grade": "primary_1_3"
+},
+"azurite": {
+"wd_id": "wd_12047",
+"grade": "primary_1_3"
+},
+"azurine": {
+"wd_id": "wd_12046",
+"grade": "primary_1_3"
+},
+"czechs": {
+"wd_id": "wd_38444",
+"grade": "primary_1_3"
+},
+"czechoslovakian": {
+"wd_id": "wd_38443",
+"grade": "primary_1_3"
+},
+"czechoslovakia": {
+"wd_id": "wd_38442",
+"grade": "primary_1_3"
+},
+"czechoslovak": {
+"wd_id": "wd_38441",
+"grade": "primary_1_3"
+},
+"czechic": {
+"wd_id": "wd_38440",
+"grade": "primary_1_3"
+},
+"jynx": {
+"wd_id": "wd_81770",
+"grade": "primary_1_3"
+},
+"jv": {
+"wd_id": "wd_81769",
+"grade": "primary_1_3"
+},
+"juxtaposition": {
+"wd_id": "wd_81768",
+"grade": "primary_1_3"
+},
+"juxtaposing": {
+"wd_id": "wd_81767",
+"grade": "primary_1_3"
+},
+"juxtaposes": {
+"wd_id": "wd_81766",
+"grade": "primary_1_3"
+},
+"juxtaposed": {
+"wd_id": "wd_81765",
+"grade": "primary_1_3"
+},
+"wheelbarrow": {
+"wd_id": "wd_164893",
+"grade": "primary_1_3"
+},
+"weeding hoe": {
+"wd_id": "wd_164335",
+"grade": "primary_1_3"
+},
+"watering can": {
+"wd_id": "wd_163903",
+"grade": "primary_1_3"
+},
+"vice": {
+"wd_id": "wd_161782",
+"grade": "primary_1_3"
+},
+"tyre lever": {
+"wd_id": "wd_156477",
+"grade": "primary_1_3"
+},
+"two-beaked anvil": {
+"wd_id": "wd_156312",
+"grade": "primary_1_3"
+},
+"wrong": {
+"wd_id": "wd_167049",
+"grade": "primary_1_3"
+},
+"wire": {
+"wd_id": "wd_165952",
+"grade": "primary_1_3"
+},
+"weekend": {
+"wd_id": "wd_164346",
+"grade": "primary_1_3"
+},
+"voice mail": {
+"wd_id": "wd_162616",
+"grade": "primary_1_3"
+},
+"zookeeper": {
+"wd_id": "wd_168341",
+"grade": "primary_1_3"
+},
+"zoogoer": {
+"wd_id": "wd_168336",
+"grade": "primary_1_3"
+},
+"yours": {
+"wd_id": "wd_167829",
+"grade": "primary_1_3"
+},
+"youngster": {
+"wd_id": "wd_167815",
+"grade": "primary_1_3"
+},
+"zack": {
+"wd_id": "wd_167932",
+"grade": "primary_1_3"
+},
+"zachary": {
+"wd_id": "wd_167930",
+"grade": "primary_1_3"
+},
+"zachariah": {
+"wd_id": "wd_167928",
+"grade": "primary_1_3"
+},
+"young": {
+"wd_id": "wd_167795",
+"grade": "primary_1_3"
+},
+"york": {
+"wd_id": "wd_167760",
+"grade": "primary_1_3"
+},
+"yates": {
+"wd_id": "wd_167476",
+"grade": "primary_1_3"
+},
+"zola": {
+"wd_id": "wd_168285",
+"grade": "primary_1_3"
+},
+"zoe": {
+"wd_id": "wd_168274",
+"grade": "primary_1_3"
+},
+"zenobia": {
+"wd_id": "wd_168079",
+"grade": "primary_1_3"
+},
+"zenia": {
+"wd_id": "wd_168074",
+"grade": "primary_1_3"
+},
+"zena": {
+"wd_id": "wd_168068",
+"grade": "primary_1_3"
+},
+"zandra": {
+"wd_id": "wd_167969",
+"grade": "primary_1_3"
+},
+"yong": {
+"wd_id": "wd_167752",
+"grade": "primary_1_3"
+},
+"wynn": {
+"wd_id": "wd_167125",
+"grade": "primary_1_3"
+},
+"winter": {
+"wd_id": "wd_165906",
+"grade": "primary_1_3"
+},
+"willie": {
+"wd_id": "wd_165602",
+"grade": "primary_1_3"
+},
+"whitney": {
+"wd_id": "wd_165253",
+"grade": "primary_1_3"
+},
+"wally": {
+"wd_id": "wd_163362",
+"grade": "primary_1_3"
+},
+"swing": {
+"wd_id": "wd_146267",
+"grade": "primary_1_3"
+},
+"slide": {
+"wd_id": "wd_137184",
+"grade": "primary_1_3"
+},
+"lion": {
+"wd_id": "wd_87315",
+"grade": "primary_1_3"
+},
+"face": {
+"wd_id": "wd_54085",
+"grade": "primary_1_3"
+},
+"head": {
+"wd_id": "wd_68970",
+"grade": "primary_1_3"
+},
+"hair": {
+"wd_id": "wd_67327",
+"grade": "primary_1_3"
+},
+"jar": {
+"wd_id": "wd_80483",
+"grade": "primary_1_3"
+},
+"insect": {
+"wd_id": "wd_77825",
+"grade": "primary_1_3"
+},
+"old": {
+"wd_id": "wd_103730",
+"grade": "primary_1_3"
+},
+"hand": {
+"wd_id": "wd_67738",
+"grade": "primary_1_3"
+},
+"swim": {
+"wd_id": "wd_146234",
+"grade": "primary_1_3"
+},
+"run": {
+"wd_id": "wd_128818",
+"grade": "primary_1_3"
+},
+"five": {
+"wd_id": "wd_57073",
+"grade": "primary_1_3"
+},
+"elephant": {
+"wd_id": "wd_48884",
+"grade": "primary_1_3"
+},
+"ten": {
+"wd_id": "wd_149035",
+"grade": "primary_1_3"
+},
+"nine": {
+"wd_id": "wd_100760",
+"grade": "primary_1_3"
+},
+"eight": {
+"wd_id": "wd_48471",
+"grade": "primary_1_3"
+},
+"seven": {
+"wd_id": "wd_133809",
+"grade": "primary_1_3"
+},
+"small": {
+"wd_id": "wd_137538",
+"grade": "primary_1_3"
+},
+"big": {
+"wd_id": "wd_16881",
+"grade": "primary_1_3"
+},
+"bag": {
+"wd_id": "wd_12560",
+"grade": "primary_1_3"
+},
+"apple": {
+"wd_id": "wd_8037",
+"grade": "primary_1_3"
+},
+"night": {
+"wd_id": "wd_100634",
+"grade": "primary_1_3"
+},
+"evening": {
+"wd_id": "wd_52469",
+"grade": "primary_1_3"
+},
+"afternoon": {
+"wd_id": "wd_3241",
+"grade": "primary_1_3"
+},
+"morning": {
+"wd_id": "wd_97028",
+"grade": "primary_1_3"
+},
+"lie": {
+"wd_id": "wd_86600",
+"grade": "primary_1_3"
+},
+"tell": {
+"wd_id": "wd_148886",
+"grade": "primary_1_3"
+},
+"poor": {
+"wd_id": "wd_115212",
+"grade": "primary_1_3"
+},
+"narrator": {
+"wd_id": "wd_99120",
+"grade": "primary_1_3"
+},
+"wolf": {
+"wd_id": "wd_166304",
+"grade": "primary_1_3"
+},
+"write": {
+"wd_id": "wd_167012",
+"grade": "primary_1_3"
+},
+"boy": {
+"wd_id": "wd_20020",
+"grade": "primary_1_3"
+},
+"miss": {
+"wd_id": "wd_95607",
+"grade": "primary_1_3"
+},
+"fold": {
+"wd_id": "wd_58383",
+"grade": "primary_1_3"
+},
+"happy": {
+"wd_id": "wd_68056",
+"grade": "primary_1_3"
+},
+"year": {
+"wd_id": "wd_167514",
+"grade": "primary_1_3"
+},
+"firework": {
+"wd_id": "wd_56788",
+"grade": "primary_1_3"
+},
+"fire": {
+"wd_id": "wd_56675",
+"grade": "primary_1_3"
+},
+"firecracker": {
+"wd_id": "wd_56740",
+"grade": "primary_1_3"
+},
+"card": {
+"wd_id": "wd_24648",
+"grade": "primary_1_3"
+},
+"gift": {
+"wd_id": "wd_63270",
+"grade": "primary_1_3"
+},
+"rope": {
+"wd_id": "wd_128029",
+"grade": "primary_1_3"
+},
+"foot": {
+"wd_id": "wd_58594",
+"grade": "primary_1_3"
+},
+"football": {
+"wd_id": "wd_58604",
+"grade": "primary_1_3"
+},
+"draw": {
+"wd_id": "wd_46130",
+"grade": "primary_1_3"
+},
+"dance": {
+"wd_id": "wd_38739",
+"grade": "primary_1_3"
+},
+"fly": {
+"wd_id": "wd_58181",
+"grade": "primary_1_3"
+},
+"play": {
+"wd_id": "wd_113728",
+"grade": "primary_1_3"
+},
+"skip": {
+"wd_id": "wd_136729",
+"grade": "primary_1_3"
+},
+"ride": {
+"wd_id": "wd_126903",
+"grade": "primary_1_3"
+},
+"new": {
+"wd_id": "wd_100307",
+"grade": "primary_1_3"
+},
+"look": {
+"wd_id": "wd_88449",
+"grade": "primary_1_3"
+},
+"need": {
+"wd_id": "wd_99659",
+"grade": "primary_1_3"
+},
+"blouse": {
+"wd_id": "wd_18411",
+"grade": "primary_1_3"
+},
+"shorts": {
+"wd_id": "wd_135085",
+"grade": "primary_1_3"
+},
+"dress": {
+"wd_id": "wd_46272",
+"grade": "primary_1_3"
+},
+"t-shirt": {
+"wd_id": "wd_146843",
+"grade": "primary_1_3"
+},
+"day": {
+"wd_id": "wd_39122",
+"grade": "primary_1_3"
+},
+"another": {
+"wd_id": "wd_6932",
+"grade": "primary_1_3"
+},
+"beach": {
+"wd_id": "wd_14991",
+"grade": "primary_1_3"
+},
+"weather": {
+"wd_id": "wd_164194",
+"grade": "primary_1_3"
+},
+"windy": {
+"wd_id": "wd_165791",
+"grade": "primary_1_3"
+},
+"rainy": {
+"wd_id": "wd_121626",
+"grade": "primary_1_3"
+},
+"cloudy": {
+"wd_id": "wd_30218",
+"grade": "primary_1_3"
+},
+"sunny": {
+"wd_id": "wd_145135",
+"grade": "primary_1_3"
+},
+"song": {
+"wd_id": "wd_139079",
+"grade": "primary_1_3"
+},
+"flower": {
+"wd_id": "wd_57976",
+"grade": "primary_1_3"
+},
+"red": {
+"wd_id": "wd_123317",
+"grade": "primary_1_3"
+},
+"cold": {
+"wd_id": "wd_31098",
+"grade": "primary_1_3"
+},
+"cool": {
+"wd_id": "wd_34372",
+"grade": "primary_1_3"
+},
+"autumn": {
+"wd_id": "wd_11595",
+"grade": "primary_1_3"
+},
+"summer": {
+"wd_id": "wd_144986",
+"grade": "primary_1_3"
+},
+"spring": {
+"wd_id": "wd_140887",
+"grade": "primary_1_3"
+},
+"hot": {
+"wd_id": "wd_72192",
+"grade": "primary_1_3"
+},
+"warm": {
+"wd_id": "wd_163554",
+"grade": "primary_1_3"
+},
+"birthday": {
+"wd_id": "wd_17487",
+"grade": "primary_1_3"
+},
+"girl": {
+"wd_id": "wd_63475",
+"grade": "primary_1_3"
+},
+"good": {
+"wd_id": "wd_64852",
+"grade": "primary_1_3"
+},
+"drink": {
+"wd_id": "wd_46379",
+"grade": "primary_1_3"
+},
+"water": {
+"wd_id": "wd_163799",
+"grade": "primary_1_3"
+},
+"milk": {
+"wd_id": "wd_94701",
+"grade": "primary_1_3"
+},
+"juice": {
+"wd_id": "wd_81474",
+"grade": "primary_1_3"
+},
+"cola": {
+"wd_id": "wd_31086",
+"grade": "primary_1_3"
+},
+"like": {
+"wd_id": "wd_86915",
+"grade": "primary_1_3"
+},
+"biscuit": {
+"wd_id": "wd_17507",
+"grade": "primary_1_3"
+},
+"sweet": {
+"wd_id": "wd_146136",
+"grade": "primary_1_3"
+},
+"cream": {
+"wd_id": "wd_36299",
+"grade": "primary_1_3"
+},
+"ice": {
+"wd_id": "wd_73751",
+"grade": "primary_1_3"
+},
+"jelly": {
+"wd_id": "wd_80678",
+"grade": "primary_1_3"
+},
+"super": {
+"wd_id": "wd_145179",
+"grade": "primary_1_3"
+},
+"nice": {
+"wd_id": "wd_100499",
+"grade": "primary_1_3"
+},
+"help": {
+"wd_id": "wd_69673",
+"grade": "primary_1_3"
+},
+"can": {
+"wd_id": "wd_23863",
+"grade": "primary_1_3"
+},
+"kite": {
+"wd_id": "wd_83084",
+"grade": "primary_1_3"
+},
+"bicycle": {
+"wd_id": "wd_16799",
+"grade": "primary_1_3"
+},
+"doll": {
+"wd_id": "wd_45158",
+"grade": "primary_1_3"
+},
+"ball": {
+"wd_id": "wd_12815",
+"grade": "primary_1_3"
+},
+"touch": {
+"wd_id": "wd_153284",
+"grade": "primary_1_3"
+},
+"smell": {
+"wd_id": "wd_137656",
+"grade": "primary_1_3"
+},
+"taste": {
+"wd_id": "wd_148121",
+"grade": "primary_1_3"
+},
+"egg": {
+"wd_id": "wd_48377",
+"grade": "primary_1_3"
+},
+"soup": {
+"wd_id": "wd_139415",
+"grade": "primary_1_3"
+},
+"rice": {
+"wd_id": "wd_126814",
+"grade": "primary_1_3"
+},
+"farmer": {
+"wd_id": "wd_54848",
+"grade": "primary_1_3"
+},
+"hear": {
+"wd_id": "wd_69158",
+"grade": "primary_1_3"
+},
+"cat": {
+"wd_id": "wd_25468",
+"grade": "primary_1_3"
+},
+"dog": {
+"wd_id": "wd_45032",
+"grade": "primary_1_3"
+},
+"hen": {
+"wd_id": "wd_69872",
+"grade": "primary_1_3"
+},
+"sheep": {
+"wd_id": "wd_134399",
+"grade": "primary_1_3"
+},
+"green": {
+"wd_id": "wd_65823",
+"grade": "primary_1_3"
+},
+"colour": {
+"wd_id": "wd_31475",
+"grade": "primary_1_3"
+},
+"monkey": {
+"wd_id": "wd_96503",
+"grade": "primary_1_3"
+},
+"tiger": {
+"wd_id": "wd_151324",
+"grade": "primary_1_3"
+},
+"bear": {
+"wd_id": "wd_15117",
+"grade": "primary_1_3"
+},
+"panda": {
+"wd_id": "wd_108077",
+"grade": "primary_1_3"
+},
+"see": {
+"wd_id": "wd_132350",
+"grade": "primary_1_3"
+},
+"bird": {
+"wd_id": "wd_17399",
+"grade": "primary_1_3"
+},
+"bee": {
+"wd_id": "wd_15502",
+"grade": "primary_1_3"
+},
+"rabbit": {
+"wd_id": "wd_121164",
+"grade": "primary_1_3"
+},
+"frog": {
+"wd_id": "wd_60276",
+"grade": "primary_1_3"
+},
+"because": {
+"wd_id": "wd_15310",
+"grade": "primary_4_5"
+},
+"luck": {
+"wd_id": "wd_89141",
+"grade": "primary_4_5"
+},
+"country": {
+"wd_id": "wd_35660",
+"grade": "primary_4_5"
+},
+"helicopter": {
+"wd_id": "wd_69567",
+"grade": "primary_4_5"
+},
+"brave": {
+"wd_id": "wd_20386",
+"grade": "primary_4_5"
+},
+"drop": {
+"wd_id": "wd_46522",
+"grade": "primary_4_5"
+},
+"match": {
+"wd_id": "wd_92183",
+"grade": "primary_4_5"
+},
+"campfire": {
+"wd_id": "wd_23833",
+"grade": "primary_4_5"
+},
+"start": {
+"wd_id": "wd_141803",
+"grade": "primary_4_5"
+},
+"smoke": {
+"wd_id": "wd_137733",
+"grade": "primary_4_5"
+},
+"drip": {
+"wd_id": "wd_46394",
+"grade": "primary_4_5"
+},
+"trouser": {
+"wd_id": "wd_155249",
+"grade": "primary_4_5"
+},
+"drunk": {
+"wd_id": "wd_46696",
+"grade": "primary_4_5"
+},
+"happily": {
+"wd_id": "wd_68053",
+"grade": "primary_4_5"
+},
+"quickly": {
+"wd_id": "wd_120906",
+"grade": "primary_4_5"
+},
+"slowly": {
+"wd_id": "wd_137433",
+"grade": "primary_4_5"
+},
+"strongly": {
+"wd_id": "wd_143642",
+"grade": "primary_4_5"
+},
+"gently": {
+"wd_id": "wd_62604",
+"grade": "primary_4_5"
+},
+"choose": {
+"wd_id": "wd_28419",
+"grade": "primary_4_5"
+},
+"cheap": {
+"wd_id": "wd_27376",
+"grade": "primary_4_5"
+},
+"pour": {
+"wd_id": "wd_115959",
+"grade": "primary_4_5"
+},
+"boil": {
+"wd_id": "wd_18954",
+"grade": "primary_4_5"
+},
+"finally": {
+"wd_id": "wd_56469",
+"grade": "primary_4_5"
+},
+"then": {
+"wd_id": "wd_150215",
+"grade": "primary_4_5"
+},
+"next": {
+"wd_id": "wd_100442",
+"grade": "primary_4_5"
+},
+"either": {
+"wd_id": "wd_48503",
+"grade": "primary_4_5"
+},
+"toothless": {
+"wd_id": "wd_152869",
+"grade": "primary_4_5"
+},
+"hurt": {
+"wd_id": "wd_72914",
+"grade": "primary_4_5"
+},
+"present": {
+"wd_id": "wd_116945",
+"grade": "primary_4_5"
+},
+"themselves": {
+"wd_id": "wd_150214",
+"grade": "primary_4_5"
+},
+"kind": {
+"wd_id": "wd_82873",
+"grade": "primary_4_5"
+},
+"forest": {
+"wd_id": "wd_59057",
+"grade": "primary_4_5"
+},
+"medicine": {
+"wd_id": "wd_92897",
+"grade": "primary_4_5"
+},
+"cough": {
+"wd_id": "wd_35423",
+"grade": "primary_4_5"
+},
+"toothache": {
+"wd_id": "wd_152861",
+"grade": "primary_4_5"
+},
+"fever": {
+"wd_id": "wd_55914",
+"grade": "primary_4_5"
+},
+"magic": {
+"wd_id": "wd_90034",
+"grade": "primary_4_5"
+},
+"emperor": {
+"wd_id": "wd_49537",
+"grade": "primary_4_5"
+},
+"silent": {
+"wd_id": "wd_135845",
+"grade": "primary_4_5"
+},
+"naughty": {
+"wd_id": "wd_99392",
+"grade": "primary_4_5"
+},
+"store": {
+"wd_id": "wd_142994",
+"grade": "primary_4_5"
+},
+"try on": {
+"wd_id": "wd_155454",
+"grade": "primary_4_5"
+},
+"put on": {
+"wd_id": "wd_120075",
+"grade": "primary_4_5"
+},
+"zip": {
+"wd_id": "wd_168228",
+"grade": "primary_4_5"
+},
+"price": {
+"wd_id": "wd_117302",
+"grade": "primary_4_5"
+},
+"turn": {
+"wd_id": "wd_155903",
+"grade": "primary_4_5"
+},
+"along": {
+"wd_id": "wd_5047",
+"grade": "primary_4_5"
+},
+"museum": {
+"wd_id": "wd_98310",
+"grade": "primary_4_5"
+},
+"hospital": {
+"wd_id": "wd_72147",
+"grade": "primary_4_5"
+},
+"bank": {
+"wd_id": "wd_13110",
+"grade": "primary_4_5"
+},
+"hotel": {
+"wd_id": "wd_72250",
+"grade": "primary_4_5"
+},
+"minute": {
+"wd_id": "wd_95178",
+"grade": "primary_4_5"
+},
+"fan": {
+"wd_id": "wd_54644",
+"grade": "primary_4_5"
+},
+"geese": {
+"wd_id": "wd_62287",
+"grade": "primary_4_5"
+},
+"lot": {
+"wd_id": "wd_88768",
+"grade": "primary_4_5"
+},
+"study": {
+"wd_id": "wd_143781",
+"grade": "primary_4_5"
+},
+"west": {
+"wd_id": "wd_164689",
+"grade": "primary_4_5"
+},
+"east": {
+"wd_id": "wd_47658",
+"grade": "primary_4_5"
+},
+"south": {
+"wd_id": "wd_139468",
+"grade": "primary_4_5"
+},
+"north": {
+"wd_id": "wd_101794",
+"grade": "primary_4_5"
+},
+"member": {
+"wd_id": "wd_93267",
+"grade": "primary_4_5"
+},
+"floor": {
+"wd_id": "wd_57842",
+"grade": "primary_4_5"
+},
+"other": {
+"wd_id": "wd_105778",
+"grade": "primary_4_5"
+},
+"each": {
+"wd_id": "wd_47483",
+"grade": "primary_4_5"
+},
+"all": {
+"wd_id": "wd_4620",
+"grade": "primary_4_5"
+},
+"both": {
+"wd_id": "wd_19654",
+"grade": "primary_4_5"
+},
+"different": {
+"wd_id": "wd_42679",
+"grade": "primary_4_5"
+},
+"same": {
+"wd_id": "wd_129840",
+"grade": "primary_4_5"
+},
+"chinese": {
+"wd_id": "wd_28051",
+"grade": "primary_4_5"
+},
+"china": {
+"wd_id": "wd_28012",
+"grade": "primary_4_5"
+},
+"internet": {
+"wd_id": "wd_78698",
+"grade": "primary_4_5"
+},
+"twice": {
+"wd_id": "wd_156202",
+"grade": "primary_4_5"
+},
+"once": {
+"wd_id": "wd_104348",
+"grade": "primary_4_5"
+},
+"chess": {
+"wd_id": "wd_27689",
+"grade": "primary_4_5"
+},
+"e-mail": {
+"wd_id": "wd_47476",
+"grade": "primary_4_5"
+},
+"mail": {
+"wd_id": "wd_90227",
+"grade": "primary_4_5"
+},
+"traveller": {
+"wd_id": "wd_154322",
+"grade": "primary_4_5"
+},
+"future": {
+"wd_id": "wd_61122",
+"grade": "primary_4_5"
+},
+"dream": {
+"wd_id": "wd_46216",
+"grade": "primary_4_5"
+},
+"save": {
+"wd_id": "wd_130483",
+"grade": "primary_4_5"
+},
+"lifeguard": {
+"wd_id": "wd_86709",
+"grade": "primary_4_5"
+},
+"gate": {
+"wd_id": "wd_62044",
+"grade": "primary_4_5"
+},
+"sick": {
+"wd_id": "wd_135488",
+"grade": "primary_4_5"
+},
+"assistant": {
+"wd_id": "wd_10087",
+"grade": "primary_4_5"
+},
+"pilot": {
+"wd_id": "wd_112759",
+"grade": "primary_4_5"
+},
+"worker": {
+"wd_id": "wd_166644",
+"grade": "primary_4_5"
+},
+"on foot": {
+"wd_id": "wd_104060",
+"grade": "primary_4_5"
+},
+"by": {
+"wd_id": "wd_22750",
+"grade": "primary_4_5"
+},
+"leave": {
+"wd_id": "wd_85534",
+"grade": "primary_4_5"
+},
+"pavement": {
+"wd_id": "wd_109549",
+"grade": "primary_4_5"
+},
+"traffic": {
+"wd_id": "wd_153752",
+"grade": "primary_4_5"
+},
+"underground": {
+"wd_id": "wd_157575",
+"grade": "primary_4_5"
+},
+"wear": {
+"wd_id": "wd_164152",
+"grade": "primary_4_5"
+},
+"bring": {
+"wd_id": "wd_20969",
+"grade": "primary_4_5"
+},
+"begin": {
+"wd_id": "wd_15654",
+"grade": "primary_4_5"
+},
+"sixth": {
+"wd_id": "wd_136492",
+"grade": "primary_4_5"
+},
+"fifth": {
+"wd_id": "wd_56175",
+"grade": "primary_4_5"
+},
+"fourth": {
+"wd_id": "wd_59508",
+"grade": "primary_4_5"
+},
+"third": {
+"wd_id": "wd_150611",
+"grade": "primary_4_5"
+},
+"grey": {
+"wd_id": "wd_65962",
+"grade": "primary_4_5"
+},
+"worm": {
+"wd_id": "wd_166758",
+"grade": "primary_4_5"
+},
+"heavy": {
+"wd_id": "wd_69316",
+"grade": "primary_4_5"
+},
+"ugly": {
+"wd_id": "wd_156599",
+"grade": "primary_4_5"
+},
+"nest": {
+"wd_id": "wd_100047",
+"grade": "primary_4_5"
+},
+"swan": {
+"wd_id": "wd_145971",
+"grade": "primary_4_5"
+},
+"duckling": {
+"wd_id": "wd_46850",
+"grade": "primary_4_5"
+},
+"traditional": {
+"wd_id": "wd_153730",
+"grade": "primary_4_5"
+},
+"envelop": {
+"wd_id": "wd_50848",
+"grade": "primary_4_5"
+},
+"dumpling": {
+"wd_id": "wd_47033",
+"grade": "primary_4_5"
+},
+"dragon": {
+"wd_id": "wd_46034",
+"grade": "primary_4_5"
+},
+"festival": {
+"wd_id": "wd_55835",
+"grade": "primary_4_5"
+},
+"away": {
+"wd_id": "wd_11847",
+"grade": "primary_4_5"
+},
+"return": {
+"wd_id": "wd_126218",
+"grade": "primary_4_5"
+},
+"drum": {
+"wd_id": "wd_46670",
+"grade": "primary_4_5"
+},
+"violin": {
+"wd_id": "wd_162153",
+"grade": "primary_4_5"
+},
+"piano": {
+"wd_id": "wd_112311",
+"grade": "primary_4_5"
+},
+"often": {
+"wd_id": "wd_103565",
+"grade": "primary_4_5"
+},
+"always": {
+"wd_id": "wd_5289",
+"grade": "primary_4_5"
+},
+"sunday": {
+"wd_id": "wd_145080",
+"grade": "primary_4_5"
+},
+"saturday": {
+"wd_id": "wd_130387",
+"grade": "primary_4_5"
+},
+"friday": {
+"wd_id": "wd_60109",
+"grade": "primary_4_5"
+},
+"thursday": {
+"wd_id": "wd_151103",
+"grade": "primary_4_5"
+},
+"wednesday": {
+"wd_id": "wd_164320",
+"grade": "primary_4_5"
+},
+"tuesday": {
+"wd_id": "wd_155627",
+"grade": "primary_4_5"
+},
+"monday": {
+"wd_id": "wd_96376",
+"grade": "primary_4_5"
+},
+"supper": {
+"wd_id": "wd_145442",
+"grade": "primary_4_5"
+},
+"dinner": {
+"wd_id": "wd_43057",
+"grade": "primary_4_5"
+},
+"lunch": {
+"wd_id": "wd_89325",
+"grade": "primary_4_5"
+},
+"breakfast": {
+"wd_id": "wd_20562",
+"grade": "primary_4_5"
+},
+"wash": {
+"wd_id": "wd_163663",
+"grade": "primary_4_5"
+},
+"get up": {
+"wd_id": "wd_63083",
+"grade": "primary_4_5"
+},
+"half": {
+"wd_id": "wd_67439",
+"grade": "primary_4_5"
+},
+"quarter": {
+"wd_id": "wd_120674",
+"grade": "primary_4_5"
+},
+"unhappy": {
+"wd_id": "wd_158176",
+"grade": "primary_4_5"
+},
+"puzzle": {
+"wd_id": "wd_120206",
+"grade": "primary_4_5"
+},
+"excuse": {
+"wd_id": "wd_52961",
+"grade": "primary_4_5"
+},
+"hole": {
+"wd_id": "wd_71341",
+"grade": "primary_4_5"
+},
+"ring": {
+"wd_id": "wd_127172",
+"grade": "primary_4_5"
+},
+"scissors": {
+"wd_id": "wd_131212",
+"grade": "primary_4_5"
+},
+"television": {
+"wd_id": "wd_148865",
+"grade": "primary_4_5"
+},
+"bell": {
+"wd_id": "wd_15847",
+"grade": "primary_4_5"
+},
+"laud": {
+"wd_id": "wd_84960",
+"grade": "primary_4_5"
+},
+"quiet": {
+"wd_id": "wd_120928",
+"grade": "primary_4_5"
+},
+"tale": {
+"wd_id": "wd_147545",
+"grade": "primary_4_5"
+},
+"fairy": {
+"wd_id": "wd_54374",
+"grade": "primary_4_5"
+},
+"bedtime": {
+"wd_id": "wd_15498",
+"grade": "primary_4_5"
+},
+"homework": {
+"wd_id": "wd_71578",
+"grade": "primary_4_5"
+},
+"usually": {
+"wd_id": "wd_160286",
+"grade": "primary_4_5"
+},
+"kitchen": {
+"wd_id": "wd_83069",
+"grade": "primary_4_5"
+},
+"bathroom": {
+"wd_id": "wd_13960",
+"grade": "primary_4_5"
+},
+"living room": {
+"wd_id": "wd_87754",
+"grade": "primary_4_5"
+},
+"bedroom": {
+"wd_id": "wd_15476",
+"grade": "primary_4_5"
+},
+"tortoise": {
+"wd_id": "wd_153162",
+"grade": "primary_4_5"
+},
+"animal": {
+"wd_id": "wd_6636",
+"grade": "primary_4_5"
+},
+"cute": {
+"wd_id": "wd_38071",
+"grade": "primary_4_5"
+},
+"parrot": {
+"wd_id": "wd_108887",
+"grade": "primary_4_5"
+},
+"bone": {
+"wd_id": "wd_19192",
+"grade": "primary_4_5"
+},
+"ever": {
+"wd_id": "wd_52500",
+"grade": "primary_4_5"
+},
+"never": {
+"wd_id": "wd_100280",
+"grade": "primary_4_5"
+},
+"join": {
+"wd_id": "wd_81137",
+"grade": "primary_4_5"
+},
+"badminton": {
+"wd_id": "wd_12534",
+"grade": "primary_4_5"
+},
+"volleyball": {
+"wd_id": "wd_162702",
+"grade": "primary_4_5"
+},
+"table tennis": {
+"wd_id": "wd_146896",
+"grade": "primary_4_5"
+},
+"sport": {
+"wd_id": "wd_140739",
+"grade": "primary_4_5"
+},
+"favourite": {
+"wd_id": "wd_55190",
+"grade": "primary_4_5"
+},
+"fear": {
+"wd_id": "wd_55239",
+"grade": "primary_4_5"
+},
+"path": {
+"wd_id": "wd_109356",
+"grade": "primary_4_5"
+},
+"lawn": {
+"wd_id": "wd_85133",
+"grade": "primary_4_5"
+},
+"hill": {
+"wd_id": "wd_70732",
+"grade": "primary_4_5"
+},
+"property": {
+"wd_id": "wd_118382",
+"grade": "primary_4_5"
+},
+"lost": {
+"wd_id": "wd_88759",
+"grade": "primary_4_5"
+},
+"thick": {
+"wd_id": "wd_150464",
+"grade": "primary_4_5"
+},
+"blunt": {
+"wd_id": "wd_18622",
+"grade": "primary_4_5"
+},
+"strawberry": {
+"wd_id": "wd_143289",
+"grade": "primary_4_5"
+},
+"grape": {
+"wd_id": "wd_65527",
+"grade": "primary_4_5"
+},
+"watermelon": {
+"wd_id": "wd_163919",
+"grade": "primary_4_5"
+},
+"sense": {
+"wd_id": "wd_133159",
+"grade": "primary_4_5"
+},
+"december": {
+"wd_id": "wd_39656",
+"grade": "primary_4_5"
+},
+"november": {
+"wd_id": "wd_102147",
+"grade": "primary_4_5"
+},
+"october": {
+"wd_id": "wd_103152",
+"grade": "primary_4_5"
+},
+"september": {
+"wd_id": "wd_133318",
+"grade": "primary_4_5"
+},
+"august": {
+"wd_id": "wd_11183",
+"grade": "primary_4_5"
+},
+"june": {
+"wd_id": "wd_81591",
+"grade": "primary_4_5"
+},
+"wet": {
+"wd_id": "wd_164734",
+"grade": "primary_4_5"
+},
+"pond": {
+"wd_id": "wd_115113",
+"grade": "primary_4_5"
+},
+"fountain": {
+"wd_id": "wd_59472",
+"grade": "primary_4_5"
+},
+"aviary": {
+"wd_id": "wd_11740",
+"grade": "primary_4_5"
+},
+"camera": {
+"wd_id": "wd_23756",
+"grade": "primary_4_5"
+},
+"sketchbook": {
+"wd_id": "wd_136587",
+"grade": "primary_4_5"
+},
+"skateboard": {
+"wd_id": "wd_136533",
+"grade": "primary_4_5"
+},
+"farm": {
+"wd_id": "wd_54838",
+"grade": "primary_4_5"
+},
+"throw": {
+"wd_id": "wd_150951",
+"grade": "primary_4_5"
+},
+"pick": {
+"wd_id": "wd_112362",
+"grade": "primary_4_5"
+},
+"litter": {
+"wd_id": "wd_87614",
+"grade": "primary_4_5"
+},
+"corn": {
+"wd_id": "wd_34783",
+"grade": "primary_4_5"
+},
+"hay": {
+"wd_id": "wd_68883",
+"grade": "primary_4_5"
+},
+"bookshop": {
+"wd_id": "wd_19353",
+"grade": "primary_4_5"
+},
+"chocolate": {
+"wd_id": "wd_28316",
+"grade": "primary_4_5"
+},
+"loaf": {
+"wd_id": "wd_87845",
+"grade": "primary_4_5"
+},
+"packet": {
+"wd_id": "wd_107530",
+"grade": "primary_4_5"
+},
+"busy": {
+"wd_id": "wd_22563",
+"grade": "primary_4_5"
+},
+"postcard": {
+"wd_id": "wd_115642",
+"grade": "primary_4_5"
+},
+"bakery": {
+"wd_id": "wd_12688",
+"grade": "primary_4_5"
+},
+"between": {
+"wd_id": "wd_16555",
+"grade": "primary_4_5"
+},
+"restaurant": {
+"wd_id": "wd_125804",
+"grade": "primary_4_5"
+},
+"post office": {
+"wd_id": "wd_115586",
+"grade": "primary_4_5"
+},
+"shelf": {
+"wd_id": "wd_134458",
+"grade": "primary_4_5"
+},
+"second": {
+"wd_id": "wd_132106",
+"grade": "primary_4_5"
+},
+"first": {
+"wd_id": "wd_56817",
+"grade": "primary_4_5"
+},
+"font": {
+"wd_id": "wd_58530",
+"grade": "primary_4_5"
+},
+"lab": {
+"wd_id": "wd_83732",
+"grade": "primary_4_5"
+},
+"canteen": {
+"wd_id": "wd_24160",
+"grade": "primary_4_5"
+},
+"gym": {
+"wd_id": "wd_66967",
+"grade": "primary_4_5"
+},
+"afraid": {
+"wd_id": "wd_3164",
+"grade": "primary_4_5"
+},
+"sharp": {
+"wd_id": "wd_134264",
+"grade": "primary_4_5"
+},
+"jean": {
+"wd_id": "wd_80613",
+"grade": "primary_4_5"
+},
+"skirt": {
+"wd_id": "wd_136762",
+"grade": "primary_4_5"
+},
+"dangerous": {
+"wd_id": "wd_38790",
+"grade": "primary_4_5"
+},
+"engine": {
+"wd_id": "wd_50232",
+"grade": "primary_4_5"
+},
+"job": {
+"wd_id": "wd_80990",
+"grade": "primary_4_5"
+},
+"bus driver": {
+"wd_id": "wd_22409",
+"grade": "primary_4_5"
+},
+"cook": {
+"wd_id": "wd_34341",
+"grade": "primary_4_5"
+},
+"firefighter": {
+"wd_id": "wd_56751",
+"grade": "primary_4_5"
+},
+"officer": {
+"wd_id": "wd_103509",
+"grade": "primary_4_5"
+},
+"office": {
+"wd_id": "wd_103487",
+"grade": "primary_4_5"
+},
+"police": {
+"wd_id": "wd_114682",
+"grade": "primary_4_5"
+},
+"student": {
+"wd_id": "wd_143759",
+"grade": "primary_4_5"
+},
+"teacher": {
+"wd_id": "wd_148409",
+"grade": "primary_4_5"
+},
+"doctor": {
+"wd_id": "wd_44941",
+"grade": "primary_4_5"
+},
+"dish": {
+"wd_id": "wd_43822",
+"grade": "primary_4_5"
+},
+"sometimes": {
+"wd_id": "wd_139017",
+"grade": "primary_4_5"
+},
+"riddle": {
+"wd_id": "wd_126896",
+"grade": "primary_4_5"
+},
+"visit": {
+"wd_id": "wd_162330",
+"grade": "primary_4_5"
+},
+"dive": {
+"wd_id": "wd_44578",
+"grade": "primary_4_5"
+},
+"cousin": {
+"wd_id": "wd_35779",
+"grade": "primary_4_5"
+},
+"aunt": {
+"wd_id": "wd_11207",
+"grade": "primary_4_5"
+},
+"uncle": {
+"wd_id": "wd_157193",
+"grade": "primary_4_5"
+},
+"bottle": {
+"wd_id": "wd_19683",
+"grade": "primary_4_5"
+},
+"dry": {
+"wd_id": "wd_46715",
+"grade": "primary_4_5"
+},
+"crow": {
+"wd_id": "wd_37002",
+"grade": "primary_4_5"
+},
+"tired": {
+"wd_id": "wd_151739",
+"grade": "primary_4_5"
+},
+"full": {
+"wd_id": "wd_60683",
+"grade": "primary_4_5"
+},
+"crisp": {
+"wd_id": "wd_36675",
+"grade": "primary_4_5"
+},
+"wasp": {
+"wd_id": "wd_163718",
+"grade": "primary_4_5"
+},
+"climb": {
+"wd_id": "wd_29869",
+"grade": "primary_4_5"
+},
+"jump": {
+"wd_id": "wd_81530",
+"grade": "primary_4_5"
+},
+"classmate": {
+"wd_id": "wd_29560",
+"grade": "primary_4_5"
+},
+"kitty": {
+"wd_id": "wd_83118",
+"grade": "primary_4_5"
+},
+"paul": {
+"wd_id": "wd_109509",
+"grade": "primary_4_5"
+},
+"sixteen": {
+"wd_id": "wd_136489",
+"grade": "primary_4_5"
+},
+"fifteen": {
+"wd_id": "wd_56172",
+"grade": "primary_4_5"
+},
+"fourteen": {
+"wd_id": "wd_59506",
+"grade": "primary_4_5"
+},
+"thirteen": {
+"wd_id": "wd_150647",
+"grade": "primary_4_5"
+},
+"twelve": {
+"wd_id": "wd_156180",
+"grade": "primary_4_5"
+},
+"eleven": {
+"wd_id": "wd_48910",
+"grade": "primary_4_5"
+},
+"storm": {
+"wd_id": "wd_143018",
+"grade": "primary_4_5"
+},
+"score": {
+"wd_id": "wd_131323",
+"grade": "primary_4_5"
+},
+"pop": {
+"wd_id": "wd_115232",
+"grade": "primary_4_5"
+},
+"goal": {
+"wd_id": "wd_64507",
+"grade": "primary_4_5"
+},
+"diary": {
+"wd_id": "wd_42423",
+"grade": "primary_4_5"
+},
+"tadpole": {
+"wd_id": "wd_147035",
+"grade": "primary_4_5"
+},
+"bench": {
+"wd_id": "wd_16011",
+"grade": "primary_4_5"
+},
+"rug": {
+"wd_id": "wd_128697",
+"grade": "primary_4_5"
+},
+"roll": {
+"wd_id": "wd_127780",
+"grade": "primary_4_5"
+},
+"station": {
+"wd_id": "wd_141935",
+"grade": "primary_4_5"
+},
+"furniture": {
+"wd_id": "wd_61016",
+"grade": "primary_4_5"
+},
+"soldier": {
+"wd_id": "wd_138758",
+"grade": "primary_4_5"
+},
+"puppet": {
+"wd_id": "wd_119767",
+"grade": "primary_4_5"
+},
+"dinosaur": {
+"wd_id": "wd_43071",
+"grade": "primary_4_5"
+},
+"sign": {
+"wd_id": "wd_135731",
+"grade": "primary_4_5"
+},
+"feed": {
+"wd_id": "wd_55374",
+"grade": "primary_4_5"
+},
+"cage": {
+"wd_id": "wd_23236",
+"grade": "primary_4_5"
+},
+"goose": {
+"wd_id": "wd_64993",
+"grade": "primary_4_5"
+},
+"giant": {
+"wd_id": "wd_63195",
+"grade": "primary_4_5"
+},
+"castle": {
+"wd_id": "wd_25425",
+"grade": "primary_4_5"
+},
+"beanstalk": {
+"wd_id": "wd_15114",
+"grade": "primary_4_5"
+},
+"theirs": {
+"wd_id": "wd_150197",
+"grade": "primary_4_5"
+},
+"shiny": {
+"wd_id": "wd_134698",
+"grade": "primary_4_5"
+},
+"parcel": {
+"wd_id": "wd_108641",
+"grade": "primary_4_5"
+},
+"mine": {
+"wd_id": "wd_94940",
+"grade": "primary_4_5"
+},
+"lady": {
+"wd_id": "wd_84034",
+"grade": "primary_4_5"
+},
+"fluffy": {
+"wd_id": "wd_58044",
+"grade": "primary_4_5"
+},
+"empty": {
+"wd_id": "wd_49653",
+"grade": "primary_4_5"
+},
+"cushion": {
+"wd_id": "wd_37922",
+"grade": "primary_4_5"
+},
+"wheel": {
+"wd_id": "wd_164882",
+"grade": "primary_4_5"
+},
+"string": {
+"wd_id": "wd_143523",
+"grade": "primary_4_5"
+},
+"shaker": {
+"wd_id": "wd_134093",
+"grade": "primary_4_5"
+},
+"screwdriver": {
+"wd_id": "wd_131573",
+"grade": "primary_4_5"
+},
+"musician": {
+"wd_id": "wd_98355",
+"grade": "primary_4_5"
+},
+"instrument": {
+"wd_id": "wd_78104",
+"grade": "primary_4_5"
+},
+"hide": {
+"wd_id": "wd_70438",
+"grade": "primary_4_5"
+},
+"hammer": {
+"wd_id": "wd_67680",
+"grade": "primary_4_5"
+},
+"awake": {
+"wd_id": "wd_11821",
+"grade": "primary_4_5"
+},
+"asleep": {
+"wd_id": "wd_9795",
+"grade": "primary_4_5"
+},
+"shadow": {
+"wd_id": "wd_134027",
+"grade": "primary_4_5"
+},
+"rise": {
+"wd_id": "wd_127309",
+"grade": "primary_4_5"
+},
+"inside": {
+"wd_id": "wd_77881",
+"grade": "primary_4_5"
+},
+"during": {
+"wd_id": "wd_47186",
+"grade": "primary_4_5"
+},
+"behind": {
+"wd_id": "wd_15734",
+"grade": "primary_4_5"
+},
+"cherry": {
+"wd_id": "wd_27655",
+"grade": "primary_4_5"
+},
+"cocoon": {
+"wd_id": "wd_30748",
+"grade": "primary_4_5"
+},
+"caterpillar": {
+"wd_id": "wd_25689",
+"grade": "primary_4_5"
+},
+"put": {
+"wd_id": "wd_120030",
+"grade": "primary_4_5"
+},
+"tape": {
+"wd_id": "wd_147900",
+"grade": "primary_4_5"
+},
+"glue": {
+"wd_id": "wd_64089",
+"grade": "primary_4_5"
+},
+"notebook": {
+"wd_id": "wd_102027",
+"grade": "primary_4_5"
+},
+"crayon": {
+"wd_id": "wd_36273",
+"grade": "primary_4_5"
+},
+"paint": {
+"wd_id": "wd_107705",
+"grade": "primary_4_5"
+},
+"brush": {
+"wd_id": "wd_21478",
+"grade": "primary_4_5"
+},
+"school bag": {
+"wd_id": "wd_131073",
+"grade": "primary_4_5"
+}
+}

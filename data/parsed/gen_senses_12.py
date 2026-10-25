@@ -1,0 +1,312 @@
+# -*- coding: utf-8 -*-
+"""Generate senses_shard_12.jsonl in batches of <=40 words, with spec checks."""
+import json, re, sys
+
+IN = '/root/wordslearn/data/parsed/gen_out/shard_12.jsonl'
+OUT = '/root/wordslearn/data/parsed/gen_out/senses_shard_12.jsonl'
+
+# word -> [(pos, definition_zh, definition_en, example_en, example_zh, confidence), ...]
+S = {
+ 'mission': [('n.','任务；使命','a special job that someone sends you to do','The spaceship starts its mission.','宇宙飞船开始执行任务。','high')],
+ 'southern': [('adj.','南方的','in or of the south','We live in the southern part of China.','我们住在中国的南部。','high')],
+ 'eventually': [('adv.','最终；终于','in the end; finally','We eventually reach the top of the hill.','我们最终到达山顶。','high')],
+ 'global': [('adj.','全球的','of the whole world','English is a global language.','英语是一门全球性语言。','high')],
+ 'relation': [('n.','关系；联系','the way two things are connected','The story shows the relation between the two girls.','这个故事展示了两个女孩之间的关系。','high')],
+ 'labor': [('n.','劳动','hard work','Hard labor makes him tired.','辛苦的劳动使他很累。','high')],
+ 'version': [('n.','版本；译本','a form of something that is a little different','This is the English version of the book.','这是这本书的英文版本。','high')],
+ 'stare': [('vi.','盯着看；凝视','to look at something for a long time','He stares at the big fish.','他盯着那条大鱼看。','high')],
+ 'original': [('adj.','最初的；原创的','first; not copied','This is the original picture of the story.','这是故事最初的图画。','high')],
+ 'species': [('n.','物种；种类','a group of the same kind of animals or plants','This species of bird sings at night.','这种鸟在夜里唱歌。','high')],
+ 'track': [('n.','轨道；小道','a path or line for things to move on','The train runs on its track.','火车在铁轨上行驶。','high'),
+           ('vt.','追踪','to follow someone by signs','The dog tracks the rabbit.','狗追踪那只兔子。','high')],
+ 'absolutely': [('adv.','绝对地；完全','completely; totally','You are absolutely right.','你说得完全正确。','high')],
+ 'object': [('n.','物体','a thing that you can see or touch','The moon is a bright object in the sky.','月亮是天空中明亮的物体。','high')],
+ 'therefore': [('adv.','因此；所以','for that reason','It rains; therefore, we stay at home.','下雨了，所以我们待在家里。','high')],
+ 'announce': [('vt.','宣布；宣告','to tell many people something','The teacher announces the winner.','老师宣布获胜者。','high')],
+ 'sleep': [('vi.','睡觉','to rest with your eyes closed','I sleep eight hours every night.','我每晚睡八个小时。','high'),
+           ('n.','睡眠','the natural rest of the body','She needs more sleep.','她需要更多的睡眠。','high')],
+ 'spirit': [('n.','精神；情绪','energy and strong feeling','The team plays with great spirit.','全队带着高昂的斗志比赛。','high')],
+ 'replace': [('vt.','代替；更换','to take the place of something','Dad replaces the old phone with a new one.','爸爸用新手机替换了旧手机。','high')],
+ 'argument': [('n.','争论；争吵','an angry talk between two people','They have an argument about the game.','他们为这个游戏争吵起来。','high')],
+ 'camp': [('n.','营地','a place where people live in tents','We swim and play at summer camp.','我们在夏令营里游泳和玩耍。','high'),
+          ('vi.','露营','to sleep in a tent','We camp by the lake every summer.','每年夏天我们在湖边露营。','high')],
+ 'feature': [('n.','特征；特色','an important part of something','Long ears are a feature of rabbits.','长耳朵是兔子的一个特征。','high')],
+ 'am': [('v.','是（be 的第一人称）',"the form of 'be' used with 'I'",'I am a student.','我是一名学生。','low')],
+ 'dozen': [('n.','一打；十二个','a group of twelve','Mom buys a dozen eggs.','妈妈买了一打鸡蛋。','high')],
+ 'possibility': [('n.','可能性','the chance that something may happen','There is a possibility of rain today.','今天有可能下雨。','high')],
+ 'department': [('n.','部门；系','a part of a company, school, or store','Mom works in the toy department.','妈妈在玩具部工作。','high')],
+ 'generally': [('adv.','通常；一般','usually; mostly','I generally get up at six.','我通常六点起床。','high')],
+ 'vision': [('n.','视力；视野','the ability to see','The owl has great night vision.','猫头鹰的夜视力很好。','high')],
+ 'normal': [('adj.','正常的','usual; not strange','His temperature is normal now.','他现在的体温正常。','high')],
+ 'scale': [('n.','秤；刻度','a tool that weighs things','We weigh the apples on a scale.','我们用秤称苹果。','high')],
+ 'spot': [('n.','地点；场所','a place','This is a good spot for a picnic.','这是野餐的好地方。','high'),
+          ('n.','斑点','a small round mark','The dog has a black spot on its back.','狗的背上有一个黑点。','high')],
+ 'handle': [('n.','把手','the part of a door you hold','Pull the handle to open the door.','拉动把手打开门。','high'),
+            ('vt.','处理；应付','to deal with something','She handles the problem well.','她把问题处理得很好。','high')],
+ 'reader': [('n.','读者','a person who reads','He is a fast reader.','他读书读得很快。','high')],
+ 'apartment': [('n.','公寓','a home in a big building','We live in a big apartment.','我们住在一套大公寓里。','high')],
+ 'willing': [('adj.','愿意的','happy to do something','He is willing to help us.','他愿意帮助我们。','high')],
+ 'strength': [('n.','力量；力气','the power inside your body','The little ant has great strength.','小蚂蚁力气很大。','high')],
+ 'previous': [('adj.','先前的','coming just before this one','I read this story in the previous book.','我在上一本书里读过这个故事。','high')],
+ 'band': [('n.','乐队','a group that plays music','My brother plays in a band.','我哥哥在乐队里演奏。','high')],
+ 'obviously': [('adv.','显然；明显','in a way that is easy to see','He obviously likes the gift.','他显然很喜欢这件礼物。','high')],
+ 'target': [('n.','目标；靶子','something you aim at or try to reach','The arrow hits the target.','箭射中了靶子。','high')],
+ 'guard': [('n.','警卫；守卫','a person who keeps a place safe','A guard stands at the gate.','一名警卫站在大门口。','high'),
+           ('vt.','守卫；保卫','to keep safe from danger','The dog guards the house.','狗看守着房子。','high')],
+ 'vehicle': [('n.','交通工具；车辆','a thing that carries people, like a car','A bus is a big vehicle.','公共汽车是一种大型交通工具。','high')],
+ 'earn': [('vt.','赚得；挣得','to get money by working','She earns money by selling cakes.','她通过卖蛋糕挣钱。','high')],
+}
+
+S.update({
+ 'sample': [('n.','样品；样本','a small part that shows the whole','The shop gives free food samples.','商店提供免费试吃品。','high')],
+ 'tiny': [('adj.','微小的','very very small','An ant is a tiny insect.','蚂蚁是一种微小的昆虫。','high')],
+ 'protection': [('n.','保护','keeping someone or something safe','The coat gives protection from the cold.','这件外套可以防寒。','high')],
+ 'highly': [('adv.','非常；高度地','very much','Teachers speak highly of her.','老师们对她评价很高。','high')],
+ 'mostly': [('adv.','主要地；大多','mainly; almost all','The box is mostly full of toys.','这个箱子里大部分是玩具。','high')],
+ 'living': [('adj.','活着的','alive now','Living things need water and air.','生物需要水和空气。','high'),
+            ('n.','生计','the money you need to live','He makes a living by teaching.','他靠教书谋生。','high')],
+ 'marry': [('vt.','结婚；嫁；娶',"to become someone's husband or wife",'They marry next spring.','他们明年春天结婚。','high')],
+ 'tomorrow': [('n.','明天','the day after today','Tomorrow is my birthday.','明天是我的生日。','high'),
+              ('adv.','在明天','on the day after today','We will go to the zoo tomorrow.','我们明天去动物园。','high')],
+ 'technique': [('n.','技术；技巧','a way of doing something well','She learns a new painting technique.','她学习一种新的绘画技巧。','high')],
+ 'folk': [('n.','人们；家人','people; your family','My folks come to see us on Sunday.','我的家人星期天来看我们。','high'),
+          ('adj.','民间的','traditional and of common people','We sing folk songs at camp.','我们在营地唱民歌。','high')],
+ 'border': [('n.','边界；边境','the line between two countries','They cross the border by train.','他们坐火车越过边界。','high')],
+ 'gather': [('vi.','聚集','to come together','The children gather in the park.','孩子们在公园里聚集。','high'),
+            ('vt.','收集；采集','to bring things together','We gather shells on the beach.','我们在海滩上捡贝壳。','high')],
+ 'limit': [('n.','限度；限制','the point where something must stop','There is a time limit for the test.','考试有时间限制。','high'),
+           ('vt.','限制','to not let something go higher','Mom limits my TV time.','妈妈限制我看电视的时间。','high')],
+ 'fit': [('adj.','健康的','healthy and strong','Exercise keeps you fit.','锻炼让你身体健康。','high'),
+         ('vt.','合身；适合','to be the right size','These shoes fit me.','这双鞋我穿正合适。','high')],
+ 'equipment': [('n.','设备；装备','the tools you need for a job','We need camping equipment for the trip.','我们旅行需要露营装备。','high')],
+ 'failure': [('n.','失败','not succeeding','Do not be afraid of failure.','不要害怕失败。','high')],
+ 'comment': [('n.','评论；评语','a few words about something','The teacher writes a comment on my paper.','老师在我的试卷上写了评语。','high')],
+ 'spread': [('vt.','涂；传播','to put something over a surface','She spreads butter on the bread.','她把黄油抹在面包上。','high'),
+            ('vi.','蔓延；扩散','to move to more places','The fire spreads very fast.','火势蔓延得很快。','high')],
+ 'baseball': [('n.','棒球','a ball game with a bat','We play baseball after school.','我们放学后打棒球。','high')],
+ 'anybody': [('pron.','任何人','any person','Anybody can join the game.','任何人都可以参加这个游戏。','high')],
+ 'review': [('vt.','复习','to study again','I review my notes before the test.','考试前我复习笔记。','high'),
+            ('n.','复习；评论','a piece of writing about a film or book','The new film gets a good review.','这部新电影获得了好评。','high')],
+ 'anyway': [('adv.','无论如何；反正','in spite of that; still','It is late, but we go anyway.','天晚了，但我们还是去了。','high')],
+ 'youth': [('n.','青年时期；青春','the time when you are young','In his youth, Grandpa lived on a farm.','爷爷年轻时住在农场。','high')],
+ 'broad': [('adj.','宽的；宽阔的','wide','The river is broad and long.','这条河又宽又长。','high')],
+ 'apparently': [('adv.','似乎；显然','it seems; probably true','Apparently, the shop closes early today.','看来这家店今天关门很早。','high')],
+ 'slightly': [('adv.','稍微；略微','a little','The soup is slightly salty.','这个汤有点咸。','high')],
+ 'reaction': [('n.','反应','a change that happens after something','The chemical reaction makes bubbles.','化学反应产生气泡。','high')],
+ 'suit': [('n.','套装','a set of clothes','Dad wears a black suit.','爸爸穿着黑色西装。','high'),
+          ('vt.','适合','to look good on someone','The red dress suits you well.','这条红裙子很适合你。','high')],
+ 'growing': [('adj.','增长的；生长的','getting bigger','The growing plant needs more water.','这棵正在生长的植物需要更多水。','high')],
+ 'construction': [('n.','建造；建筑','the work of building','A new bridge is under construction.','一座新桥正在建设中。','high')],
+ 'connection': [('n.','连接；联系','the state of being joined','There is a connection between the two stories.','这两个故事之间有联系。','high')],
+ 'burn': [('vi.','燃烧','to be on fire','Paper burns very quickly.','纸燃烧得很快。','high'),
+          ('vt.','烧伤；烫伤','to hurt with fire or heat','The hot water burns his hand.','热水烫伤了他的手。','high')],
+ 'neighbor': [('n.','邻居','a person living near you','My neighbor has a friendly dog.','我的邻居有一只友善的狗。','high')],
+ 'hey': [('int.','嘿；喂','a word to call someone or show surprise','Hey, come and see this bird.','嘿，快来看这只鸟。','high')],
+ 'indian': [('n.','印度人','a person from India','Our new friend is an Indian.','我们的新朋友是印度人。','high'),
+            ('n.','印第安人','one of the first people of America','The Indians teach him to fish.','印第安人教他钓鱼。','high')],
+ 'promise': [('n.','诺言；承诺','words that say you will do something','He makes a promise to his mom.','他向妈妈作出承诺。','high'),
+             ('vt.','承诺；答应','to say you will do something','I promise to finish my homework.','我保证完成作业。','high')],
+ 'aware': [('adj.','意识到的；知道','knowing about something','I am aware of the noise outside.','我注意到外面的噪音。','high')],
+ 'extend': [('v.','延伸；扩大','to make longer or bigger','They extend the road to the village.','他们把路延伸到村子。','high')],
+ 'combine': [('v.','结合；联合','to put things together','We combine milk and eggs in a bowl.','我们在碗里混合牛奶和鸡蛋。','high')],
+ 'learning': [('n.','学习','getting knowledge','Learning English takes time.','学习英语需要时间。','high')],
+ 'moral': [('adj.','道德的','about right and wrong','The story has a moral lesson.','这个故事有一个道德教训。','high'),
+           ('n.','寓意','the lesson of a story','The moral of the story is clear.','这个故事的寓意很清楚。','high')],
+})
+
+S.update({
+ 'negative': [('adj.','消极的；否定的','bad; saying no','Do not think in a negative way.','不要用消极的方式思考。','high')],
+ 'grab': [('vt.','抓住；抢夺','to take quickly with your hand','He grabs my hand and runs.','他抓住我的手跑了起来。','high')],
+ 'direct': [('adj.','直接的','straight; not turning','This is the direct way to the station.','这是去车站的直达路线。','high')],
+ 'fully': [('adv.','完全地；充分','completely','I fully understand the story now.','我现在完全理解这个故事了。','high')],
+ 'birth': [('n.','出生；诞生','the coming out of a baby','The cat gives birth to four kittens.','这只猫生了四只小猫。','high')],
+ 'search': [('v.','搜寻；搜索','to try to find something','I search for my pen everywhere.','我到处寻找我的钢笔。','high'),
+            ('n.','搜寻','an act of looking for something','The search for the cat takes an hour.','寻找那只猫花了一个小时。','high')],
+ 'eastern': [('adj.','东方的；东部的','in or of the east','The sun rises in the eastern sky.','太阳从东方的天空升起。','high')],
+ 'yesterday': [('n.','昨天','the day before today','Yesterday was a sunny day.','昨天是晴天。','high'),
+               ('adv.','在昨天','on the day before today','We visited the museum yesterday.','我们昨天参观了博物馆。','high')],
+ 'device': [('n.','装置；设备','a machine or tool for a job','A phone is a useful device.','手机是一种有用的设备。','high')],
+ 'studio': [('n.','工作室；演播室','a room for art or music','The painter works in a small studio.','画家在一间小工作室里工作。','high')],
+ 'lean': [('vi.','倚；靠','to rest your weight on something','Do not lean on the door.','别倚在门上。','high')],
+ 'neck': [('n.','脖子','the part of the body between head and shoulders','The giraffe has a long neck.','长颈鹿有长长的脖子。','high')],
+ 'hate': [('vt.','讨厌；恨','to not like at all','I hate rainy days.','我讨厌下雨天。','high')],
+ 'otherwise': [('adv.','否则；不然','if not; or else','Wear a coat, otherwise you feel cold.','穿上外套，不然你会觉得冷。','high')],
+ 'writing': [('n.','书写；写作','the act of making words on paper','Her writing is clear and neat.','她的书写清楚又工整。','high')],
+ 'expression': [('n.','表情；表达','a look on the face that shows a feeling','Look at the expression on his face.','看他脸上的表情。','high')],
+ 'theater': [('n.','剧院；电影院','a place to watch plays','We watch a play at the theater.','我们在剧院看戏。','high')],
+ 'shut': [('vt.','关闭','to close','Please shut the door.','请关上门。','high')],
+ 'lots': [('n.','许多；大量','a large number or amount','There are lots of books in the library.','图书馆里有许多书。','high')],
+ 'injury': [('n.','伤害；受伤','harm to the body','He has a knee injury.','他的膝盖受了伤。','high')],
+ 'respect': [('n.','尊敬；尊重','the feeling that someone is good and important','We show respect to our teachers.','我们向老师表示尊重。','high'),
+             ('vt.','尊敬','to feel respect for someone','I respect my grandfather very much.','我非常尊敬我的爷爷。','high')],
+ 'northern': [('adj.','北方的','in or of the north','Harbin is a northern city of China.','哈尔滨是中国北方的城市。','high')],
+ 'nod': [('vi.','点头','to move your head up and down','He nods at me and smiles.','他朝我点头微笑。','high')],
+ 'russian': [('n.','俄语；俄罗斯人','the language of Russia; a person from Russia','My friend learns Russian at school.','我的朋友在学校学俄语。','high'),
+             ('adj.','俄罗斯的','of Russia','Russian winters are very cold.','俄罗斯的冬天非常冷。','high')],
+ 'software': [('n.','软件','programs that run on a computer','This software helps us learn English.','这个软件帮助我们学英语。','high')],
+ 'reading': [('n.','阅读','the act of reading','Reading is a good habit.','阅读是一个好习惯。','high')],
+ 'lip': [('n.','嘴唇','the red part around the mouth','He has a small cut on his lip.','他的嘴唇上有一道小伤口。','high')],
+ 'somewhere': [('adv.','在某处','in a place you do not know','My keys are somewhere in the house.','我的钥匙在房子里的某个地方。','high')],
+ 'favorite': [('adj.','最喜欢的','liked the most','Blue is my favorite color.','蓝色是我最喜欢的颜色。','high'),
+              ('n.','最喜爱的人或物','the thing you like most','This song is my favorite.','这首歌是我的最爱。','high')],
+ 'surround': [('vt.','包围；围绕','to be all around something','The fence surrounds the garden.','篱笆围着花园。','high')],
+ 'athlete': [('n.','运动员','a person good at sports','The athlete runs very fast.','这名运动员跑得非常快。','high')],
+ 'soul': [('n.','灵魂；心灵','the part inside you that thinks and feels','The song touches my soul.','这首歌触动我的心灵。','high')],
+ 'scientific': [('adj.','科学的','about science','She does a scientific experiment at school.','她在学校做科学实验。','high')],
+ 'mom': [('n.','妈妈','mother','Mom cooks dinner for us.','妈妈为我们做晚饭。','high')],
+ 'married': [('adj.','已婚的','having a husband or wife','My aunt is married.','我的姑姑已经结婚了。','high')],
+ 'emotional': [('adj.','情绪的；情感的','full of feelings','The sad film makes her emotional.','这部悲伤的电影让她很动情。','high')],
+ 'pocket': [('n.','口袋','a small bag in clothes','The keys are in my pocket.','钥匙在我的口袋里。','high')],
+ 'works': [('n.','作品；著作','things a writer or artist makes',"Shakespeare's works are famous.",'莎士比亚的作品很有名。','high')],
+ 'teaching': [('n.','教学','the job of a teacher','Her teaching makes math fun.','她的教学让数学变得有趣。','high')],
+ 'okay': [('adj.','好的；可以','fine; not bad','This movie is okay.','这部电影还行。','high'),
+          ('int.','好；行','a word to say yes or agree','Okay, let us go to the park.','好的，我们去公园吧。','high')],
+ 'trail': [('n.','小路；踪迹','a path in the fields or mountains','We walk on a mountain trail.','我们走在山间小路上。','high')],
+ 'code': [('n.','代码','words that tell a computer what to do','I learn to write code.','我学习编写代码。','high'),
+          ('n.','密码','secret words or numbers','The secret code opens the door.','这个密码能打开这扇门。','high')],
+})
+
+S.update({
+ 'somehow': [('adv.','不知怎么地','in a way nobody can explain','Somehow the cat opens the door.','不知怎么的，猫打开了门。','high')],
+ 'theme': [('n.','主题；题目','the main idea of something','The theme of the party is animals.','这次聚会的主题是动物。','high')],
+ 'thanks': [('n.','感谢；谢意','words that show you are thankful','She gives her thanks to the teacher.','她向老师表示感谢。','high'),
+            ('int.','谢谢','a short way to say thank you','Thanks, that is very kind of you.','谢谢，你真是太好了。','high')],
+ 'struggle': [('vi.','挣扎；努力','to try hard against something','The bird struggles in the net.','鸟在网中挣扎。','high')],
+ 'regulation': [('n.','规则；规定','an official rule','The school makes a new regulation about phones.','学校制定了关于手机的新规定。','high')],
+ 'shift': [('v.','移动；改变','to move or change','Please help me shift the table.','请帮我挪一下桌子。','high')],
+ 'appearance': [('n.','外表；样子','the way someone looks','Her appearance changes after the haircut.','剪完头发后她的样子变了。','high')],
+ 'package': [('n.','包裹','a box with things inside','A package arrives from Grandma.','奶奶寄来了一个包裹。','high')],
+ 'recommend': [('vt.','推荐','to say something is good','I recommend this book to you.','我向你推荐这本书。','high')],
+ 'obvious': [('adj.','明显的；显然','easy to see or know','The answer is obvious.','答案很明显。','high')],
+ 'basically': [('adv.','基本上；大体','mainly; in general','The game is basically simple.','这个游戏基本上很简单。','high')],
+ 'anymore': [('adv.','不再','any longer','I do not play that game anymore.','我不再玩那个游戏了。','high')],
+ 'thinking': [('n.','思考；想法','the act of using your mind','His thinking changes after the talk.','谈话之后他的想法变了。','high')],
+ 'crew': [('n.','全体船员；一队人','all the people who work on a ship','The crew cleans the big ship.','船员们清洗大船。','high')],
+ 'muscle': [('n.','肌肉','the strong parts that move your body','Exercise makes your muscles strong.','锻炼让你的肌肉强壮。','high')],
+ 'chest': [('n.','胸部','the top front part of your body','The doctor listens to my chest.','医生听我的胸部。','high')],
+ 'truly': [('adv.','真正地；确实','really; very much','I am truly happy for you.','我真为你高兴。','high')],
+ 'cash': [('n.','现金','money in coins or notes','I pay in cash at the store.','我在店里用现金付款。','high')],
+ 'unique': [('adj.','独特的；唯一','the only one of its kind','Every snowflake is unique.','每片雪花都是独一无二的。','high')],
+ 'link': [('n.','联系；连接','something that joins two things','There is a link between diet and health.','饮食和健康之间有联系。','high'),
+          ('vt.','连接','to join two things','The bridge links the two towns.','这座桥连接两个小镇。','high')],
+ 'content': [('n.','内容','what is inside something','The content of the book is fun.','这本书的内容很有趣。','high'),
+             ('adj.','满意的','happy with what you have','He is content with his simple life.','他对自己的简单生活很满意。','high')],
+ 'actual': [('adj.','实际的；真实的','real; true','The actual cost is higher.','实际花费更高。','high')],
+ 'setting': [('n.','背景；环境','the place and time of a story','The setting of the story is a castle.','这个故事的背景是一座城堡。','high')],
+ 'launch': [('vt.','发射；发起','to send something into the sky','China launches a new rocket.','中国发射了一枚新火箭。','high')],
+ 'ad': [('n.','广告','a short film or picture that sells something','I see the ad on TV.','我在电视上看到那个广告。','high')],
+ 'defend': [('vt.','保卫；防守','to keep safe from harm','The knight defends the castle.','骑士保卫城堡。','high')],
+ 'sheet': [('n.','床单','a big cloth for a bed','Mom puts clean sheets on the bed.','妈妈把干净的床单铺在床上。','high'),
+           ('n.','一张；薄片','a thin flat piece, like paper','Please give me a sheet of paper.','请给我一张纸。','high')],
+ 'ought': [('v.','应该','should do something','You ought to drink more water.','你应该多喝水。','low')],
+ 'extremely': [('adv.','极其；非常','very very','The test is extremely easy.','这个测验极其简单。','high')],
+ 'wake': [('vi.','醒来','to stop sleeping','I wake up at seven every day.','我每天七点醒来。','high'),
+          ('vt.','叫醒','to make someone stop sleeping','Please wake me at six.','请在六点叫醒我。','high')],
+ 'ourselves': [('pron.','我们自己','we, when we do something to ourselves','We clean the classroom ourselves.','我们自己打扫教室。','high')],
+ 'steal': [('vt.','偷；窃取','to take something that is not yours','The fox steals a chicken.','狐狸偷了一只鸡。','high')],
+ 'slip': [('vi.','滑倒；溜走','to slide and fall','She slips on the ice.','她在冰上滑倒了。','high')],
+ 'percentage': [('n.','百分比；百分率','a number out of each hundred','A large percentage of students walk to school.','很大一部分学生步行上学。','high')],
+ 'neither': [('pron.','两者都不','not one and not the other','Neither of the boys likes milk.','两个男孩都不喜欢牛奶。','high'),
+             ('conj.','也不','not this and not that','He likes neither tea nor coffee.','他既不喜欢茶也不喜欢咖啡。','high')],
+ 'soil': [('n.','土壤；泥土','the top ground where plants grow','Plants grow well in rich soil.','植物在肥沃的土壤里长得好。','high')],
+ 'blame': [('vt.','责备；责怪','to say someone did something wrong','He blames his little sister.','他责怪他的小妹妹。','high')],
+ 'estimate': [('vt.','估计','to guess a number','We estimate the size of the room.','我们估计这个房间的大小。','high')],
+ 'golf': [('n.','高尔夫球','a game with a small ball and a stick','Grandpa plays golf on Sunday.','爷爷星期天打高尔夫球。','high')],
+ 'frequently': [('adv.','经常；频繁','very often','We frequently visit the library.','我们经常去图书馆。','high')],
+ 'dad': [('n.','爸爸','father','Dad drives me to school.','爸爸开车送我上学。','high')],
+ 'kick': [('vt.','踢','to hit with your foot','Tom kicks the ball hard.','汤姆用力踢球。','high'),
+          ('n.','踢','an act of hitting with the foot','His kick sends the ball far.','他一脚把球踢得很远。','high')],
+})
+
+S.update({
+ 'manner': [('n.','方式；礼貌','the way you do something','He talks in a friendly manner.','他说话的方式很友好。','high')],
+ 'silence': [('n.','寂静；沉默','no sound','We read in silence.','我们安静地阅读。','high')],
+ 'landscape': [('n.','风景；景色','the view of land, like fields and hills','The landscape here is full of mountains.','这里的风景满是山。','high')],
+ 'used': [('adj.','用过的；旧的','not new','He buys used books.','他买二手书。','high'),
+          ('adj.','习惯于','familiar with something because of habit','I am used to the cold weather.','我习惯了寒冷的天气。','high'),
+          ('adj.','过去常常','in the past, but not now','He used to play the piano.','他过去常常弹钢琴。','low')],
+ 'frame': [('n.','框架','a border for a picture','The photo needs a new frame.','这张照片需要一个新相框。','high')],
+ 'forth': [('adv.','向前','forward; out','The dog runs back and forth.','狗跑来跑去。','high')],
+ 'typical': [('adj.','典型的','like most others of its kind','This is a typical day at school.','这是学校里典型的一天。','high')],
+ 'trust': [('n.','信任','the feeling that someone is honest','Trust is important between friends.','信任在朋友之间很重要。','high'),
+           ('vt.','信任','to believe someone is honest','I trust my best friend.','我信任我最好的朋友。','high')],
+ 'row': [('n.','排；行','things in a straight line','We sit in a row.','我们坐成一排。','high'),
+         ('vt.','划船','to move a boat on water','Dad rows the boat on the lake.','爸爸在湖上划船。','high')],
+ 'meanwhile': [('adv.','同时；其间','at the same time','Meanwhile, the dog sleeps under the tree.','与此同时，狗在树下睡觉。','high')],
+ 'division': [('n.','除法；分开','the math of sharing into equal parts','We learn division in math class.','我们在数学课上学习除法。','high')],
+ 'tooth': [('n.','牙齿','the hard white thing in your mouth','My loose tooth comes out.','我松动的牙齿掉下来了。','high')],
+ 'entirely': [('adv.','完全地；全然','completely','The room is entirely clean now.','房间现在完全干净了。','high')],
+ 'rare': [('adj.','稀有的；罕见','not happening often','Snow is rare here in May.','这里五月份下雪很少见。','high')],
+ 'tank': [('n.','坦克','a big army car with guns','The tank moves slowly on the road.','坦克在路上缓慢行驶。','high'),
+          ('n.','箱；罐','a big box that holds liquid','The fish tank needs clean water.','鱼缸需要干净的水。','high')],
+ 'aside': [('adv.','在旁边','to one side','Please put your toys aside.','请把你的玩具放到旁边。','high')],
+ 'master': [('n.','主人；大师','a person with great skill','He is a great chess master.','他是一位国际象棋大师。','high'),
+            ('vt.','精通；掌握','to learn something very well','She masters two languages.','她精通两门语言。','high')],
+ 'separate': [('v.','分开；分离','to move apart; to divide','Please separate your socks by color.','请把你的袜子按颜色分开。','high'),
+              ('adj.','分开的；各自的','not together; different','The twins sleep in separate beds.','双胞胎睡在各自的床上。','high')],
+ 'stir': [('vt.','搅动；搅拌','to mix with a spoon','Mom stirs the soup with a spoon.','妈妈用勺子搅拌汤。','high')],
+ 'doubt': [('n.','怀疑；疑惑','a feeling of not being sure','I have no doubt about your answer.','我对你的答案毫不怀疑。','high'),
+           ('vt.','怀疑','to not feel sure','I doubt his words.','我怀疑他说的话。','high')],
+ 'totally': [('adv.','完全地','completely','I totally agree with you.','我完全同意你的看法。','high')],
+ 'stretch': [('v.','伸展；拉长','to make longer or wider','Cats stretch after a long sleep.','猫在长时间睡眠后伸懒腰。','high')],
+ 'volume': [('n.','音量','how loud a sound is','Please turn down the volume.','请把音量调低。','high'),
+            ('n.','体积；容量','the space inside something','The box has a large volume.','这个箱子容量很大。','high')],
+ 'pepper': [('n.','胡椒；辣椒','a powder that makes food hot','Add some pepper to the soup.','在汤里加点胡椒。','high')],
+ 'gray': [('adj.','灰色的','of the color between black and white','The sky is gray today.','今天天空是灰色的。','high')],
+ 'route': [('n.','路线；路途','a way from one place to another','This is the shortest route to school.','这是去学校最近的路线。','high')],
+ 'multiple': [('adj.','多个的；多重','many; more than one','The question has multiple answers.','这个问题有多个答案。','high')],
+ 'league': [('n.','联盟；联赛','a group of sports teams','His team wins the league this year.','他的球队今年赢得联赛冠军。','high')],
+ 'core': [('n.','核心；果核','the middle part of something','The apple has seeds at its core.','苹果的果核里有种子。','high')],
+ 'upper': [('adj.','上面的；较高的','higher; at the top','My bedroom is on the upper floor.','我的卧室在楼上。','high')],
+ 'fewer': [('adj.','更少的','a smaller number of','There are fewer birds this winter.','今年冬天鸟更少了。','high')],
+ 'apart': [('adv.','分开；相隔','away from each other','The two friends live far apart.','这两个朋友住得很远。','high')],
+ 'barely': [('adv.','几乎不','almost not at all','She barely hears the bell.','她几乎听不见铃声。','high')],
+ 'flow': [('vi.','流动','to move like water','The river flows to the sea.','河水流向大海。','high')],
+ 'definitely': [('adv.','肯定；当然','for sure; without doubt','I will definitely come to your party.','我肯定会来参加你的聚会。','high')],
+ 'enormous': [('adj.','巨大的；庞大','very very big','An elephant is an enormous animal.','大象是巨大的动物。','high')],
+ 'tone': [('n.','语气；音调','the sound of your voice','Please speak in a kind tone.','请用和善的语气说话。','high')],
+ 'massive': [('adj.','巨大的；大规模','very big and heavy','They build a massive sandcastle on the beach.','他们在沙滩上建造一座巨大的沙堡。','high')],
+ 'decline': [('vi.','下降；减少','to go down','The temperature declines in autumn.','秋天气温下降。','high'),
+             ('vt.','婉拒；谢绝','to say no politely','She declines the gift politely.','她礼貌地谢绝了礼物。','high')],
+})
+
+POSS = {'n.','v.','vt.','vi.','adj.','adv.','prep.','conj.','pron.','num.','int.'}
+HAN = re.compile(r'[一-鿿]')
+
+def check_row(word, order, row):
+    pos, zh, den, exen, exzh, conf = row
+    errs = []
+    if pos not in POSS: errs.append('pos:'+pos)
+    if len(HAN.findall(zh)) > 8: errs.append('def_zh>8: '+zh)
+    if len(den.split()) > 12: errs.append('def_en>12w: '+den)
+    if len(exen.split()) > 12: errs.append('ex_en>12w: '+exen)
+    if not exen[0].isupper(): errs.append('ex_en lowercase start: '+exen)
+    if not exen.endswith('.'): errs.append('ex_en no period: '+exen)
+    if not exzh.endswith('。'): errs.append('ex_zh no 。: '+exzh)
+    if conf not in ('high','low'): errs.append('conf:'+conf)
+    if errs: raise SystemExit(f'SPEC FAIL {word} #{order}: {errs}')
+
+def main():
+    words = [json.loads(l)['w'] for l in open(IN, encoding='utf-8')]
+    assert len(words) == 206, len(words)
+    missing = [w for w in words if w not in S]
+    if missing: raise SystemExit('no data for: %r' % missing)
+    B = 40
+    nl = 0
+    with open(OUT, 'w', encoding='utf-8') as f:
+        for bi in range(0, len(words), B):
+            batch = words[bi:bi+B]
+            for w in batch:
+                for so, row in enumerate(S[w], 1):
+                    check_row(w, so, row)
+                    pos, zh, den, exen, exzh, conf = row
+                    f.write(json.dumps({'word': w, 'sense_order': so, 'pos': pos,
+                        'definition_zh': zh, 'definition_en': den, 'example_en': exen,
+                        'example_zh': exzh, 'confidence': conf}, ensure_ascii=False) + '\n')
+                    nl += 1
+            f.flush()
+            print(f'batch {bi//B+1}: words {bi}-{bi+len(batch)-1} ({len(batch)} words) appended, cumulative lines {nl}', flush=True)
+    print(f'DONE write: {nl} lines -> {OUT}')
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,1583 @@
+{"word": "ability", "forms": {"s": "abilities"}}
+{"word": "accept", "forms": {"d": "accepted", "p": "accepted", "i": "accepting", "3": "accepts"}}
+{"word": "accident", "forms": {"s": "accidents"}}
+{"word": "ache", "forms": {"p": "ached", "i": "aching", "d": "ached", "3": "aches"}}
+{"word": "achieve", "forms": {"d": "achieved", "i": "achieving", "p": "achieved", "3": "achieves"}}
+{"word": "act", "forms": {"i": "acting", "s": "acts", "p": "acted", "d": "acted", "3": "acts"}}
+{"word": "action", "forms": {"s": "actions"}}
+{"word": "activity", "forms": {"s": "activities"}}
+{"word": "actor", "forms": {"s": "actors"}}
+{"word": "actress", "forms": {"s": "actresses"}}
+{"word": "ad", "forms": {"s": "ads"}}
+{"word": "add", "forms": {"p": "added", "d": "added", "i": "adding", "3": "adds"}}
+{"word": "addition", "forms": {"s": "additions"}}
+{"word": "address", "forms": {"d": "addressed", "i": "addressing", "s": "addresses", "p": "addressed", "3": "addresses"}}
+{"word": "admit", "forms": {"p": "admitted", "d": "admitted", "3": "admits", "i": "admitting"}}
+{"word": "adult", "forms": {"s": "adults"}}
+{"word": "advantage", "forms": {"s": "advantages"}}
+{"word": "adventure", "forms": {"s": "adventures"}}
+{"word": "advertisement", "forms": {"s": "advertisements"}}
+{"word": "advise", "forms": {"d": "advised", "p": "advised", "i": "advising", "3": "advises"}}
+{"word": "aeroplane", "forms": {"s": "aeroplanes"}}
+{"word": "afford", "forms": {"d": "afforded", "3": "affords", "p": "afforded", "i": "affording"}}
+{"word": "african", "forms": {"s": "africans"}}
+{"word": "afternoon", "forms": {"s": "afternoons"}}
+{"word": "age", "forms": {"s": "ages"}}
+{"word": "agree", "forms": {"d": "agreed", "p": "agreed", "3": "agrees", "i": "agreeing"}}
+{"word": "aim", "forms": {"s": "aims", "3": "aims", "p": "aimed", "d": "aimed", "i": "aiming"}}
+{"word": "air", "forms": {"s": "airs"}}
+{"word": "airline", "forms": {"s": "airlines"}}
+{"word": "airport", "forms": {"s": "airports"}}
+{"word": "alarm", "forms": {"s": "alarms", "d": "alarmed", "p": "alarmed", "i": "alarming", "3": "alarms"}}
+{"word": "allow", "forms": {"d": "allowed", "i": "allowing", "3": "allows", "p": "allowed"}}
+{"word": "ambition", "forms": {"s": "ambitions"}}
+{"word": "american", "forms": {"s": "americans"}}
+{"word": "amount", "forms": {"s": "amounts"}}
+{"word": "amusement", "forms": {"s": "amusements"}}
+{"word": "angle", "forms": {"s": "angles"}}
+{"word": "angry", "forms": {"r": "angrier"}}
+{"word": "animal", "forms": {"s": "animals"}}
+{"word": "announce", "forms": {"p": "announced", "d": "announced", "i": "announcing", "3": "announces"}}
+{"word": "answer", "forms": {"s": "answers", "p": "answered", "d": "answered", "i": "answering", "3": "answers"}}
+{"word": "ant", "forms": {"s": "ants"}}
+{"word": "apartment", "forms": {"s": "apartments"}}
+{"word": "apologize", "forms": {"p": "apologized", "i": "apologizing", "3": "apologizes", "d": "apologized"}}
+{"word": "appear", "forms": {"p": "appeared", "3": "appears", "i": "appearing", "d": "appeared"}}
+{"word": "appearance", "forms": {"s": "appearances"}}
+{"word": "apple", "forms": {"s": "apples"}}
+{"word": "apply", "forms": {"d": "applied", "3": "applies", "i": "applying", "p": "applied"}}
+{"word": "area", "forms": {"s": "areas"}}
+{"word": "argue", "forms": {"d": "argued", "p": "argued", "3": "argues", "i": "arguing"}}
+{"word": "argument", "forms": {"s": "arguments"}}
+{"word": "arm", "forms": {"s": "arms"}}
+{"word": "army", "forms": {"s": "armies"}}
+{"word": "arrange", "forms": {"d": "arranged", "i": "arranging", "p": "arranged", "3": "arranges"}}
+{"word": "arrival", "forms": {"s": "arrivals"}}
+{"word": "arrive", "forms": {"p": "arrived", "d": "arrived", "i": "arriving", "3": "arrives"}}
+{"word": "art", "forms": {"s": "arts"}}
+{"word": "article", "forms": {"s": "articles"}}
+{"word": "artist", "forms": {"s": "artists"}}
+{"word": "asian", "forms": {"s": "asians"}}
+{"word": "ask", "forms": {"p": "asked", "d": "asked", "i": "asking", "3": "asks"}}
+{"word": "assistant", "forms": {"s": "assistants"}}
+{"word": "athlete", "forms": {"s": "athletes"}}
+{"word": "attack", "forms": {"s": "attacks", "d": "attacked", "p": "attacked", "i": "attacking", "3": "attacks"}}
+{"word": "attend", "forms": {"i": "attending", "d": "attended", "p": "attended", "3": "attends"}}
+{"word": "attention", "forms": {"s": "attentions"}}
+{"word": "attitude", "forms": {"s": "attitudes"}}
+{"word": "attract", "forms": {"d": "attracted", "p": "attracted", "3": "attracts", "i": "attracting"}}
+{"word": "audience", "forms": {"s": "audiences"}}
+{"word": "aunt", "forms": {"s": "aunts"}}
+{"word": "australian", "forms": {"s": "australians"}}
+{"word": "author", "forms": {"s": "authors"}}
+{"word": "average", "forms": {"s": "averages"}}
+{"word": "avoid", "forms": {"d": "avoided", "i": "avoiding", "p": "avoided", "3": "avoids"}}
+{"word": "award", "forms": {"d": "awarded", "s": "awards", "p": "awarded", "i": "awarding", "3": "awards"}}
+{"word": "baby", "forms": {"s": "babies"}}
+{"word": "back", "forms": {"s": "backs"}}
+{"word": "background", "forms": {"s": "backgrounds"}}
+{"word": "bad", "forms": {"r": "worse", "t": "worst"}}
+{"word": "bag", "forms": {"s": "bags"}}
+{"word": "bakery", "forms": {"s": "bakeries"}}
+{"word": "balance", "forms": {"d": "balanced", "i": "balancing", "s": "balances", "3": "balances", "p": "balanced"}}
+{"word": "ball", "forms": {"s": "balls"}}
+{"word": "balloon", "forms": {"s": "balloons"}}
+{"word": "banana", "forms": {"s": "bananas"}}
+{"word": "band", "forms": {"s": "bands"}}
+{"word": "bank", "forms": {"s": "banks"}}
+{"word": "bar", "forms": {"s": "bars"}}
+{"word": "base", "forms": {"d": "based", "p": "based", "i": "basing", "3": "bases"}}
+{"word": "basket", "forms": {"s": "baskets"}}
+{"word": "basketball", "forms": {"s": "basketballs"}}
+{"word": "bath", "forms": {"s": "baths"}}
+{"word": "bathroom", "forms": {"s": "bathrooms"}}
+{"word": "battery", "forms": {"s": "batteries"}}
+{"word": "battle", "forms": {"s": "battles", "i": "battling", "p": "battled", "d": "battled", "3": "battles"}}
+{"word": "be", "forms": {"p": "was", "3": "is", "d": "been", "i": "being"}}
+{"word": "beach", "forms": {"s": "beaches"}}
+{"word": "bear", "forms": {"d": "born", "i": "bearing", "p": "bore", "3": "bears", "s": "bears"}}
+{"word": "beat", "forms": {"d": "beaten", "i": "beating", "3": "beats", "s": "beats"}}
+{"word": "beauty", "forms": {"s": "beauties"}}
+{"word": "become", "forms": {"p": "became", "3": "becomes", "i": "becoming"}}
+{"word": "bed", "forms": {"s": "beds"}}
+{"word": "bedroom", "forms": {"s": "bedrooms"}}
+{"word": "bedtime", "forms": {"s": "bedtimes"}}
+{"word": "bee", "forms": {"s": "bees"}}
+{"word": "beef", "forms": {"s": "beefs"}}
+{"word": "beep", "forms": {"s": "beeps", "i": "beeping", "p": "beeped", "3": "beeps", "d": "beeped"}}
+{"word": "beg", "forms": {"i": "begging", "p": "begged", "3": "begs", "d": "begged"}}
+{"word": "begin", "forms": {"p": "began", "i": "beginning", "d": "begun", "3": "begins"}}
+{"word": "beginning", "forms": {"s": "beginnings"}}
+{"word": "behavior", "forms": {"s": "behaviors"}}
+{"word": "being", "forms": {"s": "beings"}}
+{"word": "believe", "forms": {"p": "believed", "3": "believes", "d": "believed", "i": "believing"}}
+{"word": "bell", "forms": {"s": "bells"}}
+{"word": "belong", "forms": {"i": "belonging", "p": "belonged", "3": "belongs", "d": "belonged"}}
+{"word": "bench", "forms": {"s": "benches"}}
+{"word": "bicycle", "forms": {"s": "bicycles", "p": "bicycled", "i": "bicycling", "d": "bicycled", "3": "bicycles"}}
+{"word": "big", "forms": {"t": "biggest", "r": "bigger"}}
+{"word": "bill", "forms": {"s": "bills"}}
+{"word": "bin", "forms": {"s": "bins"}}
+{"word": "bird", "forms": {"s": "birds"}}
+{"word": "birth", "forms": {"s": "births"}}
+{"word": "birthday", "forms": {"s": "birthdays"}}
+{"word": "biscuit", "forms": {"s": "biscuits"}}
+{"word": "bit", "forms": {"s": "bits"}}
+{"word": "black", "forms": {"s": "blacks", "r": "blacker", "t": "blackest"}}
+{"word": "blackboard", "forms": {"s": "blackboards"}}
+{"word": "blame", "forms": {"d": "blamed", "p": "blamed", "i": "blaming", "3": "blames"}}
+{"word": "blanket", "forms": {"s": "blankets"}}
+{"word": "blind", "forms": {"s": "blinds", "r": "blinder"}}
+{"word": "block", "forms": {"s": "blocks", "d": "blocked", "i": "blocking", "p": "blocked", "3": "blocks"}}
+{"word": "blood", "forms": {"s": "bloods"}}
+{"word": "blouse", "forms": {"s": "blouses"}}
+{"word": "blow", "forms": {"p": "blew", "d": "blown", "i": "blowing", "3": "blows"}}
+{"word": "blue", "forms": {"s": "blues"}}
+{"word": "blunt", "forms": {"r": "blunter", "t": "bluntest"}}
+{"word": "board", "forms": {"s": "boards", "p": "boarded", "d": "boarded", "i": "boarding", "3": "boards"}}
+{"word": "boat", "forms": {"s": "boats", "i": "boating", "p": "boated", "3": "boats", "d": "boated"}}
+{"word": "body", "forms": {"s": "bodies"}}
+{"word": "boil", "forms": {"i": "boiling", "d": "boiled", "3": "boils", "p": "boiled"}}
+{"word": "bone", "forms": {"s": "bones"}}
+{"word": "book", "forms": {"s": "books", "d": "booked", "p": "booked", "i": "booking", "3": "books"}}
+{"word": "bookshop", "forms": {"s": "bookshops"}}
+{"word": "border", "forms": {"s": "borders"}}
+{"word": "born", "forms": {"i": "borning"}}
+{"word": "bottle", "forms": {"s": "bottles"}}
+{"word": "bottom", "forms": {"s": "bottoms"}}
+{"word": "bow", "forms": {"p": "bowed", "s": "bows", "i": "bowing", "d": "bowed", "3": "bows"}}
+{"word": "bowl", "forms": {"s": "bowls"}}
+{"word": "box", "forms": {"s": "boxes"}}
+{"word": "boy", "forms": {"s": "boys"}}
+{"word": "brain", "forms": {"s": "brains"}}
+{"word": "branch", "forms": {"s": "branches"}}
+{"word": "brave", "forms": {"r": "braver", "t": "bravest"}}
+{"word": "bread", "forms": {"s": "breads"}}
+{"word": "break", "forms": {"p": "broke", "d": "broken", "i": "breaking", "3": "breaks", "s": "breaks"}}
+{"word": "breakfast", "forms": {"s": "breakfasts"}}
+{"word": "breath", "forms": {"s": "breaths"}}
+{"word": "breathe", "forms": {"i": "breathing", "p": "breathed", "3": "breathes", "d": "breathed"}}
+{"word": "bridge", "forms": {"s": "bridges"}}
+{"word": "bright", "forms": {"r": "brighter", "t": "brightest"}}
+{"word": "bring", "forms": {"d": "brought", "p": "brought", "i": "bringing", "3": "brings"}}
+{"word": "briton", "forms": {"s": "britons"}}
+{"word": "broad", "forms": {"r": "broader", "t": "broadest"}}
+{"word": "broadcast", "forms": {"s": "broadcasts", "i": "broadcasting", "3": "broadcasts"}}
+{"word": "brother", "forms": {"s": "brothers"}}
+{"word": "brown", "forms": {"s": "browns", "r": "browner"}}
+{"word": "brush", "forms": {"p": "brushed", "i": "brushing", "s": "brushes", "d": "brushed", "3": "brushes"}}
+{"word": "bud", "forms": {"s": "buds"}}
+{"word": "build", "forms": {"d": "built", "i": "building", "p": "built", "3": "builds"}}
+{"word": "building", "forms": {"s": "buildings"}}
+{"word": "burn", "forms": {"d": "burnt", "i": "burning", "p": "burned", "3": "burns"}}
+{"word": "bus", "forms": {"s": "buses"}}
+{"word": "business", "forms": {"s": "businesses"}}
+{"word": "businessman", "forms": {"s": "businessmen"}}
+{"word": "busy", "forms": {"t": "busiest", "r": "busier"}}
+{"word": "butter", "forms": {"s": "butters"}}
+{"word": "butterfly", "forms": {"s": "butterflies"}}
+{"word": "button", "forms": {"s": "buttons"}}
+{"word": "buy", "forms": {"p": "bought", "i": "buying", "d": "bought", "3": "buys"}}
+{"word": "cabbage", "forms": {"s": "cabbages"}}
+{"word": "cage", "forms": {"s": "cages"}}
+{"word": "cake", "forms": {"s": "cakes"}}
+{"word": "call", "forms": {"d": "called", "p": "called", "i": "calling", "3": "calls"}}
+{"word": "calm", "forms": {"r": "calmer", "i": "calming", "p": "calmed", "d": "calmed", "3": "calms"}}
+{"word": "camera", "forms": {"s": "cameras"}}
+{"word": "camp", "forms": {"s": "camps", "i": "camping", "p": "camped", "d": "camped", "3": "camps"}}
+{"word": "campfire", "forms": {"s": "campfires"}}
+{"word": "can", "forms": {"s": "cans", "p": "could"}}
+{"word": "canadian", "forms": {"s": "canadians"}}
+{"word": "cancel", "forms": {"d": "cancelled", "p": "cancelled", "i": "cancelling", "3": "cancels"}}
+{"word": "canteen", "forms": {"s": "canteens"}}
+{"word": "capital", "forms": {"s": "capitals"}}
+{"word": "captain", "forms": {"s": "captains"}}
+{"word": "car", "forms": {"s": "cars"}}
+{"word": "card", "forms": {"s": "cards"}}
+{"word": "care", "forms": {"p": "cared", "3": "cares", "d": "cared", "i": "caring", "s": "cares"}}
+{"word": "carnation", "forms": {"s": "carnations"}}
+{"word": "carrot", "forms": {"s": "carrots"}}
+{"word": "carry", "forms": {"d": "carried", "i": "carrying", "p": "carried", "3": "carries"}}
+{"word": "cartoon", "forms": {"s": "cartoons"}}
+{"word": "case", "forms": {"s": "cases"}}
+{"word": "castle", "forms": {"s": "castles"}}
+{"word": "cat", "forms": {"s": "cats"}}
+{"word": "catch", "forms": {"d": "caught", "p": "caught", "i": "catching", "3": "catches"}}
+{"word": "caterpillar", "forms": {"s": "caterpillars"}}
+{"word": "cause", "forms": {"d": "caused", "i": "causing", "s": "causes", "p": "caused", "3": "causes"}}
+{"word": "cave", "forms": {"s": "caves"}}
+{"word": "celebrate", "forms": {"i": "celebrating", "p": "celebrated", "d": "celebrated", "3": "celebrates"}}
+{"word": "cell", "forms": {"s": "cells"}}
+{"word": "cent", "forms": {"s": "cents"}}
+{"word": "center", "forms": {"s": "centers"}}
+{"word": "century", "forms": {"s": "centuries"}}
+{"word": "chain", "forms": {"s": "chains"}}
+{"word": "chair", "forms": {"s": "chairs"}}
+{"word": "challenge", "forms": {"s": "challenges", "d": "challenged", "p": "challenged", "i": "challenging", "3": "challenges"}}
+{"word": "chance", "forms": {"s": "chances"}}
+{"word": "change", "forms": {"s": "changes", "d": "changed", "i": "changing", "p": "changed", "3": "changes"}}
+{"word": "character", "forms": {"s": "characters"}}
+{"word": "charge", "forms": {"s": "charges", "d": "charged", "p": "charged", "i": "charging", "3": "charges"}}
+{"word": "charity", "forms": {"s": "charities"}}
+{"word": "cheap", "forms": {"r": "cheaper", "t": "cheapest"}}
+{"word": "check", "forms": {"i": "checking", "d": "checked", "p": "checked", "s": "checks", "3": "checks"}}
+{"word": "cheese", "forms": {"s": "cheeses"}}
+{"word": "chemical", "forms": {"s": "chemicals"}}
+{"word": "cherry", "forms": {"s": "cherries"}}
+{"word": "chest", "forms": {"s": "chests"}}
+{"word": "chick", "forms": {"s": "chicks"}}
+{"word": "chicken", "forms": {"s": "chickens"}}
+{"word": "chief", "forms": {"s": "chiefs"}}
+{"word": "child", "forms": {"s": "children"}}
+{"word": "childhood", "forms": {"s": "childhoods"}}
+{"word": "children", "forms": {"s": "childrens"}}
+{"word": "chocolate", "forms": {"s": "chocolates"}}
+{"word": "choice", "forms": {"s": "choices"}}
+{"word": "choose", "forms": {"d": "chosen", "p": "chose", "i": "choosing", "3": "chooses"}}
+{"word": "chopstick", "forms": {"s": "chopsticks"}}
+{"word": "church", "forms": {"s": "churches"}}
+{"word": "cinema", "forms": {"s": "cinemas"}}
+{"word": "circle", "forms": {"s": "circles", "p": "circled", "i": "circling", "d": "circled", "3": "circles"}}
+{"word": "citizen", "forms": {"s": "citizens"}}
+{"word": "city", "forms": {"s": "cities"}}
+{"word": "class", "forms": {"s": "classes"}}
+{"word": "classmate", "forms": {"s": "classmates"}}
+{"word": "classroom", "forms": {"s": "classrooms"}}
+{"word": "clean", "forms": {"i": "cleaning", "d": "cleaned", "r": "cleaner", "p": "cleaned", "3": "cleans", "t": "cleanest"}}
+{"word": "clear", "forms": {"d": "cleared", "r": "clearer", "p": "cleared", "i": "clearing", "t": "clearest", "3": "clears"}}
+{"word": "clerk", "forms": {"s": "clerks"}}
+{"word": "clever", "forms": {"r": "cleverer", "t": "cleverest"}}
+{"word": "climb", "forms": {"p": "climbed", "i": "climbing", "d": "climbed", "3": "climbs"}}
+{"word": "clinic", "forms": {"s": "clinics"}}
+{"word": "clock", "forms": {"s": "clocks"}}
+{"word": "close", "forms": {"p": "closed", "r": "closer", "d": "closed", "i": "closing", "t": "closest", "3": "closes"}}
+{"word": "cloud", "forms": {"s": "clouds"}}
+{"word": "cloudy", "forms": {"r": "cloudier"}}
+{"word": "club", "forms": {"s": "clubs"}}
+{"word": "coach", "forms": {"s": "coaches"}}
+{"word": "coat", "forms": {"s": "coats"}}
+{"word": "cocoon", "forms": {"s": "cocoons"}}
+{"word": "code", "forms": {"s": "codes"}}
+{"word": "coffee", "forms": {"s": "coffees"}}
+{"word": "coin", "forms": {"s": "coins"}}
+{"word": "cola", "forms": {"s": "colas"}}
+{"word": "cold", "forms": {"r": "colder", "s": "colds", "t": "coldest"}}
+{"word": "collect", "forms": {"d": "collected", "i": "collecting", "p": "collected", "3": "collects"}}
+{"word": "collection", "forms": {"s": "collections"}}
+{"word": "college", "forms": {"s": "colleges"}}
+{"word": "color", "forms": {"s": "colors", "i": "coloring", "p": "colored", "3": "colors", "d": "colored"}}
+{"word": "colour", "forms": {"s": "colours", "d": "coloured", "i": "colouring", "p": "coloured", "3": "colours"}}
+{"word": "combine", "forms": {"d": "combined", "i": "combining", "3": "combines", "p": "combined"}}
+{"word": "come", "forms": {"p": "came", "i": "coming", "3": "comes"}}
+{"word": "comment", "forms": {"s": "comments", "p": "commented", "i": "commenting", "d": "commented", "3": "comments"}}
+{"word": "communicate", "forms": {"d": "communicated", "i": "communicating", "3": "communicates", "p": "communicated"}}
+{"word": "community", "forms": {"s": "communities"}}
+{"word": "company", "forms": {"s": "companies"}}
+{"word": "compare", "forms": {"d": "compared", "i": "comparing", "3": "compares", "p": "compared"}}
+{"word": "competition", "forms": {"s": "competitions"}}
+{"word": "complain", "forms": {"p": "complained", "i": "complaining", "d": "complained", "3": "complains"}}
+{"word": "complete", "forms": {"d": "completed", "p": "completed", "i": "completing", "3": "completes"}}
+{"word": "computer", "forms": {"s": "computers"}}
+{"word": "concert", "forms": {"s": "concerts"}}
+{"word": "conclusion", "forms": {"s": "conclusions"}}
+{"word": "condition", "forms": {"s": "conditions"}}
+{"word": "confidence", "forms": {"s": "confidences"}}
+{"word": "confuse", "forms": {"d": "confused", "i": "confusing", "3": "confuses", "p": "confused"}}
+{"word": "connect", "forms": {"d": "connected", "i": "connecting", "3": "connects", "p": "connected"}}
+{"word": "connection", "forms": {"s": "connections"}}
+{"word": "consider", "forms": {"d": "considered", "i": "considering", "p": "considered", "3": "considers"}}
+{"word": "consist", "forms": {"3": "consists", "i": "consisting", "p": "consisted", "d": "consisted"}}
+{"word": "construction", "forms": {"s": "constructions"}}
+{"word": "contact", "forms": {"s": "contacts", "d": "contacted", "p": "contacted", "i": "contacting", "3": "contacts"}}
+{"word": "contain", "forms": {"3": "contains", "i": "containing", "p": "contained", "d": "contained"}}
+{"word": "content", "forms": {"s": "contents"}}
+{"word": "contest", "forms": {"s": "contests"}}
+{"word": "continue", "forms": {"p": "continued", "3": "continues", "d": "continued", "i": "continuing"}}
+{"word": "control", "forms": {"s": "controls", "d": "controlled", "i": "controlling", "3": "controls", "p": "controlled"}}
+{"word": "conversation", "forms": {"s": "conversations"}}
+{"word": "cook", "forms": {"i": "cooking", "d": "cooked", "p": "cooked", "s": "cooks", "3": "cooks"}}
+{"word": "cool", "forms": {"r": "cooler", "t": "coolest"}}
+{"word": "copy", "forms": {"s": "copies", "d": "copied", "i": "copying", "p": "copied", "3": "copies"}}
+{"word": "core", "forms": {"s": "cores"}}
+{"word": "corn", "forms": {"s": "corns"}}
+{"word": "corner", "forms": {"s": "corners"}}
+{"word": "correct", "forms": {"d": "corrected", "p": "corrected", "i": "correcting", "3": "corrects"}}
+{"word": "cost", "forms": {"s": "costs", "3": "costs", "i": "costing"}}
+{"word": "cotton", "forms": {"s": "cottons"}}
+{"word": "cough", "forms": {"p": "coughed", "i": "coughing", "s": "coughs", "3": "coughs", "d": "coughed"}}
+{"word": "count", "forms": {"d": "counted", "i": "counting", "3": "counts", "p": "counted"}}
+{"word": "country", "forms": {"s": "countries"}}
+{"word": "couple", "forms": {"s": "couples"}}
+{"word": "course", "forms": {"s": "courses"}}
+{"word": "cousin", "forms": {"s": "cousins"}}
+{"word": "cover", "forms": {"d": "covered", "i": "covering", "3": "covers", "p": "covered", "s": "covers"}}
+{"word": "cow", "forms": {"s": "cows"}}
+{"word": "crayon", "forms": {"s": "crayons"}}
+{"word": "crazy", "forms": {"t": "craziest", "r": "crazier"}}
+{"word": "cream", "forms": {"s": "creams"}}
+{"word": "create", "forms": {"d": "created", "i": "creating", "3": "creates", "p": "created"}}
+{"word": "crew", "forms": {"s": "crews"}}
+{"word": "crisp", "forms": {"s": "crisps", "r": "crisper", "t": "crispest"}}
+{"word": "cross", "forms": {"p": "crossed", "i": "crossing", "d": "crossed", "3": "crosses", "s": "crosses"}}
+{"word": "crow", "forms": {"s": "crows", "p": "crowed", "i": "crowing", "d": "crowed", "3": "crows"}}
+{"word": "crowd", "forms": {"s": "crowds", "p": "crowded", "d": "crowded", "i": "crowding", "3": "crowds"}}
+{"word": "cry", "forms": {"p": "cried", "i": "crying", "s": "cries", "3": "cries", "d": "cried"}}
+{"word": "culture", "forms": {"s": "cultures"}}
+{"word": "cup", "forms": {"s": "cups"}}
+{"word": "current", "forms": {"s": "currents"}}
+{"word": "cushion", "forms": {"s": "cushions", "d": "cushioned", "p": "cushioned", "i": "cushioning", "3": "cushions"}}
+{"word": "custom", "forms": {"s": "customs"}}
+{"word": "customer", "forms": {"s": "customers"}}
+{"word": "cut", "forms": {"i": "cutting", "3": "cuts"}}
+{"word": "cute", "forms": {"t": "cutest", "r": "cuter"}}
+{"word": "cycle", "forms": {"s": "cycles", "i": "cycling", "p": "cycled", "d": "cycled", "3": "cycles"}}
+{"word": "dad", "forms": {"s": "dads"}}
+{"word": "daily", "forms": {"s": "dailies"}}
+{"word": "dance", "forms": {"i": "dancing", "p": "danced", "s": "dances", "d": "danced", "3": "dances"}}
+{"word": "dancer", "forms": {"s": "dancers"}}
+{"word": "danger", "forms": {"s": "dangers"}}
+{"word": "dark", "forms": {"r": "darker", "t": "darkest"}}
+{"word": "date", "forms": {"s": "dates"}}
+{"word": "daughter", "forms": {"s": "daughters"}}
+{"word": "day", "forms": {"s": "days"}}
+{"word": "deal", "forms": {"i": "dealing", "d": "dealt", "s": "deals", "3": "deals", "p": "dealt"}}
+{"word": "dear", "forms": {"t": "dearest", "r": "dearer"}}
+{"word": "death", "forms": {"s": "deaths"}}
+{"word": "decide", "forms": {"p": "decided", "d": "decided", "i": "deciding", "3": "decides"}}
+{"word": "decision", "forms": {"s": "decisions"}}
+{"word": "decline", "forms": {"d": "declined", "p": "declined", "i": "declining", "3": "declines", "s": "declines"}}
+{"word": "decorate", "forms": {"d": "decorated", "p": "decorated", "i": "decorating", "3": "decorates"}}
+{"word": "deep", "forms": {"r": "deeper", "t": "deepest"}}
+{"word": "defend", "forms": {"i": "defending", "d": "defended", "p": "defended", "3": "defends"}}
+{"word": "degree", "forms": {"s": "degrees"}}
+{"word": "deliver", "forms": {"d": "delivered", "i": "delivering", "p": "delivered", "3": "delivers"}}
+{"word": "dentist", "forms": {"s": "dentists"}}
+{"word": "deny", "forms": {"d": "denied", "p": "denied", "i": "denying", "3": "denies"}}
+{"word": "department", "forms": {"s": "departments"}}
+{"word": "departure", "forms": {"s": "departures"}}
+{"word": "depend", "forms": {"3": "depends", "i": "depending", "p": "depended", "d": "depended"}}
+{"word": "describe", "forms": {"d": "described", "p": "described", "3": "describes", "i": "describing"}}
+{"word": "deserve", "forms": {"3": "deserves", "p": "deserved", "d": "deserved", "i": "deserving"}}
+{"word": "design", "forms": {"d": "designed", "s": "designs", "p": "designed", "i": "designing", "3": "designs"}}
+{"word": "desire", "forms": {"s": "desires", "d": "desired", "p": "desired", "3": "desires", "i": "desiring"}}
+{"word": "desk", "forms": {"s": "desks"}}
+{"word": "destroy", "forms": {"d": "destroyed", "i": "destroying", "p": "destroyed", "3": "destroys"}}
+{"word": "detail", "forms": {"s": "details"}}
+{"word": "detective", "forms": {"s": "detectives"}}
+{"word": "develop", "forms": {"d": "developed", "i": "developing", "p": "developed", "3": "develops"}}
+{"word": "development", "forms": {"s": "developments"}}
+{"word": "device", "forms": {"s": "devices"}}
+{"word": "dial", "forms": {"p": "dialled", "d": "dialled", "3": "dials", "i": "dialing"}}
+{"word": "diary", "forms": {"s": "diaries"}}
+{"word": "dictionary", "forms": {"s": "dictionaries"}}
+{"word": "die", "forms": {"p": "died", "d": "died", "i": "dying", "3": "dies"}}
+{"word": "diet", "forms": {"s": "diets"}}
+{"word": "difference", "forms": {"s": "differences"}}
+{"word": "difficulty", "forms": {"s": "difficulties"}}
+{"word": "dinner", "forms": {"s": "dinners"}}
+{"word": "dinosaur", "forms": {"s": "dinosaurs"}}
+{"word": "direct", "forms": {"d": "directed", "i": "directing", "p": "directed", "3": "directs"}}
+{"word": "direction", "forms": {"s": "directions"}}
+{"word": "director", "forms": {"s": "directors"}}
+{"word": "dirty", "forms": {"t": "dirtiest", "r": "dirtier"}}
+{"word": "disadvantage", "forms": {"s": "disadvantages"}}
+{"word": "disappear", "forms": {"p": "disappeared", "d": "disappeared", "3": "disappears", "i": "disappearing"}}
+{"word": "disaster", "forms": {"s": "disasters"}}
+{"word": "discover", "forms": {"p": "discovered", "d": "discovered", "i": "discovering", "3": "discovers"}}
+{"word": "discuss", "forms": {"d": "discussed", "i": "discussing", "p": "discussed", "3": "discusses"}}
+{"word": "discussion", "forms": {"s": "discussions"}}
+{"word": "disease", "forms": {"s": "diseases"}}
+{"word": "dish", "forms": {"s": "dishes"}}
+{"word": "dislike", "forms": {"p": "disliked", "d": "disliked", "3": "dislikes", "i": "disliking", "s": "dislikes"}}
+{"word": "distance", "forms": {"s": "distances"}}
+{"word": "disturb", "forms": {"d": "disturbed", "i": "disturbing", "p": "disturbed", "3": "disturbs"}}
+{"word": "dive", "forms": {"p": "dived", "i": "diving", "3": "dives", "d": "dived"}}
+{"word": "divide", "forms": {"d": "divided", "i": "dividing", "p": "divided", "3": "divides"}}
+{"word": "division", "forms": {"s": "divisions"}}
+{"word": "do", "forms": {"i": "doing", "p": "did", "3": "does", "d": "done"}}
+{"word": "doctor", "forms": {"s": "doctors"}}
+{"word": "dog", "forms": {"s": "dogs"}}
+{"word": "doll", "forms": {"s": "dolls"}}
+{"word": "dollar", "forms": {"s": "dollars"}}
+{"word": "door", "forms": {"s": "doors"}}
+{"word": "double", "forms": {"d": "doubled", "i": "doubling", "s": "doubles", "p": "doubled", "3": "doubles"}}
+{"word": "doubt", "forms": {"s": "doubts", "p": "doubted", "d": "doubted", "i": "doubting", "3": "doubts"}}
+{"word": "download", "forms": {"d": "downloaded", "i": "downloading", "p": "downloaded", "s": "downloads", "3": "downloads"}}
+{"word": "dragon", "forms": {"s": "dragons"}}
+{"word": "draw", "forms": {"d": "drawn", "p": "drew", "i": "drawing", "3": "draws"}}
+{"word": "dream", "forms": {"s": "dreams", "i": "dreaming", "d": "dreamed", "p": "dreamed", "3": "dreams"}}
+{"word": "dress", "forms": {"d": "dressed", "s": "dresses", "i": "dressing", "p": "dressed", "3": "dresses"}}
+{"word": "drink", "forms": {"s": "drinks", "i": "drinking", "p": "drank", "d": "drunk", "3": "drinks"}}
+{"word": "drip", "forms": {"i": "dripping", "p": "dripped", "s": "drips", "3": "drips", "d": "dripped"}}
+{"word": "drive", "forms": {"p": "drove", "d": "driven", "i": "driving", "3": "drives", "s": "drives"}}
+{"word": "driver", "forms": {"s": "drivers"}}
+{"word": "drop", "forms": {"p": "dropped", "d": "dropped", "i": "dropping", "s": "drops", "3": "drops"}}
+{"word": "drum", "forms": {"s": "drums", "p": "drummed", "d": "drummed", "i": "drumming", "3": "drums"}}
+{"word": "drunk", "forms": {"r": "drunker"}}
+{"word": "dry", "forms": {"d": "dried", "i": "drying", "p": "dried", "3": "dries", "r": "drier", "t": "driest"}}
+{"word": "duck", "forms": {"s": "ducks"}}
+{"word": "duckling", "forms": {"s": "ducklings"}}
+{"word": "dull", "forms": {"r": "duller", "t": "dullest"}}
+{"word": "dumpling", "forms": {"s": "dumplings"}}
+{"word": "duty", "forms": {"s": "duties"}}
+{"word": "e-mail", "forms": {"s": "e-mails", "i": "e-mailing", "p": "e-mailed", "3": "e-mails", "d": "e-mailed"}}
+{"word": "ear", "forms": {"s": "ears"}}
+{"word": "early", "forms": {"r": "earlier", "t": "earliest"}}
+{"word": "earn", "forms": {"i": "earning", "d": "earned", "p": "earned", "3": "earns"}}
+{"word": "earth", "forms": {"s": "earths"}}
+{"word": "earthquake", "forms": {"s": "earthquakes"}}
+{"word": "easy", "forms": {"r": "easier", "t": "easiest"}}
+{"word": "eat", "forms": {"i": "eating", "p": "ate", "d": "eaten", "3": "eats"}}
+{"word": "economy", "forms": {"s": "economies"}}
+{"word": "edge", "forms": {"s": "edges"}}
+{"word": "effect", "forms": {"s": "effects"}}
+{"word": "effort", "forms": {"s": "efforts"}}
+{"word": "egg", "forms": {"s": "eggs"}}
+{"word": "elephant", "forms": {"s": "elephants"}}
+{"word": "emergency", "forms": {"s": "emergencies"}}
+{"word": "emperor", "forms": {"s": "emperors"}}
+{"word": "empty", "forms": {"d": "emptied", "p": "emptied", "i": "emptying", "3": "empties", "r": "emptier", "t": "emptiest"}}
+{"word": "enable", "forms": {"3": "enables", "p": "enabled", "i": "enabling", "d": "enabled"}}
+{"word": "encourage", "forms": {"d": "encouraged", "p": "encouraged", "3": "encourages", "i": "encouraging"}}
+{"word": "end", "forms": {"p": "ended", "s": "ends", "d": "ended", "i": "ending", "3": "ends"}}
+{"word": "enemy", "forms": {"s": "enemies"}}
+{"word": "energy", "forms": {"s": "energies"}}
+{"word": "engine", "forms": {"s": "engines"}}
+{"word": "engineer", "forms": {"s": "engineers"}}
+{"word": "enjoy", "forms": {"p": "enjoyed", "i": "enjoying", "d": "enjoyed", "3": "enjoys"}}
+{"word": "enrich", "forms": {"d": "enriched", "i": "enriching", "3": "enriches", "p": "enriched"}}
+{"word": "enter", "forms": {"p": "entered", "d": "entered", "i": "entering", "3": "enters"}}
+{"word": "entertainment", "forms": {"s": "entertainments"}}
+{"word": "entrance", "forms": {"s": "entrances"}}
+{"word": "envelope", "forms": {"s": "envelopes"}}
+{"word": "environment", "forms": {"s": "environments"}}
+{"word": "equal", "forms": {"3": "equals", "s": "equals", "d": "equalled", "p": "equalled", "i": "equalling"}}
+{"word": "equipment", "forms": {"s": "equipments"}}
+{"word": "estimate", "forms": {"d": "estimated", "s": "estimates", "p": "estimated", "3": "estimates", "i": "estimating"}}
+{"word": "european", "forms": {"s": "europeans"}}
+{"word": "evening", "forms": {"s": "evenings"}}
+{"word": "event", "forms": {"s": "events"}}
+{"word": "examine", "forms": {"d": "examined", "i": "examining", "p": "examined", "3": "examines"}}
+{"word": "example", "forms": {"s": "examples"}}
+{"word": "exchange", "forms": {"s": "exchanges", "d": "exchanged", "p": "exchanged", "i": "exchanging", "3": "exchanges"}}
+{"word": "excuse", "forms": {"s": "excuses", "d": "excused", "p": "excused", "i": "excusing", "3": "excuses"}}
+{"word": "exercise", "forms": {"d": "exercised", "s": "exercises", "i": "exercising", "3": "exercises", "p": "exercised"}}
+{"word": "exhibition", "forms": {"s": "exhibitions"}}
+{"word": "exist", "forms": {"3": "exists", "p": "existed", "d": "existed", "i": "existing"}}
+{"word": "exit", "forms": {"s": "exits", "i": "exiting", "p": "exited", "d": "exited", "3": "exits"}}
+{"word": "expect", "forms": {"d": "expected", "i": "expecting", "p": "expected", "3": "expects"}}
+{"word": "experience", "forms": {"s": "experiences"}}
+{"word": "experiment", "forms": {"s": "experiments"}}
+{"word": "expert", "forms": {"s": "experts"}}
+{"word": "explain", "forms": {"p": "explained", "d": "explained", "3": "explains", "i": "explaining"}}
+{"word": "explore", "forms": {"i": "exploring", "d": "explored", "3": "explores", "p": "explored"}}
+{"word": "express", "forms": {"d": "expressed", "i": "expressing", "p": "expressed", "3": "expresses"}}
+{"word": "expression", "forms": {"s": "expressions"}}
+{"word": "extend", "forms": {"d": "extended", "i": "extending", "3": "extends", "p": "extended"}}
+{"word": "eye", "forms": {"s": "eyes"}}
+{"word": "fable", "forms": {"s": "fables"}}
+{"word": "face", "forms": {"i": "facing", "s": "faces", "d": "faced", "p": "faced", "3": "faces"}}
+{"word": "fact", "forms": {"s": "facts"}}
+{"word": "factory", "forms": {"s": "factories"}}
+{"word": "fail", "forms": {"d": "failed", "p": "failed", "i": "failing", "3": "fails"}}
+{"word": "failure", "forms": {"s": "failures"}}
+{"word": "fair", "forms": {"s": "fairs", "r": "fairer", "t": "fairest"}}
+{"word": "fairy", "forms": {"s": "fairies"}}
+{"word": "fall", "forms": {"p": "fell", "d": "fallen", "i": "falling", "3": "falls", "s": "falls"}}
+{"word": "family", "forms": {"s": "families"}}
+{"word": "fan", "forms": {"s": "fans"}}
+{"word": "far", "forms": {"r": "further", "t": "furthest"}}
+{"word": "fare", "forms": {"s": "fares"}}
+{"word": "farm", "forms": {"s": "farms"}}
+{"word": "farmer", "forms": {"s": "farmers"}}
+{"word": "fashion", "forms": {"s": "fashions"}}
+{"word": "fast", "forms": {"r": "faster", "t": "fastest"}}
+{"word": "fasten", "forms": {"d": "fastened", "p": "fastened", "i": "fastening", "3": "fastens"}}
+{"word": "fat", "forms": {"s": "fats", "r": "fatter", "t": "fattest"}}
+{"word": "father", "forms": {"s": "fathers"}}
+{"word": "favorite", "forms": {"s": "favorites"}}
+{"word": "favourite", "forms": {"s": "favourites"}}
+{"word": "fear", "forms": {"s": "fears", "p": "feared", "d": "feared", "3": "fears", "i": "fearing"}}
+{"word": "feature", "forms": {"s": "features", "i": "featuring", "3": "features", "d": "featured", "p": "featured"}}
+{"word": "feed", "forms": {"d": "fed", "p": "fed", "i": "feeding", "3": "feeds", "s": "feeds"}}
+{"word": "feel", "forms": {"p": "felt", "i": "feeling", "d": "felt", "3": "feels"}}
+{"word": "feeling", "forms": {"s": "feelings"}}
+{"word": "fence", "forms": {"s": "fences"}}
+{"word": "ferry", "forms": {"s": "ferries"}}
+{"word": "festival", "forms": {"s": "festivals"}}
+{"word": "fever", "forms": {"s": "fevers"}}
+{"word": "field", "forms": {"s": "fields"}}
+{"word": "fight", "forms": {"i": "fighting", "p": "fought", "d": "fought", "s": "fights", "3": "fights"}}
+{"word": "figure", "forms": {"s": "figures", "p": "figured", "d": "figured", "3": "figures", "i": "figuring"}}
+{"word": "fill", "forms": {"d": "filled", "p": "filled", "i": "filling", "3": "fills"}}
+{"word": "film", "forms": {"s": "films", "i": "filming", "d": "filmed", "p": "filmed", "3": "films"}}
+{"word": "final", "forms": {"s": "finals"}}
+{"word": "find", "forms": {"d": "found", "p": "found", "i": "finding", "3": "finds"}}
+{"word": "fine", "forms": {"t": "finest", "r": "finer"}}
+{"word": "finger", "forms": {"s": "fingers"}}
+{"word": "finish", "forms": {"d": "finished", "p": "finished", "i": "finishing", "3": "finishes"}}
+{"word": "fire", "forms": {"s": "fires"}}
+{"word": "firecracker", "forms": {"s": "firecrackers"}}
+{"word": "firefighter", "forms": {"s": "firefighters"}}
+{"word": "fireman", "forms": {"s": "firemen"}}
+{"word": "firework", "forms": {"s": "fireworks"}}
+{"word": "fish", "forms": {"s": "fishes", "p": "fished", "i": "fishing", "d": "fished", "3": "fishes"}}
+{"word": "fisherman", "forms": {"s": "fishermen"}}
+{"word": "fit", "forms": {"d": "fitted", "3": "fits", "i": "fitting", "p": "fitted", "r": "fitter", "t": "fittest"}}
+{"word": "fix", "forms": {"d": "fixed", "i": "fixing", "p": "fixed", "3": "fixes"}}
+{"word": "flag", "forms": {"s": "flags"}}
+{"word": "flash", "forms": {"p": "flashed", "i": "flashing", "s": "flashes", "d": "flashed", "3": "flashes"}}
+{"word": "flat", "forms": {"s": "flats", "r": "flatter"}}
+{"word": "flight", "forms": {"s": "flights"}}
+{"word": "flood", "forms": {"d": "flooded", "s": "floods", "p": "flooded", "i": "flooding", "3": "floods"}}
+{"word": "floor", "forms": {"s": "floors"}}
+{"word": "flow", "forms": {"s": "flows", "i": "flowing", "3": "flows", "p": "flowed", "d": "flowed"}}
+{"word": "flower", "forms": {"s": "flowers"}}
+{"word": "fluffy", "forms": {"t": "fluffiest", "r": "fluffier"}}
+{"word": "fly", "forms": {"p": "flew", "i": "flying", "d": "flown", "s": "flies", "3": "flies"}}
+{"word": "focus", "forms": {"d": "focused", "i": "focusing", "3": "focuses", "p": "focused", "s": "foci"}}
+{"word": "foil", "forms": {"s": "foils"}}
+{"word": "fold", "forms": {"d": "folded", "p": "folded", "i": "folding", "3": "folds"}}
+{"word": "folk", "forms": {"s": "folks"}}
+{"word": "follow", "forms": {"i": "following", "d": "followed", "3": "follows", "p": "followed"}}
+{"word": "fond", "forms": {"r": "fonder", "t": "fondest"}}
+{"word": "font", "forms": {"s": "fonts"}}
+{"word": "food", "forms": {"s": "foods"}}
+{"word": "fool", "forms": {"s": "fools", "d": "fooled", "i": "fooling", "p": "fooled", "3": "fools"}}
+{"word": "foot", "forms": {"s": "feet"}}
+{"word": "football", "forms": {"s": "footballs"}}
+{"word": "force", "forms": {"s": "forces", "d": "forced", "p": "forced", "i": "forcing", "3": "forces"}}
+{"word": "foreigner", "forms": {"s": "foreigners"}}
+{"word": "forest", "forms": {"s": "forests"}}
+{"word": "forget", "forms": {"d": "forgotten", "p": "forgot", "i": "forgetting", "3": "forgets"}}
+{"word": "forgive", "forms": {"d": "forgiven", "p": "forgave", "3": "forgives", "i": "forgiving"}}
+{"word": "fork", "forms": {"s": "forks"}}
+{"word": "form", "forms": {"s": "forms", "d": "formed", "p": "formed", "i": "forming", "3": "forms"}}
+{"word": "forward", "forms": {"s": "forwards"}}
+{"word": "fountain", "forms": {"s": "fountains"}}
+{"word": "fourth", "forms": {"s": "fourths"}}
+{"word": "fox", "forms": {"s": "foxes"}}
+{"word": "frame", "forms": {"s": "frames"}}
+{"word": "free", "forms": {"r": "freer"}}
+{"word": "freedom", "forms": {"s": "freedoms"}}
+{"word": "french", "forms": {"s": "Frenches"}}
+{"word": "fresh", "forms": {"r": "fresher", "t": "freshest"}}
+{"word": "fridge", "forms": {"s": "fridges"}}
+{"word": "friend", "forms": {"s": "friends"}}
+{"word": "friendly", "forms": {"r": "friendlier", "t": "friendliest"}}
+{"word": "friendship", "forms": {"s": "friendships"}}
+{"word": "frighten", "forms": {"d": "frightened", "p": "frightened", "3": "frightens", "i": "frightening"}}
+{"word": "frog", "forms": {"s": "frogs"}}
+{"word": "front", "forms": {"s": "fronts"}}
+{"word": "fruit", "forms": {"s": "fruits"}}
+{"word": "fuel", "forms": {"s": "fuels"}}
+{"word": "full", "forms": {"r": "fuller", "t": "fullest"}}
+{"word": "funny", "forms": {"t": "funniest", "r": "funnier"}}
+{"word": "future", "forms": {"s": "futures"}}
+{"word": "gain", "forms": {"d": "gained", "p": "gained", "i": "gaining", "3": "gains"}}
+{"word": "game", "forms": {"s": "games"}}
+{"word": "garden", "forms": {"s": "gardens"}}
+{"word": "gas", "forms": {"s": "gases"}}
+{"word": "gate", "forms": {"s": "gates"}}
+{"word": "gather", "forms": {"d": "gathered", "p": "gathered", "i": "gathering", "3": "gathers"}}
+{"word": "general", "forms": {"s": "generals"}}
+{"word": "generation", "forms": {"s": "generations"}}
+{"word": "gentleman", "forms": {"s": "gentlemen"}}
+{"word": "geography", "forms": {"s": "geographies"}}
+{"word": "german", "forms": {"s": "germans"}}
+{"word": "get", "forms": {"d": "got", "p": "got", "i": "getting", "3": "gets"}}
+{"word": "giant", "forms": {"s": "giants"}}
+{"word": "gift", "forms": {"s": "gifts"}}
+{"word": "giraffe", "forms": {"s": "giraffes"}}
+{"word": "girl", "forms": {"s": "girls"}}
+{"word": "give", "forms": {"d": "given", "p": "gave", "i": "giving", "3": "gives"}}
+{"word": "glad", "forms": {"r": "gladder"}}
+{"word": "glass", "forms": {"s": "glasses"}}
+{"word": "glue", "forms": {"d": "glued", "p": "glued", "s": "glues", "i": "gluing", "3": "glues"}}
+{"word": "go", "forms": {"i": "going", "p": "went", "d": "gone", "3": "goes"}}
+{"word": "goal", "forms": {"s": "goals"}}
+{"word": "gold", "forms": {"s": "golds"}}
+{"word": "golf", "forms": {"s": "golfs"}}
+{"word": "good", "forms": {"t": "best", "r": "better"}}
+{"word": "goose", "forms": {"s": "geese"}}
+{"word": "government", "forms": {"s": "governments"}}
+{"word": "grab", "forms": {"p": "grabbed", "i": "grabbing", "d": "grabbed", "3": "grabs"}}
+{"word": "grade", "forms": {"s": "grades"}}
+{"word": "graduate", "forms": {"s": "graduates", "p": "graduated", "i": "graduating", "d": "graduated", "3": "graduates"}}
+{"word": "grandfather", "forms": {"s": "grandfathers"}}
+{"word": "grandmother", "forms": {"s": "grandmothers"}}
+{"word": "grape", "forms": {"s": "grapes"}}
+{"word": "grass", "forms": {"s": "grasses"}}
+{"word": "gray", "forms": {"s": "grays"}}
+{"word": "great", "forms": {"r": "greater", "t": "greatest"}}
+{"word": "green", "forms": {"s": "greens", "r": "greener", "t": "greenest"}}
+{"word": "greenhouse", "forms": {"s": "greenhouses"}}
+{"word": "greet", "forms": {"d": "greeted", "p": "greeted", "i": "greeting", "3": "greets"}}
+{"word": "grey", "forms": {"s": "greys"}}
+{"word": "ground", "forms": {"s": "grounds"}}
+{"word": "group", "forms": {"s": "groups", "d": "grouped", "p": "grouped", "i": "grouping", "3": "groups"}}
+{"word": "grow", "forms": {"p": "grew", "d": "grown", "i": "growing", "3": "grows"}}
+{"word": "growth", "forms": {"s": "growths"}}
+{"word": "guard", "forms": {"s": "guards", "d": "guarded", "i": "guarding", "3": "guards", "p": "guarded"}}
+{"word": "guess", "forms": {"p": "guessed", "d": "guessed", "i": "guessing", "s": "guesses", "3": "guesses"}}
+{"word": "guest", "forms": {"s": "guests"}}
+{"word": "guide", "forms": {"s": "guides"}}
+{"word": "guitar", "forms": {"s": "guitars"}}
+{"word": "gun", "forms": {"s": "guns"}}
+{"word": "guy", "forms": {"s": "guys"}}
+{"word": "gym", "forms": {"s": "gyms"}}
+{"word": "habit", "forms": {"s": "habits"}}
+{"word": "hair", "forms": {"s": "hairs"}}
+{"word": "half", "forms": {"s": "halves"}}
+{"word": "hall", "forms": {"s": "halls"}}
+{"word": "hamburger", "forms": {"s": "hamburgers"}}
+{"word": "hammer", "forms": {"i": "hammering", "s": "hammers", "p": "hammered", "d": "hammered", "3": "hammers"}}
+{"word": "hand", "forms": {"s": "hands", "p": "handed", "d": "handed", "i": "handing", "3": "hands"}}
+{"word": "handle", "forms": {"d": "handled", "i": "handling", "p": "handled", "s": "handles", "3": "handles"}}
+{"word": "hang", "forms": {"i": "hanging", "p": "hung", "d": "hung", "3": "hangs"}}
+{"word": "happen", "forms": {"p": "happened", "3": "happens", "d": "happened", "i": "happening"}}
+{"word": "happiness", "forms": {"s": "happinesses"}}
+{"word": "happy", "forms": {"r": "happier", "t": "happiest"}}
+{"word": "hard", "forms": {"r": "harder", "t": "hardest"}}
+{"word": "hat", "forms": {"s": "hats"}}
+{"word": "hate", "forms": {"p": "hated", "3": "hates", "i": "hating", "d": "hated"}}
+{"word": "have", "forms": {"i": "having", "p": "had", "3": "has", "d": "had"}}
+{"word": "hay", "forms": {"s": "hays"}}
+{"word": "head", "forms": {"s": "heads"}}
+{"word": "headache", "forms": {"s": "headaches"}}
+{"word": "healthy", "forms": {"r": "healthier", "t": "healthiest"}}
+{"word": "hear", "forms": {"d": "heard", "p": "heard", "i": "hearing", "3": "hears"}}
+{"word": "heart", "forms": {"s": "hearts"}}
+{"word": "heat", "forms": {"d": "heated", "s": "heats", "i": "heating", "3": "heats", "p": "heated"}}
+{"word": "heavy", "forms": {"r": "heavier", "t": "heaviest"}}
+{"word": "helicopter", "forms": {"s": "helicopters"}}
+{"word": "help", "forms": {"d": "helped", "i": "helping", "p": "helped", "3": "helps", "s": "helps"}}
+{"word": "hen", "forms": {"s": "hens"}}
+{"word": "hero", "forms": {"s": "heroes"}}
+{"word": "hesitate", "forms": {"p": "hesitated", "i": "hesitating", "3": "hesitates", "d": "hesitated"}}
+{"word": "hide", "forms": {"d": "hidden", "i": "hiding", "p": "hid", "3": "hides"}}
+{"word": "high", "forms": {"r": "higher", "t": "highest"}}
+{"word": "hill", "forms": {"s": "hills"}}
+{"word": "hippo", "forms": {"s": "hippos"}}
+{"word": "history", "forms": {"s": "histories"}}
+{"word": "hit", "forms": {"i": "hitting", "3": "hits", "s": "hits"}}
+{"word": "hobby", "forms": {"s": "hobbies"}}
+{"word": "hold", "forms": {"d": "held", "p": "held", "i": "holding", "3": "holds"}}
+{"word": "hole", "forms": {"s": "holes"}}
+{"word": "holiday", "forms": {"s": "holidays"}}
+{"word": "home", "forms": {"s": "homes"}}
+{"word": "homework", "forms": {"s": "homeworks"}}
+{"word": "honey", "forms": {"s": "honeys"}}
+{"word": "hop", "forms": {"i": "hopping", "p": "hopped", "d": "hopped", "3": "hops"}}
+{"word": "hope", "forms": {"i": "hoping", "d": "hoped", "p": "hoped", "s": "hopes", "3": "hopes"}}
+{"word": "horse", "forms": {"s": "horses"}}
+{"word": "hospital", "forms": {"s": "hospitals"}}
+{"word": "host", "forms": {"s": "hosts"}}
+{"word": "hot", "forms": {"r": "hotter", "t": "hottest"}}
+{"word": "hot-dog", "forms": {"s": "hot-dogs"}}
+{"word": "hotel", "forms": {"s": "hotels"}}
+{"word": "hour", "forms": {"s": "hours"}}
+{"word": "house", "forms": {"s": "houses"}}
+{"word": "human", "forms": {"s": "humans"}}
+{"word": "hungry", "forms": {"r": "hungrier", "t": "hungriest"}}
+{"word": "hunt", "forms": {"i": "hunting", "d": "hunted", "p": "hunted", "3": "hunts"}}
+{"word": "hurry", "forms": {"p": "hurried", "i": "hurrying", "d": "hurried", "3": "hurries"}}
+{"word": "hurt", "forms": {"i": "hurting", "3": "hurts"}}
+{"word": "husband", "forms": {"s": "husbands"}}
+{"word": "ice", "forms": {"s": "ices"}}
+{"word": "ice-cream", "forms": {"s": "ice-creams"}}
+{"word": "idea", "forms": {"s": "ideas"}}
+{"word": "ignore", "forms": {"d": "ignored", "i": "ignoring", "p": "ignored", "3": "ignores"}}
+{"word": "illness", "forms": {"s": "illnesses"}}
+{"word": "image", "forms": {"s": "images"}}
+{"word": "imagine", "forms": {"d": "imagined", "p": "imagined", "i": "imagining", "3": "imagines"}}
+{"word": "impression", "forms": {"s": "impressions"}}
+{"word": "improve", "forms": {"d": "improved", "i": "improving", "3": "improves", "p": "improved"}}
+{"word": "inch", "forms": {"s": "inches"}}
+{"word": "include", "forms": {"3": "includes", "d": "included", "p": "included", "i": "including"}}
+{"word": "income", "forms": {"s": "incomes"}}
+{"word": "increase", "forms": {"d": "increased", "i": "increasing", "s": "increases", "3": "increases", "p": "increased"}}
+{"word": "indian", "forms": {"s": "indians"}}
+{"word": "industry", "forms": {"s": "industries"}}
+{"word": "injury", "forms": {"s": "injuries"}}
+{"word": "ink", "forms": {"s": "inks"}}
+{"word": "insect", "forms": {"s": "insects"}}
+{"word": "instruction", "forms": {"s": "instructions"}}
+{"word": "instrument", "forms": {"s": "instruments"}}
+{"word": "interest", "forms": {"s": "interests", "3": "interests", "p": "interested", "d": "interested", "i": "interesting"}}
+{"word": "introduce", "forms": {"d": "introduced", "i": "introducing", "p": "introduced", "3": "introduces"}}
+{"word": "invent", "forms": {"d": "invented", "p": "invented", "i": "inventing", "3": "invents"}}
+{"word": "invention", "forms": {"s": "inventions"}}
+{"word": "inventor", "forms": {"s": "inventors"}}
+{"word": "investigate", "forms": {"d": "investigated", "i": "investigating", "p": "investigated", "3": "investigates"}}
+{"word": "invitation", "forms": {"s": "invitations"}}
+{"word": "invite", "forms": {"d": "invited", "p": "invited", "3": "invites", "i": "inviting"}}
+{"word": "iron", "forms": {"s": "irons", "d": "ironed", "i": "ironing", "p": "ironed", "3": "irons"}}
+{"word": "island", "forms": {"s": "islands"}}
+{"word": "italian", "forms": {"s": "italians"}}
+{"word": "item", "forms": {"s": "items"}}
+{"word": "jacket", "forms": {"s": "jackets"}}
+{"word": "jam", "forms": {"s": "jams"}}
+{"word": "jar", "forms": {"s": "jars"}}
+{"word": "jelly", "forms": {"s": "jellies"}}
+{"word": "job", "forms": {"s": "jobs"}}
+{"word": "join", "forms": {"p": "joined", "d": "joined", "i": "joining", "3": "joins"}}
+{"word": "joke", "forms": {"s": "jokes", "i": "joking", "p": "joked", "3": "jokes", "d": "joked"}}
+{"word": "journalist", "forms": {"s": "journalists"}}
+{"word": "journey", "forms": {"s": "journeys"}}
+{"word": "joy", "forms": {"s": "joys"}}
+{"word": "judge", "forms": {"s": "judges", "d": "judged", "i": "judging", "p": "judged", "3": "judges"}}
+{"word": "juice", "forms": {"s": "juices"}}
+{"word": "jump", "forms": {"p": "jumped", "i": "jumping", "d": "jumped", "3": "jumps", "s": "jumps"}}
+{"word": "keen", "forms": {"r": "keener", "t": "keenest"}}
+{"word": "keep", "forms": {"p": "kept", "d": "kept", "i": "keeping", "3": "keeps"}}
+{"word": "key", "forms": {"s": "keys"}}
+{"word": "keyboard", "forms": {"s": "keyboards"}}
+{"word": "kick", "forms": {"p": "kicked", "i": "kicking", "d": "kicked", "s": "kicks", "3": "kicks"}}
+{"word": "kid", "forms": {"s": "kids", "i": "kidding", "p": "kidded", "3": "kids", "d": "kidded"}}
+{"word": "kill", "forms": {"d": "killed", "i": "killing", "p": "killed", "3": "kills"}}
+{"word": "kilogram", "forms": {"s": "kilograms"}}
+{"word": "kilometre", "forms": {"s": "kilometres"}}
+{"word": "kind", "forms": {"s": "kinds", "r": "kinder", "t": "kindest"}}
+{"word": "kindergarten", "forms": {"s": "kindergartens"}}
+{"word": "kindness", "forms": {"s": "kindnesses"}}
+{"word": "king", "forms": {"s": "kings"}}
+{"word": "kitchen", "forms": {"s": "kitchens"}}
+{"word": "kite", "forms": {"s": "kites"}}
+{"word": "knee", "forms": {"s": "knees"}}
+{"word": "know", "forms": {"p": "knew", "d": "known", "3": "knows", "i": "knowing"}}
+{"word": "knowledge", "forms": {"s": "knowledges"}}
+{"word": "lab", "forms": {"s": "labs"}}
+{"word": "labor", "forms": {"s": "labors"}}
+{"word": "lady", "forms": {"s": "ladies"}}
+{"word": "ladybird", "forms": {"s": "ladybirds"}}
+{"word": "lake", "forms": {"s": "lakes"}}
+{"word": "lamp", "forms": {"s": "lamps"}}
+{"word": "land", "forms": {"s": "lands", "p": "landed", "d": "landed", "i": "landing", "3": "lands"}}
+{"word": "landscape", "forms": {"s": "landscapes"}}
+{"word": "language", "forms": {"s": "languages"}}
+{"word": "lantern", "forms": {"s": "lanterns"}}
+{"word": "large", "forms": {"r": "larger", "t": "largest"}}
+{"word": "last", "forms": {"p": "lasted", "3": "lasts", "i": "lasting", "d": "lasted"}}
+{"word": "late", "forms": {"r": "later", "t": "latest"}}
+{"word": "laugh", "forms": {"p": "laughed", "i": "laughing", "3": "laughs", "d": "laughed", "s": "laughs"}}
+{"word": "launch", "forms": {"d": "launched", "p": "launched", "i": "launching", "3": "launches"}}
+{"word": "law", "forms": {"s": "laws"}}
+{"word": "lawn", "forms": {"s": "lawns"}}
+{"word": "lawyer", "forms": {"s": "lawyers"}}
+{"word": "lay", "forms": {"d": "laid", "p": "laid", "i": "laying", "3": "lays"}}
+{"word": "lazy", "forms": {"t": "laziest", "r": "lazier"}}
+{"word": "lead", "forms": {"p": "led", "d": "led", "i": "leading", "3": "leads"}}
+{"word": "leader", "forms": {"s": "leaders"}}
+{"word": "leaf", "forms": {"s": "leaves"}}
+{"word": "league", "forms": {"s": "leagues"}}
+{"word": "lean", "forms": {"p": "leaned", "i": "leaning", "3": "leans", "r": "leaner", "d": "leaned"}}
+{"word": "learn", "forms": {"d": "learned", "i": "learning", "p": "learned", "3": "learns"}}
+{"word": "leave", "forms": {"d": "left", "p": "left", "i": "leaving", "3": "leaves"}}
+{"word": "lecture", "forms": {"s": "lectures"}}
+{"word": "leg", "forms": {"s": "legs"}}
+{"word": "lemon", "forms": {"s": "lemons"}}
+{"word": "length", "forms": {"s": "lengths"}}
+{"word": "lesson", "forms": {"s": "lessons"}}
+{"word": "let", "forms": {"i": "letting", "3": "lets"}}
+{"word": "letter", "forms": {"s": "letters"}}
+{"word": "level", "forms": {"s": "levels"}}
+{"word": "librarian", "forms": {"s": "librarians"}}
+{"word": "library", "forms": {"s": "libraries"}}
+{"word": "lie", "forms": {"p": "lay", "i": "lying", "3": "lies", "s": "lies", "d": "lain"}}
+{"word": "life", "forms": {"s": "lives"}}
+{"word": "lifeguard", "forms": {"s": "lifeguards"}}
+{"word": "lift", "forms": {"p": "lifted", "d": "lifted", "i": "lifting", "s": "lifts", "3": "lifts"}}
+{"word": "light", "forms": {"s": "lights", "r": "lighter", "t": "lightest"}}
+{"word": "like", "forms": {"p": "liked", "3": "likes", "d": "liked", "i": "liking"}}
+{"word": "likely", "forms": {"t": "likeliest"}}
+{"word": "limit", "forms": {"s": "limits", "d": "limited", "3": "limits", "i": "limiting", "p": "limited"}}
+{"word": "line", "forms": {"s": "lines", "d": "lined", "i": "lining", "p": "lined", "3": "lines"}}
+{"word": "link", "forms": {"d": "linked", "s": "links", "i": "linking", "3": "links", "p": "linked"}}
+{"word": "lion", "forms": {"s": "lions"}}
+{"word": "lip", "forms": {"s": "lips"}}
+{"word": "liquid", "forms": {"s": "liquids"}}
+{"word": "list", "forms": {"s": "lists", "d": "listed", "p": "listed", "3": "lists", "i": "listing"}}
+{"word": "listen", "forms": {"p": "listened", "i": "listening", "d": "listened", "3": "listens"}}
+{"word": "litter", "forms": {"d": "littered", "s": "litters", "p": "littered", "i": "littering", "3": "litters"}}
+{"word": "live", "forms": {"p": "lived", "i": "living", "3": "lives", "d": "lived"}}
+{"word": "living", "forms": {"s": "livings"}}
+{"word": "loaf", "forms": {"s": "loaves"}}
+{"word": "locate", "forms": {"d": "located", "p": "located", "i": "locating", "3": "locates"}}
+{"word": "location", "forms": {"s": "locations"}}
+{"word": "lonely", "forms": {"t": "loneliest", "r": "lonelier"}}
+{"word": "long", "forms": {"r": "longer", "t": "longest"}}
+{"word": "look", "forms": {"p": "looked", "i": "looking", "3": "looks", "d": "looked", "s": "looks"}}
+{"word": "lose", "forms": {"d": "lost", "p": "lost", "i": "losing", "3": "loses"}}
+{"word": "loss", "forms": {"s": "losses"}}
+{"word": "loud", "forms": {"r": "louder", "t": "loudest"}}
+{"word": "love", "forms": {"p": "loved", "3": "loves", "d": "loved", "i": "loving", "s": "loves"}}
+{"word": "lovely", "forms": {"t": "loveliest", "r": "lovelier"}}
+{"word": "low", "forms": {"r": "lower", "t": "lowest"}}
+{"word": "lucky", "forms": {"r": "luckier", "t": "luckiest"}}
+{"word": "lunch", "forms": {"s": "lunches"}}
+{"word": "machine", "forms": {"s": "machines"}}
+{"word": "mad", "forms": {"r": "madder", "t": "maddest"}}
+{"word": "magazine", "forms": {"s": "magazines"}}
+{"word": "magic", "forms": {"s": "magics"}}
+{"word": "mail", "forms": {"d": "mailed", "s": "mails", "i": "mailing", "p": "mailed", "3": "mails"}}
+{"word": "major", "forms": {"s": "majors"}}
+{"word": "make", "forms": {"d": "made", "p": "made", "i": "making", "3": "makes"}}
+{"word": "male", "forms": {"s": "males"}}
+{"word": "man", "forms": {"s": "men"}}
+{"word": "manage", "forms": {"d": "managed", "p": "managed", "3": "manages", "i": "managing"}}
+{"word": "manager", "forms": {"s": "managers"}}
+{"word": "manner", "forms": {"s": "manners"}}
+{"word": "map", "forms": {"s": "maps"}}
+{"word": "mark", "forms": {"s": "marks", "d": "marked", "i": "marking", "3": "marks", "p": "marked"}}
+{"word": "market", "forms": {"s": "markets"}}
+{"word": "marry", "forms": {"p": "married", "d": "married", "i": "marrying", "3": "marries"}}
+{"word": "master", "forms": {"s": "masters", "d": "mastered", "i": "mastering", "p": "mastered", "3": "masters"}}
+{"word": "match", "forms": {"s": "matches", "d": "matched", "3": "matches", "i": "matching", "p": "matched"}}
+{"word": "material", "forms": {"s": "materials"}}
+{"word": "matter", "forms": {"s": "matters", "3": "matters", "p": "mattered", "d": "mattered"}}
+{"word": "meal", "forms": {"s": "meals"}}
+{"word": "mean", "forms": {"3": "means", "p": "meant", "d": "meant", "i": "meaning"}}
+{"word": "meaning", "forms": {"s": "meanings"}}
+{"word": "measure", "forms": {"s": "measures", "d": "measured", "i": "measuring", "p": "measured", "3": "measures"}}
+{"word": "meat", "forms": {"s": "meats"}}
+{"word": "medicine", "forms": {"s": "medicines"}}
+{"word": "medium", "forms": {"s": "mediums"}}
+{"word": "meet", "forms": {"p": "met", "d": "met", "i": "meeting", "3": "meets"}}
+{"word": "meeting", "forms": {"s": "meetings"}}
+{"word": "member", "forms": {"s": "members"}}
+{"word": "memory", "forms": {"s": "memories"}}
+{"word": "mention", "forms": {"d": "mentioned", "p": "mentioned", "i": "mentioning", "3": "mentions"}}
+{"word": "menu", "forms": {"s": "menus"}}
+{"word": "message", "forms": {"s": "messages"}}
+{"word": "metal", "forms": {"s": "metals"}}
+{"word": "method", "forms": {"s": "methods"}}
+{"word": "middle", "forms": {"s": "middles"}}
+{"word": "mile", "forms": {"s": "miles"}}
+{"word": "milk", "forms": {"d": "milked", "i": "milking", "s": "milks", "p": "milked", "3": "milks"}}
+{"word": "mind", "forms": {"s": "minds", "d": "minded", "i": "minding", "p": "minded", "3": "minds"}}
+{"word": "mine", "forms": {"s": "mines", "i": "mining", "d": "mined", "p": "mined", "3": "mines"}}
+{"word": "minute", "forms": {"s": "minutes"}}
+{"word": "mirror", "forms": {"s": "mirrors"}}
+{"word": "miss", "forms": {"d": "missed", "p": "missed", "i": "missing", "3": "misses", "s": "misses"}}
+{"word": "mission", "forms": {"s": "missions"}}
+{"word": "mistake", "forms": {"s": "mistakes", "d": "mistaken", "i": "mistaking", "p": "mistook", "3": "mistakes"}}
+{"word": "mix", "forms": {"d": "mixed", "p": "mixed", "i": "mixing", "3": "mixes"}}
+{"word": "mixture", "forms": {"s": "mixtures"}}
+{"word": "model", "forms": {"s": "models"}}
+{"word": "mom", "forms": {"s": "moms"}}
+{"word": "moment", "forms": {"s": "moments"}}
+{"word": "money", "forms": {"s": "moneys"}}
+{"word": "monitor", "forms": {"s": "monitors"}}
+{"word": "monkey", "forms": {"s": "monkeys"}}
+{"word": "month", "forms": {"s": "months"}}
+{"word": "mood", "forms": {"s": "moods"}}
+{"word": "moon", "forms": {"s": "moons"}}
+{"word": "moral", "forms": {"s": "morals"}}
+{"word": "morning", "forms": {"s": "mornings"}}
+{"word": "mother", "forms": {"s": "mothers"}}
+{"word": "motorcycle", "forms": {"s": "motorcycles"}}
+{"word": "mountain", "forms": {"s": "mountains"}}
+{"word": "mouse", "forms": {"s": "mice"}}
+{"word": "mouth", "forms": {"s": "mouths"}}
+{"word": "move", "forms": {"i": "moving", "p": "moved", "d": "moved", "3": "moves"}}
+{"word": "movement", "forms": {"s": "movements"}}
+{"word": "movie", "forms": {"s": "movies"}}
+{"word": "multiple", "forms": {"s": "multiples"}}
+{"word": "muscle", "forms": {"s": "muscles"}}
+{"word": "museum", "forms": {"s": "museums"}}
+{"word": "mushroom", "forms": {"s": "mushrooms"}}
+{"word": "music", "forms": {"s": "musics"}}
+{"word": "musician", "forms": {"s": "musicians"}}
+{"word": "name", "forms": {"s": "names", "d": "named", "p": "named", "i": "naming", "3": "names"}}
+{"word": "narrator", "forms": {"s": "narrators"}}
+{"word": "narrow", "forms": {"r": "narrower", "t": "narrowest"}}
+{"word": "nation", "forms": {"s": "nations"}}
+{"word": "nationality", "forms": {"s": "nationalities"}}
+{"word": "native", "forms": {"s": "natives"}}
+{"word": "nature", "forms": {"s": "natures"}}
+{"word": "naughty", "forms": {"t": "naughtiest", "r": "naughtier"}}
+{"word": "near", "forms": {"t": "nearest", "r": "nearer"}}
+{"word": "neck", "forms": {"s": "necks"}}
+{"word": "need", "forms": {"3": "needs", "d": "needed", "p": "needed", "i": "needing"}}
+{"word": "negative", "forms": {"s": "negatives"}}
+{"word": "neighbor", "forms": {"s": "neighbors"}}
+{"word": "nest", "forms": {"s": "nests"}}
+{"word": "net", "forms": {"s": "nets"}}
+{"word": "network", "forms": {"s": "networks"}}
+{"word": "new", "forms": {"r": "newer", "t": "newest"}}
+{"word": "newspaper", "forms": {"s": "newspapers"}}
+{"word": "nice", "forms": {"r": "nicer", "t": "nicest"}}
+{"word": "night", "forms": {"s": "nights"}}
+{"word": "nod", "forms": {"p": "nodded", "i": "nodding", "3": "nods", "d": "nodded"}}
+{"word": "noise", "forms": {"s": "noises"}}
+{"word": "noisy", "forms": {"r": "noisier", "t": "noisiest"}}
+{"word": "noodle", "forms": {"s": "noodles"}}
+{"word": "noon", "forms": {"s": "noons"}}
+{"word": "normal", "forms": {"s": "normals"}}
+{"word": "nose", "forms": {"s": "noses"}}
+{"word": "note", "forms": {"s": "notes"}}
+{"word": "notebook", "forms": {"s": "notebooks"}}
+{"word": "notice", "forms": {"p": "noticed", "d": "noticed", "i": "noticing", "s": "notices", "3": "notices"}}
+{"word": "novel", "forms": {"s": "novels"}}
+{"word": "number", "forms": {"s": "numbers", "d": "numbered", "p": "numbered", "i": "numbering", "3": "numbs"}}
+{"word": "nurse", "forms": {"s": "nurses"}}
+{"word": "obey", "forms": {"p": "obeyed", "d": "obeyed", "i": "obeying", "3": "obeys"}}
+{"word": "object", "forms": {"s": "objects", "p": "objected", "d": "objected", "i": "objecting", "3": "objects"}}
+{"word": "observe", "forms": {"d": "observed", "p": "observed", "i": "observing", "3": "observes"}}
+{"word": "occupation", "forms": {"s": "occupations"}}
+{"word": "ocean", "forms": {"s": "oceans"}}
+{"word": "offer", "forms": {"d": "offered", "3": "offers", "i": "offering", "p": "offered", "s": "offers"}}
+{"word": "office", "forms": {"s": "offices"}}
+{"word": "officer", "forms": {"s": "officers"}}
+{"word": "oil", "forms": {"s": "oils"}}
+{"word": "old", "forms": {"r": "older", "t": "oldest"}}
+{"word": "open", "forms": {"p": "opened", "d": "opened", "i": "opening", "3": "opens"}}
+{"word": "operate", "forms": {"i": "operating", "d": "operated", "3": "operates", "p": "operated"}}
+{"word": "operation", "forms": {"s": "operations"}}
+{"word": "opinion", "forms": {"s": "opinions"}}
+{"word": "opportunity", "forms": {"s": "opportunities"}}
+{"word": "orange", "forms": {"s": "oranges"}}
+{"word": "order", "forms": {"s": "orders", "d": "ordered", "p": "ordered", "i": "ordering", "3": "orders"}}
+{"word": "organization", "forms": {"s": "organizations"}}
+{"word": "organize", "forms": {"d": "organized", "i": "organizing", "p": "organized", "3": "organizes"}}
+{"word": "oven", "forms": {"s": "ovens"}}
+{"word": "own", "forms": {"d": "owned", "3": "owns", "p": "owned", "i": "owning"}}
+{"word": "owner", "forms": {"s": "owners"}}
+{"word": "pack", "forms": {"d": "packed", "s": "packs", "p": "packed", "i": "packing", "3": "packs"}}
+{"word": "package", "forms": {"s": "packages"}}
+{"word": "packet", "forms": {"s": "packets"}}
+{"word": "page", "forms": {"s": "pages"}}
+{"word": "pain", "forms": {"s": "pains"}}
+{"word": "paint", "forms": {"d": "painted", "p": "painted", "i": "painting", "s": "paints", "3": "paints"}}
+{"word": "painting", "forms": {"s": "paintings"}}
+{"word": "pair", "forms": {"s": "pairs"}}
+{"word": "palace", "forms": {"s": "palaces"}}
+{"word": "pale", "forms": {"r": "paler", "t": "palest"}}
+{"word": "panda", "forms": {"s": "pandas"}}
+{"word": "paper", "forms": {"s": "papers"}}
+{"word": "parcel", "forms": {"s": "parcels"}}
+{"word": "parent", "forms": {"s": "parents"}}
+{"word": "park", "forms": {"s": "parks", "d": "parked", "p": "parked", "i": "parking", "3": "parks"}}
+{"word": "parrot", "forms": {"s": "parrots", "i": "parroting", "p": "parroted", "3": "parrots", "d": "parroted"}}
+{"word": "part", "forms": {"s": "parts"}}
+{"word": "partner", "forms": {"s": "partners"}}
+{"word": "party", "forms": {"s": "parties"}}
+{"word": "pass", "forms": {"d": "passed", "p": "passed", "i": "passing", "3": "passes"}}
+{"word": "passenger", "forms": {"s": "passengers"}}
+{"word": "passport", "forms": {"s": "passports"}}
+{"word": "path", "forms": {"s": "paths"}}
+{"word": "patient", "forms": {"s": "patients"}}
+{"word": "pattern", "forms": {"s": "patterns"}}
+{"word": "pavement", "forms": {"s": "pavements"}}
+{"word": "pay", "forms": {"d": "paid", "i": "paying", "p": "paid", "3": "pays"}}
+{"word": "peach", "forms": {"s": "peaches"}}
+{"word": "pear", "forms": {"s": "pears"}}
+{"word": "pearl", "forms": {"s": "pearls"}}
+{"word": "pen", "forms": {"s": "pens"}}
+{"word": "pencil", "forms": {"s": "pencils"}}
+{"word": "people", "forms": {"s": "peoples"}}
+{"word": "pepper", "forms": {"s": "peppers"}}
+{"word": "percentage", "forms": {"s": "percentages"}}
+{"word": "perform", "forms": {"d": "performed", "i": "performing", "p": "performed", "3": "performs"}}
+{"word": "performance", "forms": {"s": "performances"}}
+{"word": "period", "forms": {"s": "periods"}}
+{"word": "person", "forms": {"s": "persons"}}
+{"word": "pet", "forms": {"s": "pets"}}
+{"word": "phone", "forms": {"p": "phoned", "s": "phones", "i": "phoning", "d": "phoned", "3": "phones"}}
+{"word": "photo", "forms": {"s": "photos"}}
+{"word": "photograph", "forms": {"s": "photographs", "d": "photographed", "p": "photographed", "i": "photographing", "3": "photographs"}}
+{"word": "piano", "forms": {"s": "pianos"}}
+{"word": "pick", "forms": {"p": "picked", "i": "picking", "d": "picked", "3": "picks"}}
+{"word": "picnic", "forms": {"s": "picnics"}}
+{"word": "picture", "forms": {"s": "pictures"}}
+{"word": "pie", "forms": {"s": "pies"}}
+{"word": "piece", "forms": {"s": "pieces"}}
+{"word": "pig", "forms": {"s": "pigs"}}
+{"word": "pill", "forms": {"s": "pills"}}
+{"word": "pilot", "forms": {"s": "pilots"}}
+{"word": "pin", "forms": {"s": "pins", "d": "pinned", "i": "pinning", "p": "pinned", "3": "pins"}}
+{"word": "pineapple", "forms": {"s": "pineapples"}}
+{"word": "pink", "forms": {"s": "pinks", "r": "pinker"}}
+{"word": "pioneer", "forms": {"s": "pioneers"}}
+{"word": "pity", "forms": {"s": "pities"}}
+{"word": "pizza", "forms": {"s": "pizzas"}}
+{"word": "place", "forms": {"s": "places", "d": "placed", "i": "placing", "p": "placed", "3": "places"}}
+{"word": "plan", "forms": {"s": "plans", "i": "planning", "d": "planned", "3": "plans", "p": "planned"}}
+{"word": "plane", "forms": {"s": "planes"}}
+{"word": "planet", "forms": {"s": "planets"}}
+{"word": "plant", "forms": {"s": "plants", "d": "planted", "i": "planting", "p": "planted", "3": "plants"}}
+{"word": "plastic", "forms": {"s": "plastics"}}
+{"word": "plate", "forms": {"s": "plates"}}
+{"word": "platform", "forms": {"s": "platforms"}}
+{"word": "play", "forms": {"i": "playing", "p": "played", "d": "played", "3": "plays", "s": "plays"}}
+{"word": "player", "forms": {"s": "players"}}
+{"word": "playground", "forms": {"s": "playgrounds"}}
+{"word": "pleasant", "forms": {"r": "pleasanter", "t": "pleasantest"}}
+{"word": "please", "forms": {"p": "pleased", "3": "pleases", "d": "pleased", "i": "pleasing"}}
+{"word": "pleasure", "forms": {"s": "pleasures"}}
+{"word": "plum", "forms": {"s": "plums"}}
+{"word": "pocket", "forms": {"s": "pockets"}}
+{"word": "poem", "forms": {"s": "poems"}}
+{"word": "point", "forms": {"s": "points", "p": "pointed", "i": "pointing", "3": "points", "d": "pointed"}}
+{"word": "pole", "forms": {"s": "poles"}}
+{"word": "polite", "forms": {"t": "politest", "r": "politer"}}
+{"word": "pollute", "forms": {"i": "polluting", "d": "polluted", "3": "pollutes", "p": "polluted"}}
+{"word": "pollution", "forms": {"s": "pollutions"}}
+{"word": "pond", "forms": {"s": "ponds"}}
+{"word": "pool", "forms": {"s": "pools"}}
+{"word": "poor", "forms": {"r": "poorer", "t": "poorest"}}
+{"word": "pop", "forms": {"s": "pops"}}
+{"word": "population", "forms": {"s": "populations"}}
+{"word": "position", "forms": {"s": "positions"}}
+{"word": "possibility", "forms": {"s": "possibilities"}}
+{"word": "post", "forms": {"s": "posts", "d": "posted", "p": "posted", "i": "posting", "3": "posts"}}
+{"word": "postcard", "forms": {"s": "postcards"}}
+{"word": "poster", "forms": {"s": "posters"}}
+{"word": "pot", "forms": {"s": "pots"}}
+{"word": "potato", "forms": {"s": "potatoes"}}
+{"word": "pound", "forms": {"s": "pounds"}}
+{"word": "pour", "forms": {"p": "poured", "i": "pouring", "d": "poured", "3": "pours"}}
+{"word": "power", "forms": {"s": "powers"}}
+{"word": "practice", "forms": {"s": "practices", "3": "practices", "i": "practicing", "p": "practiced", "d": "practiced"}}
+{"word": "predict", "forms": {"d": "predicted", "p": "predicted", "i": "predicting", "3": "predicts"}}
+{"word": "prefer", "forms": {"p": "preferred", "d": "preferred", "i": "preferring", "3": "prefers"}}
+{"word": "prepare", "forms": {"d": "prepared", "i": "preparing", "p": "prepared", "3": "prepares"}}
+{"word": "present", "forms": {"s": "presents"}}
+{"word": "president", "forms": {"s": "presidents"}}
+{"word": "press", "forms": {"p": "pressed", "d": "pressed", "i": "pressing", "3": "presses"}}
+{"word": "pressure", "forms": {"s": "pressures"}}
+{"word": "pretend", "forms": {"i": "pretending", "p": "pretended", "3": "pretends", "d": "pretended"}}
+{"word": "pretty", "forms": {"t": "prettiest", "r": "prettier"}}
+{"word": "prevent", "forms": {"i": "preventing", "d": "prevented", "3": "prevents", "p": "prevented"}}
+{"word": "price", "forms": {"s": "prices"}}
+{"word": "print", "forms": {"d": "printed", "i": "printing", "p": "printed", "3": "prints"}}
+{"word": "prison", "forms": {"s": "prisons"}}
+{"word": "prize", "forms": {"s": "prizes"}}
+{"word": "problem", "forms": {"s": "problems"}}
+{"word": "process", "forms": {"s": "processes", "d": "processed", "i": "processing", "p": "processed", "3": "processes"}}
+{"word": "produce", "forms": {"d": "produced", "p": "produced", "i": "producing", "3": "produces"}}
+{"word": "product", "forms": {"s": "products"}}
+{"word": "professor", "forms": {"s": "professors"}}
+{"word": "program", "forms": {"s": "programs"}}
+{"word": "project", "forms": {"s": "projects"}}
+{"word": "promise", "forms": {"p": "promised", "d": "promised", "s": "promises", "3": "promises", "i": "promising"}}
+{"word": "pronounce", "forms": {"p": "pronounced", "d": "pronounced", "i": "pronouncing", "3": "pronounces"}}
+{"word": "property", "forms": {"s": "properties"}}
+{"word": "protect", "forms": {"d": "protected", "i": "protecting", "3": "protects", "p": "protected"}}
+{"word": "protection", "forms": {"s": "protections"}}
+{"word": "proud", "forms": {"t": "proudest", "r": "prouder"}}
+{"word": "prove", "forms": {"d": "proved", "p": "proved", "i": "proving", "3": "proves"}}
+{"word": "proverb", "forms": {"s": "proverbs"}}
+{"word": "provide", "forms": {"d": "provided", "3": "provides", "i": "providing", "p": "provided"}}
+{"word": "publish", "forms": {"d": "published", "p": "published", "i": "publishing", "3": "publishes"}}
+{"word": "pull", "forms": {"p": "pulled", "i": "pulling", "d": "pulled", "3": "pulls"}}
+{"word": "pupil", "forms": {"s": "pupils"}}
+{"word": "puppet", "forms": {"s": "puppets"}}
+{"word": "purple", "forms": {"s": "purples", "r": "purpler", "t": "purplest"}}
+{"word": "purpose", "forms": {"s": "purposes"}}
+{"word": "push", "forms": {"p": "pushed", "i": "pushing", "d": "pushed", "3": "pushes"}}
+{"word": "put", "forms": {"i": "putting", "3": "puts"}}
+{"word": "puzzle", "forms": {"s": "puzzles", "i": "puzzling", "p": "puzzled", "d": "puzzled", "3": "puzzles"}}
+{"word": "quality", "forms": {"s": "qualities"}}
+{"word": "quarter", "forms": {"s": "quarters"}}
+{"word": "queen", "forms": {"s": "queens"}}
+{"word": "question", "forms": {"s": "questions"}}
+{"word": "quick", "forms": {"r": "quicker", "t": "quickest"}}
+{"word": "quiet", "forms": {"r": "quieter", "t": "quietest"}}
+{"word": "rabbit", "forms": {"s": "rabbits"}}
+{"word": "race", "forms": {"s": "races", "i": "racing", "p": "raced", "d": "raced", "3": "races"}}
+{"word": "radio", "forms": {"s": "radios"}}
+{"word": "railway", "forms": {"s": "railways"}}
+{"word": "rain", "forms": {"i": "raining", "3": "rains", "s": "rains", "p": "rained", "d": "rained"}}
+{"word": "rainbow", "forms": {"s": "rainbows"}}
+{"word": "rainy", "forms": {"t": "rainiest"}}
+{"word": "raise", "forms": {"d": "raised", "p": "raised", "i": "raising", "3": "raises"}}
+{"word": "range", "forms": {"s": "ranges"}}
+{"word": "rare", "forms": {"r": "rarer", "t": "rarest"}}
+{"word": "rate", "forms": {"s": "rates"}}
+{"word": "rattle", "forms": {"i": "rattling", "p": "rattled", "d": "rattled", "3": "rattles", "s": "rattles"}}
+{"word": "reach", "forms": {"p": "reached", "d": "reached", "i": "reaching", "3": "reaches"}}
+{"word": "reaction", "forms": {"s": "reactions"}}
+{"word": "read", "forms": {"i": "reading", "3": "reads"}}
+{"word": "reader", "forms": {"s": "readers"}}
+{"word": "reading", "forms": {"s": "readings"}}
+{"word": "ready", "forms": {"r": "readier"}}
+{"word": "realize", "forms": {"p": "realized", "d": "realized", "i": "realizing", "3": "realizes"}}
+{"word": "reason", "forms": {"s": "reasons"}}
+{"word": "rebuild", "forms": {"d": "rebuilt", "i": "rebuilding", "p": "rebuilt", "3": "rebuilds"}}
+{"word": "receive", "forms": {"d": "received", "p": "received", "i": "receiving", "3": "receives"}}
+{"word": "recognize", "forms": {"d": "recognized", "p": "recognized", "i": "recognizing", "3": "recognizes"}}
+{"word": "recommend", "forms": {"d": "recommended", "p": "recommended", "3": "recommends", "i": "recommending"}}
+{"word": "record", "forms": {"s": "records", "d": "recorded", "p": "recorded", "i": "recording", "3": "records"}}
+{"word": "rectangle", "forms": {"s": "rectangles"}}
+{"word": "recycle", "forms": {"i": "recycling", "d": "recycled", "3": "recycles", "p": "recycled"}}
+{"word": "red", "forms": {"s": "reds", "r": "redder"}}
+{"word": "reduce", "forms": {"d": "reduced", "i": "reducing", "3": "reduces", "p": "reduced"}}
+{"word": "reference", "forms": {"s": "references"}}
+{"word": "reflect", "forms": {"3": "reflects", "d": "reflected", "i": "reflecting", "p": "reflected"}}
+{"word": "refuse", "forms": {"p": "refused", "d": "refused", "i": "refusing", "3": "refuses"}}
+{"word": "region", "forms": {"s": "regions"}}
+{"word": "regulation", "forms": {"s": "regulations"}}
+{"word": "relation", "forms": {"s": "relations"}}
+{"word": "relationship", "forms": {"s": "relationships"}}
+{"word": "relative", "forms": {"s": "relatives"}}
+{"word": "rely", "forms": {"i": "relying", "3": "relies", "d": "relied", "p": "relied"}}
+{"word": "remain", "forms": {"3": "remains", "p": "remained", "d": "remained", "i": "remaining"}}
+{"word": "remember", "forms": {"p": "remembered", "d": "remembered", "i": "remembering", "3": "remembers"}}
+{"word": "remind", "forms": {"p": "reminded", "d": "reminded", "3": "reminds", "i": "reminding"}}
+{"word": "remove", "forms": {"d": "removed", "i": "removing", "p": "removed", "3": "removes"}}
+{"word": "repeat", "forms": {"p": "repeated", "d": "repeated", "i": "repeating", "3": "repeats"}}
+{"word": "replace", "forms": {"d": "replaced", "i": "replacing", "p": "replaced", "3": "replaces"}}
+{"word": "report", "forms": {"d": "reported", "s": "reports", "p": "reported", "3": "reports", "i": "reporting"}}
+{"word": "reporter", "forms": {"s": "reporters"}}
+{"word": "republic", "forms": {"s": "republics"}}
+{"word": "require", "forms": {"d": "required", "3": "requires", "i": "requiring", "p": "required"}}
+{"word": "research", "forms": {"s": "researches"}}
+{"word": "resource", "forms": {"s": "resources"}}
+{"word": "respect", "forms": {"s": "respects", "d": "respected", "p": "respected", "3": "respects", "i": "respecting"}}
+{"word": "response", "forms": {"s": "responses"}}
+{"word": "responsibility", "forms": {"s": "responsibilities"}}
+{"word": "rest", "forms": {"i": "resting", "p": "rested", "3": "rests", "s": "rests", "d": "rested"}}
+{"word": "restaurant", "forms": {"s": "restaurants"}}
+{"word": "result", "forms": {"s": "results"}}
+{"word": "return", "forms": {"p": "returned", "d": "returned", "i": "returning", "3": "returns"}}
+{"word": "reuse", "forms": {"d": "reused", "p": "reused", "i": "reusing", "3": "reuses"}}
+{"word": "review", "forms": {"d": "reviewed", "s": "reviews", "i": "reviewing", "p": "reviewed", "3": "reviews"}}
+{"word": "rice", "forms": {"s": "rices"}}
+{"word": "rich", "forms": {"r": "richer", "t": "richest"}}
+{"word": "rid", "forms": {"i": "ridding", "3": "rids"}}
+{"word": "riddle", "forms": {"s": "riddles"}}
+{"word": "ride", "forms": {"i": "riding", "p": "rode", "d": "ridden", "s": "rides", "3": "rides"}}
+{"word": "right", "forms": {"s": "rights"}}
+{"word": "ring", "forms": {"p": "rang", "s": "rings", "i": "ringing", "d": "rung", "3": "rings"}}
+{"word": "rise", "forms": {"p": "rose", "i": "rising", "d": "risen", "3": "rises"}}
+{"word": "risk", "forms": {"s": "risks", "i": "risking", "p": "risked", "3": "risks", "d": "risked"}}
+{"word": "river", "forms": {"s": "rivers"}}
+{"word": "road", "forms": {"s": "roads"}}
+{"word": "roast", "forms": {"i": "roasting", "d": "roasted", "p": "roasted", "3": "roasts", "r": "roaster"}}
+{"word": "robot", "forms": {"s": "robots"}}
+{"word": "rock", "forms": {"s": "rocks", "i": "rocking", "p": "rocked", "d": "rocked", "3": "rocks"}}
+{"word": "rocket", "forms": {"s": "rockets"}}
+{"word": "role", "forms": {"s": "roles"}}
+{"word": "roll", "forms": {"p": "rolled", "i": "rolling", "d": "rolled", "3": "rolls"}}
+{"word": "room", "forms": {"s": "rooms"}}
+{"word": "root", "forms": {"s": "roots"}}
+{"word": "rope", "forms": {"s": "ropes"}}
+{"word": "rose", "forms": {"s": "roses"}}
+{"word": "rough", "forms": {"r": "rougher", "t": "roughest"}}
+{"word": "round", "forms": {"r": "rounder"}}
+{"word": "route", "forms": {"s": "routes"}}
+{"word": "row", "forms": {"s": "rows", "p": "rowed", "d": "rowed", "i": "rowing", "3": "rows"}}
+{"word": "rubber", "forms": {"s": "rubbers"}}
+{"word": "rude", "forms": {"r": "ruder", "t": "rudest"}}
+{"word": "rug", "forms": {"s": "rugs"}}
+{"word": "rule", "forms": {"s": "rules", "d": "ruled", "p": "ruled", "3": "rules", "i": "ruling"}}
+{"word": "ruler", "forms": {"s": "rulers"}}
+{"word": "run", "forms": {"p": "ran", "i": "running", "3": "runs"}}
+{"word": "rush", "forms": {"i": "rushing", "p": "rushed", "d": "rushed", "s": "rushes", "3": "rushes"}}
+{"word": "russian", "forms": {"s": "russians"}}
+{"word": "sad", "forms": {"t": "saddest", "r": "sadder"}}
+{"word": "safe", "forms": {"r": "safer", "t": "safest", "s": "safes"}}
+{"word": "salad", "forms": {"s": "salads"}}
+{"word": "salary", "forms": {"s": "salaries"}}
+{"word": "salt", "forms": {"s": "salts"}}
+{"word": "salty", "forms": {"r": "saltier"}}
+{"word": "sample", "forms": {"s": "samples"}}
+{"word": "sandwich", "forms": {"s": "sandwiches"}}
+{"word": "sauce", "forms": {"s": "sauces"}}
+{"word": "save", "forms": {"d": "saved", "p": "saved", "i": "saving", "3": "saves"}}
+{"word": "say", "forms": {"p": "said", "3": "says", "d": "said", "i": "saying"}}
+{"word": "saying", "forms": {"s": "sayings"}}
+{"word": "scale", "forms": {"s": "scales"}}
+{"word": "scarf", "forms": {"s": "scarves"}}
+{"word": "scene", "forms": {"s": "scenes"}}
+{"word": "schedule", "forms": {"d": "scheduled", "s": "schedules", "i": "scheduling", "p": "scheduled", "3": "schedules"}}
+{"word": "school", "forms": {"s": "schools"}}
+{"word": "science", "forms": {"s": "sciences"}}
+{"word": "scientist", "forms": {"s": "scientists"}}
+{"word": "score", "forms": {"p": "scored", "s": "scores", "d": "scored", "i": "scoring", "3": "scores"}}
+{"word": "screen", "forms": {"s": "screens"}}
+{"word": "screwdriver", "forms": {"s": "screwdrivers"}}
+{"word": "sea", "forms": {"s": "seas"}}
+{"word": "seafood", "forms": {"s": "seafoods"}}
+{"word": "search", "forms": {"i": "searching", "p": "searched", "s": "searches", "d": "searched", "3": "searches"}}
+{"word": "seaside", "forms": {"s": "seasides"}}
+{"word": "season", "forms": {"s": "seasons"}}
+{"word": "seat", "forms": {"s": "seats"}}
+{"word": "second", "forms": {"s": "seconds"}}
+{"word": "secret", "forms": {"s": "secrets"}}
+{"word": "secretary", "forms": {"s": "secretaries"}}
+{"word": "section", "forms": {"s": "sections"}}
+{"word": "see", "forms": {"d": "seen", "p": "saw", "i": "seeing", "3": "sees"}}
+{"word": "seed", "forms": {"s": "seeds"}}
+{"word": "seek", "forms": {"i": "seeking", "d": "sought", "p": "sought", "3": "seeks"}}
+{"word": "seem", "forms": {"3": "seems", "p": "seemed", "d": "seemed", "i": "seeming"}}
+{"word": "select", "forms": {"d": "selected", "i": "selecting", "3": "selects", "p": "selected"}}
+{"word": "sell", "forms": {"d": "sold", "i": "selling", "p": "sold", "3": "sells"}}
+{"word": "send", "forms": {"d": "sent", "p": "sent", "i": "sending", "3": "sends"}}
+{"word": "sense", "forms": {"s": "senses"}}
+{"word": "sentence", "forms": {"s": "sentences"}}
+{"word": "separate", "forms": {"d": "separated", "i": "separating", "3": "separates", "p": "separated"}}
+{"word": "serve", "forms": {"d": "served", "i": "serving", "p": "served", "3": "serves"}}
+{"word": "service", "forms": {"s": "services"}}
+{"word": "set", "forms": {"i": "setting", "s": "sets", "3": "sets"}}
+{"word": "setting", "forms": {"s": "settings"}}
+{"word": "settle", "forms": {"d": "settled", "p": "settled", "i": "settling", "3": "settles"}}
+{"word": "shadow", "forms": {"s": "shadows"}}
+{"word": "shake", "forms": {"p": "shook", "i": "shaking", "d": "shaken", "3": "shakes"}}
+{"word": "shaker", "forms": {"s": "shakers"}}
+{"word": "shame", "forms": {"s": "shames"}}
+{"word": "shape", "forms": {"s": "shapes"}}
+{"word": "share", "forms": {"d": "shared", "i": "sharing", "p": "shared", "3": "shares"}}
+{"word": "sheep", "forms": {"s": "sheeps"}}
+{"word": "sheet", "forms": {"s": "sheets"}}
+{"word": "shelf", "forms": {"s": "shelves"}}
+{"word": "shift", "forms": {"s": "shifts", "d": "shifted", "p": "shifted", "i": "shifting", "3": "shifts"}}
+{"word": "shiny", "forms": {"r": "shinier", "t": "shiniest"}}
+{"word": "ship", "forms": {"s": "ships"}}
+{"word": "shirt", "forms": {"s": "shirts"}}
+{"word": "shoe", "forms": {"s": "shoes"}}
+{"word": "shoot", "forms": {"d": "shot", "p": "shot", "i": "shooting", "3": "shoots"}}
+{"word": "shop", "forms": {"s": "shops", "i": "shopping", "p": "shopped", "3": "shops", "d": "shopped"}}
+{"word": "short", "forms": {"r": "shorter", "t": "shortest"}}
+{"word": "shot", "forms": {"s": "shots"}}
+{"word": "shoulder", "forms": {"s": "shoulders"}}
+{"word": "show", "forms": {"d": "shown", "p": "showed", "3": "shows", "i": "showing", "s": "shows"}}
+{"word": "show off", "forms": {"i": "showing off", "p": "showed off", "3": "shows off", "d": "shown off"}}
+{"word": "shower", "forms": {"s": "showers"}}
+{"word": "shut", "forms": {"i": "shutting", "3": "shuts"}}
+{"word": "shy", "forms": {"r": "shyer", "t": "shyest"}}
+{"word": "sick", "forms": {"r": "sicker", "t": "sickest"}}
+{"word": "side", "forms": {"s": "sides"}}
+{"word": "sight", "forms": {"s": "sights"}}
+{"word": "sign", "forms": {"s": "signs", "d": "signed", "p": "signed", "i": "signing", "3": "signs"}}
+{"word": "signal", "forms": {"s": "signals", "p": "signalled", "d": "signalled", "i": "signalling", "3": "signals"}}
+{"word": "silence", "forms": {"s": "silences"}}
+{"word": "silk", "forms": {"s": "silks"}}
+{"word": "silly", "forms": {"t": "silliest", "r": "sillier"}}
+{"word": "simple", "forms": {"t": "simplest", "r": "simpler"}}
+{"word": "sing", "forms": {"i": "singing", "p": "sang", "d": "sung", "3": "sings"}}
+{"word": "singer", "forms": {"s": "singers"}}
+{"word": "sir", "forms": {"s": "sirs"}}
+{"word": "sister", "forms": {"s": "sisters"}}
+{"word": "sit", "forms": {"p": "sat", "i": "sitting", "3": "sits", "d": "sat"}}
+{"word": "site", "forms": {"s": "sites"}}
+{"word": "situation", "forms": {"s": "situations"}}
+{"word": "size", "forms": {"s": "sizes"}}
+{"word": "skate", "forms": {"i": "skating", "s": "skates", "p": "skated", "3": "skates", "d": "skated"}}
+{"word": "skateboard", "forms": {"s": "skateboards", "i": "skateboarding", "3": "skateboards"}}
+{"word": "sketchbook", "forms": {"s": "sketchbooks"}}
+{"word": "ski", "forms": {"s": "skis", "i": "skiing", "3": "skis", "p": "skied", "d": "ski'd"}}
+{"word": "skill", "forms": {"s": "skills"}}
+{"word": "skin", "forms": {"s": "skins"}}
+{"word": "skip", "forms": {"p": "skipped", "i": "skipping", "d": "skipped", "3": "skips"}}
+{"word": "skirt", "forms": {"s": "skirts"}}
+{"word": "sky", "forms": {"s": "skies"}}
+{"word": "sleep", "forms": {"p": "slept", "i": "sleeping", "d": "slept", "3": "sleeps"}}
+{"word": "slide", "forms": {"p": "slid", "s": "slides", "i": "sliding", "3": "slides", "d": "slid"}}
+{"word": "slip", "forms": {"p": "slipped", "i": "slipping", "d": "slipped", "3": "slips"}}
+{"word": "slow", "forms": {"r": "slower", "t": "slowest"}}
+{"word": "small", "forms": {"r": "smaller", "t": "smallest"}}
+{"word": "smart", "forms": {"r": "smarter", "t": "smartest"}}
+{"word": "smell", "forms": {"s": "smells", "p": "smelled", "3": "smells", "i": "smelling", "d": "smelt"}}
+{"word": "smile", "forms": {"p": "smiled", "i": "smiling", "s": "smiles", "3": "smiles", "d": "smiled"}}
+{"word": "smoke", "forms": {"i": "smoking", "p": "smoked", "d": "smoked", "3": "smokes", "s": "smokes"}}
+{"word": "smooth", "forms": {"r": "smoother", "t": "smoothest"}}
+{"word": "snack", "forms": {"s": "snacks"}}
+{"word": "snake", "forms": {"s": "snakes"}}
+{"word": "snow", "forms": {"i": "snowing", "s": "snows", "p": "snowed", "d": "snowed", "3": "snows"}}
+{"word": "snowy", "forms": {"t": "snowiest"}}
+{"word": "society", "forms": {"s": "societies"}}
+{"word": "soft", "forms": {"r": "softer", "t": "softest"}}
+{"word": "soil", "forms": {"s": "soils"}}
+{"word": "soldier", "forms": {"s": "soldiers"}}
+{"word": "solution", "forms": {"s": "solutions"}}
+{"word": "solve", "forms": {"d": "solved", "i": "solving", "3": "solves", "p": "solved"}}
+{"word": "son", "forms": {"s": "sons"}}
+{"word": "song", "forms": {"s": "songs"}}
+{"word": "sorry", "forms": {"r": "sorrier"}}
+{"word": "sort", "forms": {"s": "sorts", "d": "sorted", "i": "sorting", "p": "sorted", "3": "sorts"}}
+{"word": "soul", "forms": {"s": "souls"}}
+{"word": "sound", "forms": {"3": "sounds", "s": "sounds", "p": "sounded", "i": "sounding", "d": "sounded"}}
+{"word": "soup", "forms": {"s": "soups"}}
+{"word": "sour", "forms": {"d": "soured", "p": "soured", "3": "sours", "i": "souring", "r": "sourer", "t": "sourest"}}
+{"word": "source", "forms": {"s": "sources"}}
+{"word": "space", "forms": {"s": "spaces"}}
+{"word": "spaceship", "forms": {"s": "spaceships"}}
+{"word": "spare", "forms": {"d": "spared", "p": "spared", "i": "sparing", "3": "spares"}}
+{"word": "speak", "forms": {"p": "spoke", "i": "speaking", "d": "spoken", "3": "speaks"}}
+{"word": "speech", "forms": {"s": "speeches"}}
+{"word": "speed", "forms": {"s": "speeds", "i": "speeding", "p": "sped", "3": "speeds", "d": "speeded"}}
+{"word": "spend", "forms": {"d": "spent", "p": "spent", "i": "spending", "3": "spends"}}
+{"word": "spin", "forms": {"i": "spinning", "p": "spun", "d": "spun", "3": "spins"}}
+{"word": "spinner", "forms": {"s": "spinners"}}
+{"word": "spirit", "forms": {"s": "spirits"}}
+{"word": "spoon", "forms": {"s": "spoons"}}
+{"word": "sport", "forms": {"s": "sports"}}
+{"word": "spot", "forms": {"s": "spots", "p": "spotted", "d": "spotted", "i": "spotting", "3": "spots"}}
+{"word": "spread", "forms": {"i": "spreading", "3": "spreads"}}
+{"word": "spring", "forms": {"s": "springs"}}
+{"word": "square", "forms": {"s": "squares"}}
+{"word": "staff", "forms": {"s": "staffs"}}
+{"word": "stage", "forms": {"s": "stages"}}
+{"word": "stamp", "forms": {"s": "stamps", "p": "stamped", "d": "stamped", "i": "stamping", "3": "stamps"}}
+{"word": "stand", "forms": {"p": "stood", "i": "standing", "3": "stands", "d": "stood", "s": "stands"}}
+{"word": "star", "forms": {"s": "stars"}}
+{"word": "stare", "forms": {"p": "stared", "i": "staring", "3": "stares", "d": "stared"}}
+{"word": "start", "forms": {"p": "started", "d": "started", "3": "starts", "i": "starting", "s": "starts"}}
+{"word": "state", "forms": {"s": "states"}}
+{"word": "station", "forms": {"s": "stations"}}
+{"word": "stay", "forms": {"p": "stayed", "i": "staying", "d": "stayed", "3": "stays"}}
+{"word": "steak", "forms": {"s": "steaks"}}
+{"word": "steal", "forms": {"d": "stolen", "p": "stole", "i": "stealing", "3": "steals"}}
+{"word": "steam", "forms": {"i": "steaming", "p": "steamed", "d": "steamed", "s": "steams", "3": "steams"}}
+{"word": "step", "forms": {"s": "steps", "p": "stepped", "i": "stepping", "d": "stepped", "3": "steps"}}
+{"word": "stick", "forms": {"p": "stuck", "i": "sticking", "d": "stuck", "s": "sticks", "3": "sticks"}}
+{"word": "stir", "forms": {"p": "stirred", "i": "stirring", "d": "stirred", "3": "stirs"}}
+{"word": "stocking", "forms": {"s": "stockings"}}
+{"word": "stone", "forms": {"s": "stones"}}
+{"word": "stop", "forms": {"p": "stopped", "d": "stopped", "i": "stopping", "3": "stops", "s": "stops"}}
+{"word": "store", "forms": {"s": "stores", "d": "stored", "p": "stored", "i": "storing", "3": "stores"}}
+{"word": "storm", "forms": {"s": "storms"}}
+{"word": "story", "forms": {"s": "stories"}}
+{"word": "straight", "forms": {"r": "straighter", "t": "straightest"}}
+{"word": "strange", "forms": {"r": "stranger", "t": "strangest"}}
+{"word": "strategy", "forms": {"s": "strategies"}}
+{"word": "strawberry", "forms": {"s": "strawberries"}}
+{"word": "street", "forms": {"s": "streets"}}
+{"word": "strength", "forms": {"s": "strengths"}}
+{"word": "stress", "forms": {"p": "stressed", "d": "stressed", "3": "stresses", "i": "stressing", "s": "stresses"}}
+{"word": "stretch", "forms": {"p": "stretched", "i": "stretching", "d": "stretched", "s": "stretches", "3": "stretches"}}
+{"word": "strict", "forms": {"r": "stricter", "t": "strictest"}}
+{"word": "string", "forms": {"s": "strings"}}
+{"word": "strong", "forms": {"r": "stronger", "t": "strongest"}}
+{"word": "struggle", "forms": {"i": "struggling", "p": "struggled", "s": "struggles", "d": "struggled", "3": "struggles"}}
+{"word": "student", "forms": {"s": "students"}}
+{"word": "studio", "forms": {"s": "studios"}}
+{"word": "study", "forms": {"s": "studies", "i": "studying", "d": "studied", "p": "studied", "3": "studies"}}
+{"word": "stuff", "forms": {"s": "stuffs"}}
+{"word": "style", "forms": {"s": "styles"}}
+{"word": "subject", "forms": {"s": "subjects"}}
+{"word": "succeed", "forms": {"d": "succeeded", "p": "succeeded", "3": "succeeds", "i": "succeeding"}}
+{"word": "success", "forms": {"s": "successes"}}
+{"word": "suffer", "forms": {"d": "suffered", "p": "suffered", "i": "suffering", "3": "suffers"}}
+{"word": "sugar", "forms": {"s": "sugars"}}
+{"word": "suggest", "forms": {"3": "suggests", "d": "suggested", "p": "suggested", "i": "suggesting"}}
+{"word": "suggestion", "forms": {"s": "suggestions"}}
+{"word": "suit", "forms": {"d": "suited", "3": "suits", "s": "suits", "p": "suited", "i": "suiting"}}
+{"word": "summer", "forms": {"s": "summers"}}
+{"word": "sun", "forms": {"s": "suns"}}
+{"word": "sunflower", "forms": {"s": "sunflowers"}}
+{"word": "sunny", "forms": {"r": "sunnier", "t": "sunniest"}}
+{"word": "supermarket", "forms": {"s": "supermarkets"}}
+{"word": "supper", "forms": {"s": "suppers"}}
+{"word": "support", "forms": {"d": "supported", "i": "supporting", "3": "supports", "p": "supported", "s": "supports"}}
+{"word": "suppose", "forms": {"p": "supposed", "d": "supposed", "i": "supposing", "3": "supposes"}}
+{"word": "sure", "forms": {"t": "surest", "r": "surer"}}
+{"word": "surface", "forms": {"s": "surfaces"}}
+{"word": "surprise", "forms": {"p": "surprised", "s": "surprises", "d": "surprised", "3": "surprises", "i": "surprising"}}
+{"word": "surround", "forms": {"d": "surrounded", "i": "surrounding", "p": "surrounded", "3": "surrounds"}}
+{"word": "survey", "forms": {"s": "surveys", "i": "surveying", "p": "surveyed", "d": "surveyed", "3": "surveys"}}
+{"word": "survive", "forms": {"p": "survived", "d": "survived", "3": "survives", "i": "surviving"}}
+{"word": "swan", "forms": {"s": "swans"}}
+{"word": "sweater", "forms": {"s": "sweaters"}}
+{"word": "sweet", "forms": {"s": "sweets", "r": "sweeter", "t": "sweetest"}}
+{"word": "swim", "forms": {"i": "swimming", "p": "swam", "3": "swims", "d": "swum", "s": "swims"}}
+{"word": "swing", "forms": {"p": "swung", "i": "swinging", "s": "swings", "d": "swung", "3": "swings"}}
+{"word": "system", "forms": {"s": "systems"}}
+{"word": "t-shirt", "forms": {"s": "t-shirts"}}
+{"word": "table", "forms": {"s": "tables"}}
+{"word": "tadpole", "forms": {"s": "tadpoles"}}
+{"word": "tail", "forms": {"s": "tails"}}
+{"word": "take", "forms": {"p": "took", "d": "taken", "i": "taking", "3": "takes"}}
+{"word": "tale", "forms": {"s": "tales"}}
+{"word": "talent", "forms": {"s": "talents"}}
+{"word": "talk", "forms": {"i": "talking", "s": "talks", "p": "talked", "d": "talked", "3": "talks"}}
+{"word": "tall", "forms": {"r": "taller", "t": "tallest"}}
+{"word": "tank", "forms": {"s": "tanks"}}
+{"word": "tape", "forms": {"s": "tapes", "i": "taping", "d": "taped", "p": "taped", "3": "tapes"}}
+{"word": "target", "forms": {"s": "targets"}}
+{"word": "task", "forms": {"s": "tasks"}}
+{"word": "taste", "forms": {"s": "tastes", "p": "tasted", "d": "tasted", "3": "tastes", "i": "tasting"}}
+{"word": "taxi", "forms": {"s": "taxis"}}
+{"word": "tea", "forms": {"s": "teas"}}
+{"word": "teach", "forms": {"d": "taught", "i": "teaching", "p": "taught", "3": "teaches"}}
+{"word": "teacher", "forms": {"s": "teachers"}}
+{"word": "teaching", "forms": {"s": "teachings"}}
+{"word": "team", "forms": {"s": "teams"}}
+{"word": "tear", "forms": {"s": "tears", "d": "torn", "p": "tore", "i": "tearing", "3": "tears"}}
+{"word": "technique", "forms": {"s": "techniques"}}
+{"word": "technology", "forms": {"s": "technologies"}}
+{"word": "telephone", "forms": {"p": "telephoned", "s": "telephones", "i": "telephoning", "d": "telephoned", "3": "telephones"}}
+{"word": "television", "forms": {"s": "televisions"}}
+{"word": "tell", "forms": {"p": "told", "d": "told", "i": "telling", "3": "tells"}}
+{"word": "temperature", "forms": {"s": "temperatures"}}
+{"word": "temple", "forms": {"s": "temples"}}
+{"word": "term", "forms": {"s": "terms"}}
+{"word": "test", "forms": {"s": "tests", "d": "tested", "i": "testing", "p": "tested", "3": "tests"}}
+{"word": "text", "forms": {"s": "texts"}}
+{"word": "thank", "forms": {"p": "thanked", "i": "thanking", "d": "thanked", "3": "thanks"}}
+{"word": "theme", "forms": {"s": "themes"}}
+{"word": "thick", "forms": {"r": "thicker", "t": "thickest"}}
+{"word": "thin", "forms": {"r": "thinner", "t": "thinnest"}}
+{"word": "thing", "forms": {"s": "things"}}
+{"word": "think", "forms": {"p": "thought", "d": "thought", "i": "thinking", "3": "thinks"}}
+{"word": "thirsty", "forms": {"r": "thirstier", "t": "thirstiest"}}
+{"word": "thought", "forms": {"s": "thoughts"}}
+{"word": "throw", "forms": {"d": "thrown", "p": "threw", "i": "throwing", "3": "throws"}}
+{"word": "ticket", "forms": {"s": "tickets"}}
+{"word": "tidy", "forms": {"i": "tidying", "p": "tidied", "d": "tidied", "r": "tidier", "3": "tidies", "t": "tidiest"}}
+{"word": "tie", "forms": {"d": "tied", "s": "ties", "p": "tied", "i": "tying", "3": "ties"}}
+{"word": "tiger", "forms": {"s": "tigers"}}
+{"word": "time", "forms": {"s": "times"}}
+{"word": "tiny", "forms": {"t": "tiniest", "r": "tinier"}}
+{"word": "tip", "forms": {"s": "tips"}}
+{"word": "tire", "forms": {"p": "tired", "3": "tires", "d": "tired", "i": "tiring"}}
+{"word": "title", "forms": {"s": "titles"}}
+{"word": "today", "forms": {"s": "todays"}}
+{"word": "toe", "forms": {"s": "toes"}}
+{"word": "toilet", "forms": {"s": "toilets"}}
+{"word": "tomato", "forms": {"s": "tomatoes"}}
+{"word": "tomorrow", "forms": {"s": "tomorrows"}}
+{"word": "tone", "forms": {"s": "tones"}}
+{"word": "tool", "forms": {"s": "tools"}}
+{"word": "tooth", "forms": {"s": "teeth"}}
+{"word": "top", "forms": {"s": "tops"}}
+{"word": "topic", "forms": {"s": "topics"}}
+{"word": "tortoise", "forms": {"s": "tortoises"}}
+{"word": "total", "forms": {"s": "totals"}}
+{"word": "touch", "forms": {"p": "touched", "d": "touched", "i": "touching", "3": "touches"}}
+{"word": "tough", "forms": {"r": "tougher", "t": "toughest"}}
+{"word": "tour", "forms": {"s": "tours", "i": "touring", "p": "toured", "d": "toured", "3": "tours"}}
+{"word": "tourist", "forms": {"s": "tourists"}}
+{"word": "tower", "forms": {"s": "towers"}}
+{"word": "town", "forms": {"s": "towns"}}
+{"word": "toy", "forms": {"s": "toys"}}
+{"word": "track", "forms": {"s": "tracks", "d": "tracked", "p": "tracked", "i": "tracking", "3": "tracks"}}
+{"word": "tradition", "forms": {"s": "traditions"}}
+{"word": "trail", "forms": {"s": "trails"}}
+{"word": "train", "forms": {"d": "trained", "s": "trains", "i": "training", "p": "trained", "3": "trains"}}
+{"word": "translate", "forms": {"d": "translated", "i": "translating", "3": "translates", "p": "translated"}}
+{"word": "transport", "forms": {"d": "transported", "i": "transporting", "p": "transported", "3": "transports", "s": "transports"}}
+{"word": "travel", "forms": {"i": "travelling", "p": "travelled", "d": "travelled", "s": "travels", "3": "travels"}}
+{"word": "traveller", "forms": {"s": "travellers"}}
+{"word": "treat", "forms": {"d": "treated", "i": "treating", "p": "treated", "3": "treats", "s": "treats"}}
+{"word": "tree", "forms": {"s": "trees"}}
+{"word": "triangle", "forms": {"s": "triangles"}}
+{"word": "trick", "forms": {"s": "tricks", "d": "tricked", "p": "tricked", "3": "tricks", "i": "tricking"}}
+{"word": "trip", "forms": {"s": "trips", "i": "tripping", "p": "tripped", "3": "trips", "d": "tripped"}}
+{"word": "trouble", "forms": {"s": "troubles", "d": "troubled", "p": "troubled", "3": "troubles", "i": "troubling"}}
+{"word": "truck", "forms": {"s": "trucks"}}
+{"word": "true", "forms": {"r": "truer", "t": "truest"}}
+{"word": "trunk", "forms": {"s": "trunks"}}
+{"word": "trust", "forms": {"s": "trusts", "d": "trusted", "p": "trusted", "i": "trusting", "3": "trusts"}}
+{"word": "truth", "forms": {"s": "truths"}}
+{"word": "try", "forms": {"i": "trying", "p": "tried", "d": "tried", "3": "tries", "s": "tries"}}
+{"word": "tube", "forms": {"s": "tubes"}}
+{"word": "turkey", "forms": {"s": "turkeys"}}
+{"word": "turn", "forms": {"p": "turned", "d": "turned", "i": "turning", "3": "turns", "s": "turns"}}
+{"word": "twin", "forms": {"s": "twins"}}
+{"word": "type", "forms": {"s": "types", "d": "typed", "i": "typing", "p": "typed", "3": "types"}}
+{"word": "ugly", "forms": {"t": "ugliest", "r": "uglier"}}
+{"word": "umbrella", "forms": {"s": "umbrellas"}}
+{"word": "uncle", "forms": {"s": "uncles"}}
+{"word": "understand", "forms": {"d": "understood", "p": "understood", "i": "understanding", "3": "understands"}}
+{"word": "unhappy", "forms": {"t": "unhappiest", "r": "unhappier"}}
+{"word": "uniform", "forms": {"s": "uniforms"}}
+{"word": "unit", "forms": {"s": "units"}}
+{"word": "university", "forms": {"s": "universities"}}
+{"word": "upset", "forms": {"i": "upsetting", "3": "upsets"}}
+{"word": "use", "forms": {"d": "used", "i": "using", "p": "used", "3": "uses", "s": "uses"}}
+{"word": "value", "forms": {"s": "values", "d": "valued", "p": "valued", "i": "valuing", "3": "values"}}
+{"word": "van", "forms": {"s": "vans"}}
+{"word": "variety", "forms": {"s": "varieties"}}
+{"word": "vegetable", "forms": {"s": "vegetables"}}
+{"word": "vehicle", "forms": {"s": "vehicles"}}
+{"word": "version", "forms": {"s": "versions"}}
+{"word": "vice", "forms": {"s": "vices"}}
+{"word": "victory", "forms": {"s": "victories"}}
+{"word": "video", "forms": {"s": "videos"}}
+{"word": "view", "forms": {"s": "views"}}
+{"word": "village", "forms": {"s": "villages"}}
+{"word": "violin", "forms": {"s": "violins"}}
+{"word": "vision", "forms": {"s": "visions"}}
+{"word": "visit", "forms": {"p": "visited", "s": "visits", "d": "visited", "i": "visiting", "3": "visits"}}
+{"word": "visitor", "forms": {"s": "visitors"}}
+{"word": "voice", "forms": {"s": "voices"}}
+{"word": "volume", "forms": {"s": "volumes"}}
+{"word": "volunteer", "forms": {"s": "volunteers", "p": "volunteered", "d": "volunteered", "i": "volunteering", "3": "volunteers"}}
+{"word": "wait", "forms": {"i": "waiting", "p": "waited", "d": "waited", "3": "waits"}}
+{"word": "waiter", "forms": {"s": "waiters"}}
+{"word": "waitress", "forms": {"s": "waitresses"}}
+{"word": "wake", "forms": {"p": "woke", "d": "woken", "i": "waking", "3": "wakes"}}
+{"word": "walk", "forms": {"p": "walked", "i": "walking", "s": "walks", "d": "walked", "3": "walks"}}
+{"word": "wall", "forms": {"s": "walls"}}
+{"word": "wally", "forms": {"s": "wallies"}}
+{"word": "want", "forms": {"p": "wanted", "3": "wants", "d": "wanted", "i": "wanting"}}
+{"word": "war", "forms": {"s": "wars"}}
+{"word": "warm", "forms": {"r": "warmer", "i": "warming", "d": "warmed", "p": "warmed", "t": "warmest", "3": "warms"}}
+{"word": "warn", "forms": {"p": "warned", "d": "warned", "3": "warns", "i": "warning"}}
+{"word": "wash", "forms": {"d": "washed", "i": "washing", "p": "washed", "s": "washes", "3": "washes"}}
+{"word": "waste", "forms": {"i": "wasting", "d": "wasted", "s": "wastes", "p": "wasted", "3": "wastes"}}
+{"word": "watch", "forms": {"i": "watching", "p": "watched", "d": "watched", "3": "watches", "s": "watches"}}
+{"word": "water", "forms": {"s": "waters", "d": "watered", "i": "watering", "3": "waters", "p": "watered"}}
+{"word": "watermelon", "forms": {"s": "watermelons"}}
+{"word": "wave", "forms": {"s": "waves", "p": "waved", "i": "waving", "d": "waved", "3": "waves"}}
+{"word": "way", "forms": {"s": "ways"}}
+{"word": "weak", "forms": {"r": "weaker", "t": "weakest"}}
+{"word": "wear", "forms": {"i": "wearing", "p": "wore", "d": "worn", "3": "wears"}}
+{"word": "weather", "forms": {"s": "weathers"}}
+{"word": "web", "forms": {"s": "webs"}}
+{"word": "week", "forms": {"s": "weeks"}}
+{"word": "weekday", "forms": {"s": "weekdays"}}
+{"word": "weekend", "forms": {"s": "weekends"}}
+{"word": "weigh", "forms": {"i": "weighing", "p": "weighed", "3": "weighs", "d": "weighed"}}
+{"word": "weight", "forms": {"s": "weights"}}
+{"word": "welcome", "forms": {"d": "welcomed", "p": "welcomed", "3": "welcomes", "i": "welcoming", "s": "welcomes"}}
+{"word": "well", "forms": {"s": "wells"}}
+{"word": "wet", "forms": {"r": "wetter", "t": "wettest"}}
+{"word": "wheel", "forms": {"s": "wheels"}}
+{"word": "wheelbarrow", "forms": {"s": "wheelbarrows"}}
+{"word": "white", "forms": {"s": "whites", "r": "whiter"}}
+{"word": "wide", "forms": {"r": "wider", "t": "widest"}}
+{"word": "widen", "forms": {"d": "widened", "p": "widened", "i": "widening", "3": "widens"}}
+{"word": "wife", "forms": {"s": "wives"}}
+{"word": "wild", "forms": {"r": "wilder", "t": "wildest"}}
+{"word": "will", "forms": {"i": "willing", "p": "willed", "3": "wills", "d": "willed"}}
+{"word": "win", "forms": {"p": "won", "d": "won", "i": "winning", "3": "wins"}}
+{"word": "wind", "forms": {"s": "winds"}}
+{"word": "window", "forms": {"s": "windows"}}
+{"word": "windy", "forms": {"t": "windiest", "r": "windier"}}
+{"word": "wine", "forms": {"s": "wines"}}
+{"word": "wing", "forms": {"s": "wings"}}
+{"word": "winner", "forms": {"s": "winners"}}
+{"word": "winter", "forms": {"s": "winters"}}
+{"word": "wire", "forms": {"s": "wires"}}
+{"word": "wisdom", "forms": {"s": "wisdoms"}}
+{"word": "wise", "forms": {"r": "wiser", "t": "wisest"}}
+{"word": "wish", "forms": {"p": "wished", "i": "wishing", "3": "wishes", "s": "wishes", "d": "wished"}}
+{"word": "wolf", "forms": {"s": "wolves"}}
+{"word": "woman", "forms": {"s": "women"}}
+{"word": "wonder", "forms": {"p": "wondered", "i": "wondering", "s": "wonders", "3": "wonders", "d": "wondered"}}
+{"word": "wood", "forms": {"s": "woods"}}
+{"word": "word", "forms": {"s": "words"}}
+{"word": "work", "forms": {"i": "working", "3": "works", "p": "worked", "d": "worked"}}
+{"word": "worker", "forms": {"s": "workers"}}
+{"word": "world", "forms": {"s": "worlds"}}
+{"word": "worm", "forms": {"s": "worms"}}
+{"word": "worry", "forms": {"s": "worries", "p": "worried", "3": "worries", "i": "worrying", "d": "worried"}}
+{"word": "wound", "forms": {"s": "wounds"}}
+{"word": "write", "forms": {"p": "wrote", "d": "written", "i": "writing", "3": "writes"}}
+{"word": "writer", "forms": {"s": "writers"}}
+{"word": "writing", "forms": {"s": "writings"}}
+{"word": "yard", "forms": {"s": "yards"}}
+{"word": "year", "forms": {"s": "years"}}
+{"word": "yellow", "forms": {"s": "yellows", "r": "yellower"}}
+{"word": "yogurt", "forms": {"s": "yogurts"}}
+{"word": "young", "forms": {"r": "younger", "t": "youngest"}}
+{"word": "youngster", "forms": {"s": "youngsters"}}
+{"word": "youth", "forms": {"s": "youths"}}
+{"word": "zebra", "forms": {"s": "zebras"}}
+{"word": "zip", "forms": {"p": "zipped", "s": "zips", "i": "zipping", "d": "zipped", "3": "zips"}}
+{"word": "zoo", "forms": {"s": "zoos"}}

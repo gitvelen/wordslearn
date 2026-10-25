@@ -1,0 +1,16 @@
+services:
+  wordslearn:
+    build: ./app
+    container_name: wordslearn
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./app/data:/app/data
+      - ./data:/data:ro
+    networks:
+      - main_default
+
+networks:
+  main_default:
+    external: true

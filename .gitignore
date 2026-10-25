@@ -1,0 +1,15 @@
+# 敏感数据（账号哈希/会话密钥）与运行时数据——绝不入库
+app/data/
+# 外部词典（ECDICT/lemma，可重新下载）
+data/ext/
+# 内容管线中间产物（v2 分片；合并终稿 word_senses.jsonl 保留）
+data/parsed/gen_out/
+# 确定性可再生成物（gen_quiz.py 从 senses 重跑即可）
+data/parsed/word_quiz.jsonl
+# venv 与日志
+.venv/
+__pycache__/
+*.pyc
+*.log
+sent_tts_failed.txt
+tts_failed.txt
