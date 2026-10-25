@@ -13,3 +13,6 @@ __pycache__/
 *.log
 sent_tts_failed.txt
 tts_failed.txt
+
+# 音频批次备份（P2 清理产物，可随时删）
+data/audio_legacy_20261026/
