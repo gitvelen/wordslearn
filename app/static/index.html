@@ -320,7 +320,7 @@
     <div class="phase-tag" v-if="curItem.type==='quiz'">
       第{{curItem._level}}关 · {{gateName(curItem._level)}}{{curItem._retry ? ' · 补测' : ''}} · {{curItem._qi}} / {{curItem._qn}}
     </div>
-    <div class="phase-tag" v-else>{{curItem._requeued ? '巩固重现' : '复习闯关'}} · 已过 {{today.doneReview}}</div>
+    <div class="phase-tag" v-else>{{curItem._requeued ? '巩固重现' : (curItem.item.audit ? '掌握抽检' : '复习闯关')}} · 已过 {{today.doneReview}}</div>
     <div class="bar slim"><div class="bar-fill" :style="{width: todayPct+'%'}"></div></div>
     <div class="hint" style="margin-bottom:8px">今日总进度 {{todayPct}}%</div>
     <div class="card quiz-card">
@@ -463,6 +463,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b17"></script>
+<script src="/app.js?v=b18"></script>
 </body>
 </html>

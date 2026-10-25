@@ -1,9 +1,11 @@
 """调度核心 v4.2：计划生成（全局词频序）、每日队列（热身轮+新词4题+波次复习+巩固轮供题）、
 答题状态机、表格确认流程（取代旧 spot 抽查+全量摸底）。
 
-状态机（不变）: 首学 stage=1,next=D+2 → 答对 stage=2,next=D+5
-→ 答对 stage=3,next=D+12 → 答对 mastered。
+状态机（不变）: 首学 stage=1,next=D+2 → 复习答对 stage=2,next=复习日+5
+→ 答对 stage=3,next=复习日+12 → 答对 mastered（全对时即首学后第 2/7/19 天）。
 复习答错: stage 重置为 1, next=D+2 完整回炉；当日重现由前端推回队尾。
+掌握词每日抽检（v2.6 方案A）：audit_schedule 当日随机抽 AUDIT_N 个已掌握词混入复习队列，
+答对无事、答错打回 D+2 重走——掌握后仍有留存防线，且产出真实留存率数据。
 
 v4.2 新词首学 4 题（多角度）：word_zh(形→义) + listen_zh(音→义) + zh_word(义→形)
 + spell(音→形·当天听写)；junior 为 word_zh + listen_zh + emoji(听音选词，无 emoji
@@ -21,9 +23,11 @@ import re
 from datetime import date, timedelta
 from database import get_db
 
-INTERVALS = [2, 5, 12]           # new_stage-1 → 间隔天数（扩张比≈2.5，记忆跨度12天）
+INTERVALS = [2, 5, 12]           # stage-1 → 间隔天数（从每次复习当天起算；扩张比≈2.5）
 REST_DAYS = 12                   # 计划尾部停投新词的天数（保证最后的词走完复习周期）
-REVIEW_CAP = 40                  # 单日复习上限（积压分日消化，不改动调度状态）
+REVIEW_CAP = 60                  # 单日复习上限（积压分日消化，不改动调度状态；稳态需求≈3×daily_new）
+NEW_THROTTLE_AT = 80             # 到期复习积压超过此值 → 当日新词减半（先还债再扩新）
+AUDIT_N = 5                      # 掌握词每日抽检数
 POS_RE = re.compile(r"^((?:n|v|adj|adv|prep|conj|pron|num|art|int|vt|vi|aux|abbr|modal)\.)")
 
 STAGE_BY_REVIEW = {1: "d2", 2: "d5", 3: "d12"}   # 复习 stage → 题库阶段
@@ -422,6 +426,12 @@ def get_today_queue(user_id):
                              (user_id, t_str)).fetchone()
             done = log["new_done"] if log else 0
             new_allowance = max(0, plan["daily_new"] - done)
+        # 积压调节：到期复习过多时当日新词减半（先还债再扩新，防缺勤后滚雪球）
+        due_n = db.execute("""SELECT COUNT(*) c FROM user_word_state
+                              WHERE user_id=? AND state='learning' AND next_review_date<=?""",
+                           (user_id, t_str)).fetchone()["c"]
+        if due_n > NEW_THROTTLE_AT:
+            new_allowance //= 2
         # 热身轮：昨天首学的词（快闪巩固，不提交不调度）
         yesterday = (t - timedelta(days=1)).isoformat()
         warmup = db.execute("""
@@ -465,6 +475,31 @@ def get_today_queue(user_id):
             item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
                                     stage_key, user_id, junior) or None
             review_items.append(item)
+        # 掌握词每日抽检（方案A）：当日排样一次，done 标记防重出；答错由 submit_answer 打回 D+2
+        db.execute("DELETE FROM audit_schedule WHERE user_id=? AND date<?", (user_id, t_str))
+        audit_rows = db.execute("""SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
+                                   FROM audit_schedule a JOIN words w ON w.id=a.word_id
+                                   WHERE a.user_id=? AND a.date=? AND a.done=0 ORDER BY a.rowid""",
+                                 (user_id, t_str)).fetchall()
+        if not audit_rows:
+            has_today = db.execute("SELECT COUNT(*) c FROM audit_schedule WHERE user_id=? AND date=?",
+                                   (user_id, t_str)).fetchone()["c"]
+            if not has_today:   # 首次加载才抽样（全部完成后重开不重抽）
+                audit_rows = db.execute("""SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us,
+                                                  w.definition_zh, w.mp3, w.emoji
+                                           FROM user_word_state s JOIN words w ON w.id=s.word_id
+                                           WHERE s.user_id=? AND s.state='mastered'
+                                           ORDER BY RANDOM() LIMIT ?""",
+                                         (user_id, AUDIT_N)).fetchall()
+                db.executemany("INSERT OR IGNORE INTO audit_schedule(user_id, date, word_id) VALUES(?,?,?)",
+                               [(user_id, t_str, r["id"]) for r in audit_rows])
+        for r in audit_rows:
+            item = _word_brief(db, r, user_id, junior, with_senses=False)
+            item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
+                                    random.choice(("d2", "d5", "d12")), user_id, junior) or None
+            item["audit"] = True
+            review_items.append(item)
+        db.commit()   # get_quiz 的 user_quiz_used 标记与抽检排样都要落盘（v2.6 修复：此前只读路径不 commit 全部回滚）
         return {"plan": dict(plan), "warmup": warmup_items, "new": new_items,
                 "learned_today": learned_items, "review": review_items}
     finally:
@@ -483,7 +518,7 @@ def _bump_log(db, user_id, field):
 
 # ---------- 答题状态机 ----------
 def submit_answer(user_id, word_id, phase, correct, quiz_type=""):
-    """phase: 'learn'=新词首学, 'review'=复习测试。
+    """phase: 'learn'=新词首学, 'review'=复习测试, 'audit'=掌握词抽检。
     首学 2 题 / 热身轮 / 当日重现轮均不调用此接口——只有「进入下一个新词」与复习首答才提交。
     同时写 quiz_log（学习日报数据源；quiz_type 由前端带回）。"""
     db = get_db()
@@ -492,6 +527,9 @@ def submit_answer(user_id, word_id, phase, correct, quiz_type=""):
         db.execute("""INSERT INTO quiz_log(user_id, date, phase, word_id, quiz_type, correct)
                       VALUES(?,?,?,?,?,?)""",
                    (user_id, t.isoformat(), phase, word_id, quiz_type or "", 1 if correct else 0))
+        if phase == "audit":
+            db.execute("UPDATE audit_schedule SET done=1 WHERE user_id=? AND word_id=? AND date=?",
+                       (user_id, word_id, t.isoformat()))
         if phase == "learn":
             # 防重复首学双计数：仅首次落 first_learned_date 时记 daily_logs
             existing = db.execute("""SELECT first_learned_date FROM user_word_state
@@ -524,9 +562,10 @@ def submit_answer(user_id, word_id, phase, correct, quiz_type=""):
                                   WHERE user_id=? AND word_id=?""",
                                (old + 1, next_date, user_id, word_id))
             else:
-                # 答错：stage 重置为 1，从最短间隔完整回炉
+                # 答错：stage 重置为 1，从最短间隔完整回炉（state 回 learning——
+                # 掌握词抽检答错时原 state='mastered'，不改回则永远进不了复习管道）
                 next_date = (t + timedelta(days=INTERVALS[0])).isoformat()
-                db.execute("""UPDATE user_word_state SET stage=1, next_review_date=?,
+                db.execute("""UPDATE user_word_state SET state='learning', stage=1, next_review_date=?,
                               wrong_count=wrong_count+1
                               WHERE user_id=? AND word_id=?""",
                            (next_date, user_id, word_id))

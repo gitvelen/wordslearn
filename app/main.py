@@ -156,8 +156,8 @@ def today(request: Request):
 @app.post("/api/answer")
 def answer(body: AnswerIn, request: Request):
     user = auth.current_user(request)
-    if body.phase not in ("learn", "review"):
-        raise HTTPException(400, "phase 必须是 learn 或 review")
+    if body.phase not in ("learn", "review", "audit"):
+        raise HTTPException(400, "phase 必须是 learn、review 或 audit")
     try:
         scheduler.submit_answer(user["id"], body.word_id, body.phase, body.correct, body.quiz_type)
     except ValueError as e:

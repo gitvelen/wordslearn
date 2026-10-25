@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS quiz_log (
   id         INTEGER PRIMARY KEY,
   user_id    INTEGER NOT NULL REFERENCES users(id),
   date       TEXT NOT NULL,
-  phase      TEXT NOT NULL,                      -- learn|review|warmup|gate
+  phase      TEXT NOT NULL,                      -- learn|review|warmup|gate|audit
   level      INTEGER,                            -- gate 关卡号 1-5（其余 NULL）
   word_id    INTEGER NOT NULL REFERENCES words(id),
   quiz_type  TEXT DEFAULT '',                    -- word_zh/listen_zh/zh_word/cloze/spell/emoji/card
@@ -99,6 +99,15 @@ CREATE TABLE IF NOT EXISTS quiz_log (
   ts         TEXT DEFAULT (datetime('now'))      -- 会话时长估算用
 );
 CREATE INDEX IF NOT EXISTS idx_quizlog_user_date ON quiz_log(user_id, date);
+
+-- v2.6 掌握词每日抽检排样：当日抽样一次（done 标记防重出；答错由 submit_answer 打回 D+2）
+CREATE TABLE IF NOT EXISTS audit_schedule (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date    TEXT NOT NULL,
+  word_id INTEGER NOT NULL REFERENCES words(id),
+  done    INTEGER DEFAULT 0,
+  UNIQUE(user_id, date, word_id)
+);
 
 CREATE TABLE IF NOT EXISTS screening_batches (
   id         INTEGER PRIMARY KEY,

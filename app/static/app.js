@@ -637,8 +637,8 @@ const app = Vue.createApp({
         this.today.queue.push({ ...w, _requeued: true });
         this.openWordDetail(w.item.id, 'wrong');   // 弹卡：点「记住了，继续」即推进
       }
-      this.api('/api/answer', { method: 'POST', body: { word_id: w.item.id, phase: 'review', correct: ok,
-        quiz_type: (w.item.quiz && w.item.quiz.quiz_type) || '' } });
+      this.api('/api/answer', { method: 'POST', body: { word_id: w.item.id, phase: w.item.audit ? 'audit' : 'review',
+        correct: ok, quiz_type: (w.item.quiz && w.item.quiz.quiz_type) || '' } });
     },
 
     // 关卡测验题：不进调度；答错记入关末重测

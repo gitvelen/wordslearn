@@ -141,7 +141,7 @@ def build_daily_report(user_id, day=None):
         review_words.sort(key=lambda x: x["ok"])   # 有错的排前（家长重点）
         # 分轮统计
         rounds = []
-        for phase, label in (("warmup", "晨间热身"), ("review", "复习轮")):
+        for phase, label in (("warmup", "晨间热身"), ("review", "复习轮"), ("audit", "掌握抽检")):
             rows = [r for r in qrows if r["phase"] == phase]
             if rows:
                 rounds.append({"label": label, **_round_rows(rows)})
@@ -164,7 +164,7 @@ def build_daily_report(user_id, day=None):
         for r in qrows:
             if r["correct"]:
                 continue
-            lbl = {"warmup": "热身", "review": "复习", "learn": "新学"}.get(r["phase"]) \
+            lbl = {"warmup": "热身", "review": "复习", "learn": "新学", "audit": "抽检"}.get(r["phase"]) \
                 or f"第{r['level']}关"
             wrong_map.setdefault(r["word"], {"def": defs.get(r["word_id"], ""), "rounds": []})["rounds"].append(lbl)
         # 会话时长（首末作答时间差，含卡片提交；跨长时间挂起会高估，仅供参考）
@@ -289,6 +289,7 @@ def render_html(rep):
 <h3 style="font-size:15px;margin:16px 0 6px">📊 各轮表现（首答正确率）</h3>
 <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:10px;font-size:13px">
 <tr style="color:#888;font-size:12px"><th style="padding:8px 10px;text-align:left">轮次</th><th>题数</th><th>正确率</th><th>补测</th><th style="text-align:left">错词</th></tr>{rows_html}</table>
+{f"<div style='font-size:12px;color:#888;margin-top:4px'>🎯 掌握抽检 = 之前已掌握的词随机回访，正确率即<b>旧词留存率</b>；答错的词已自动回炉重学</div>" if any(r['label']=='掌握抽检' for r in rep['rounds']) else ''}
 <h3 style="font-size:15px;margin:16px 0 6px">🔍 错词清单（今晚重点）</h3>
 <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:10px;font-size:13px">
 <tr style="color:#888;font-size:12px"><th style="padding:8px 10px;text-align:left">单词</th><th style="text-align:left">释义</th><th style="text-align:left">错在</th></tr>{wrong_html}</table>

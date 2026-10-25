@@ -131,6 +131,31 @@ if wid2:
     row = st(uid, wid2)
     check('复习答错 → 回炉 stage1/wrong+1', row['stage'] == 1 and row['wrong_count'] == 1)
 
+# ---- 掌握词抽检（v2.6 方案A）：mastered 词当日入抽检，答错回炉、done 防重出 ----
+s, r = api(cj, '/api/today')
+audits = [rv for rv in r['review'] if rv.get('audit')]
+check('掌握词进入当日抽检队列', len(audits) == 1 and audits[0]['id'] == wid,
+      [(a['word'], a.get('audit')) for a in r['review']])
+s, _ = api(cj, '/api/answer', 'POST', {'word_id': wid, 'phase': 'audit', 'correct': False})
+row = st(uid, wid)
+check('抽检答错 → 回炉 learning/stage1/next=D+2',
+      row['state'] == 'learning' and row['stage'] == 1)
+sched = db.execute("SELECT done FROM audit_schedule WHERE user_id=? AND word_id=?", (uid, wid)).fetchone()
+check('抽检完成标记 done=1', sched and sched['done'] == 1)
+s, r = api(cj, '/api/today')
+check('当日抽检完成后不再重出', not [rv for rv in r['review'] if rv.get('audit')])
+
+# ---- 积压调节：到期复习 >80 → 当日新词减半；复习上限 60 ----
+rows = db.execute("SELECT id FROM words WHERE id NOT IN "
+                  "(SELECT word_id FROM user_word_state WHERE user_id=?) LIMIT 85", (uid,)).fetchall()
+for w in rows:
+    db.execute("INSERT INTO user_word_state(user_id, word_id, state, stage, next_review_date) "
+               "VALUES(?,?, 'learning', 1, ?)", (uid, w['id'], TODAY_STR))
+db.commit()
+s, r = api(cj, '/api/today')
+check('积压>80 → 当日新词减半', len(r['new']) <= 2, len(r['new']))
+check('复习上限 60 生效（85 到期只出 60）', 60 <= len(r['review']) <= 65, len(r['review']))
+
 # ---- word_detail ----
 s, r = api(cj, '/api/word_detail?id=%d' % wid)
 check('word_detail 含义项', s == 200 and r['word'] and isinstance(r['senses'], list) and 'forms' in r)
@@ -219,6 +244,7 @@ def _cleanup(uname):
     db.execute("DELETE FROM user_word_state WHERE user_id=?", (u,))
     db.execute("DELETE FROM user_quiz_used WHERE user_id=?", (u,))
     db.execute("DELETE FROM quiz_log WHERE user_id=?", (u,))
+    db.execute("DELETE FROM audit_schedule WHERE user_id=?", (u,))
     db.execute("DELETE FROM users WHERE id=?", (u,))
 
 for _un in (uname, uname_j):
