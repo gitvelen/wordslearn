@@ -310,6 +310,15 @@ def confirm_finish(request: Request):
 
 
 # ---------- 静态资源（挂载放最后，避免吞掉 /api 路由）----------
+class AudioStatic(StaticFiles):
+    """音频文件名即内容（按词生成、不变更），配前端 ?v= 版本参数 → 可放心长缓存，
+    弱网下二次播放零请求（原先无 Cache-Control，每次播放都回源 revalidate）"""
+    def file_response(self, *args, **kwargs):
+        resp = super().file_response(*args, **kwargs)
+        resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return resp
+
+
 AUDIO.mkdir(parents=True, exist_ok=True)
-app.mount("/audio", StaticFiles(directory=AUDIO), name="audio")
+app.mount("/audio", AudioStatic(directory=AUDIO), name="audio")
 app.mount("/", StaticFiles(directory=STATIC, html=True), name="static")

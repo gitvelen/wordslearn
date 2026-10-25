@@ -196,7 +196,7 @@
 </section>
 
 <!-- ========== 今日任务（统一队列：热身→波次交错→重现→巩固轮） ========== -->
-<section v-if="view==='today'" class="wrap today-wrap">
+<section v-if="view==='today' && today" class="wrap today-wrap">
   <!-- 声音解锁屏 -->
   <template v-if="learnIntro">
     <div class="card done-card">
@@ -463,6 +463,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b18"></script>
+<script src="/app.js?v=b19"></script>
 </body>
 </html>

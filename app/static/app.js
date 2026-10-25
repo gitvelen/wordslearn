@@ -2,6 +2,7 @@
    流程：年级 → 目标 → 表格确认（速选+验证轮）→ 建计划 → 今日任务
    今日任务 = 热身轮（昨日词，不提交）→ 新词卡片连播 → 复习组 → 分关测验（刷新可恢复）
    音频原则：每题进题自动读一遍，答后不重播；zh_word/cloze 禁朗读（防听音猜答案） */
+const AUDIO_VER = 'v2';   // 音频文件 immutable 缓存的失效开关：批量重生成音频后 bump
 const app = Vue.createApp({
   data() {
     return {
@@ -737,6 +738,7 @@ const app = Vue.createApp({
     startLearning() {
       this.audioReady = true;
       // iOS 两道独立锁都要在手势栈内解锁：Audio 元素 + speechSynthesis（TTS 兜底路径）
+      try { speechSynthesis.getVoices(); } catch (e) {}   // 预热 voice 列表（Chrome 异步加载）
       try {
         const u = new SpeechSynthesisUtterance('ok');
         u.volume = 0.1; u.lang = 'en-US';
@@ -747,50 +749,88 @@ const app = Vue.createApp({
     },
 
     // ---------- 音频 ----------
+    // 接管一切进行中的朗读：兜底定时器 + 浏览器 TTS + Audio 元素。
+    // 旧 play() 因接管 pause 而 reject 时，靠 _settled 标记短路其兜底（否则旧词被 TTS 幽灵重读）
+    _takeoverAudio() {
+      if (this._fbTimer) { clearTimeout(this._fbTimer); this._fbTimer = null; }
+      this.stopSpeak();
+      if (this._curAudio) {
+        this._curAudio._settled = true;
+        try { this._curAudio.pause(); } catch (e) {}
+        this._curAudio = null;
+      }
+    },
     playWord(word) {
-      // 单音频管理：播新的先停旧的（杜绝重叠双读）；远程加载悬挂 2.5s 超时转 TTS（杜绝无声卡死）
-      if (this._curAudio) { try { this._curAudio.pause(); } catch (e) {} this._curAudio = null; }
-      const a = new Audio('/audio/' + encodeURIComponent(word) + '.mp3');
+      // 单音频管理：播新的先接管旧的（杜绝重叠双读）；远程加载悬挂 6s 超时转 TTS（杜绝无声卡死，
+      // 但尽量等 mp3——超时越短越容易换成各设备音色不一的系统 TTS）
+      this._takeoverAudio();
+      const a = new Audio(this.audioUrl(word));
+      a._settled = false;
       this._curAudio = a;
-      let settled = false;
       const fallback = () => {
-        if (settled) return;
-        settled = true;
+        if (a._settled) return;
+        a._settled = true;
+        this._fbTimer = null;
         try { a.pause(); } catch (e) {}
         this.speakTTS(word);
       };
-      const timer = setTimeout(fallback, 2500);
+      const timer = setTimeout(fallback, 6000);
+      this._fbTimer = timer;
       a.onerror = fallback;
       a.play()
-        .then(() => { if (!settled) { settled = true; clearTimeout(timer); } })
+        .then(() => {
+          if (!a._settled) {
+            a._settled = true;
+            clearTimeout(timer);
+            if (this._fbTimer === timer) this._fbTimer = null;
+          }
+        })
         .catch(fallback);
       return a;   // 调用方（跟读）可监听 ended
     },
+    audioUrl(word) { return '/audio/' + encodeURIComponent(word) + '.mp3?v=' + AUDIO_VER; },
+    sentUrl(word, order) { return '/audio/sent/' + encodeURIComponent(word) + '__' + order + '.mp3?v=' + AUDIO_VER; },
     prefetchAudio() {
-      // 预取后续 2 题的单词音频：队列在前端已知，弱网下进题即播
+      // 预取后续 4 题的单词音频：队列在前端已知，弱网下进题即播
       if (!this.today) return;
       this._pf = this._pf || {};
-      for (let k = 1; k <= 2; k++) {
+      for (let k = 1; k <= 4; k++) {
         const it = this.todayQueue[this.today.qIdx + k];
         const w = it && it.item && it.item.word;
         if (w && !this._pf[w]) {
           this._pf[w] = 1;
           try {
-            const p = new Audio('/audio/' + encodeURIComponent(w) + '.mp3');
+            const p = new Audio(this.audioUrl(w));
             p.preload = 'auto';
             p.load();
           } catch (e) {}
         }
       }
     },
+    stopSpeak() {
+      // 取消正在播/待播的浏览器 TTS（含 50ms 延迟队列里的），seq 递增作废旧的延迟回调
+      this._ttsSeq = (this._ttsSeq || 0) + 1;
+      if ('speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) {} }
+    },
+    pickTTSVoice() {   // 兜底音色尽量拉齐 Aria（mp3 主音色），避免"换人朗读"的听感
+      try {
+        const vs = speechSynthesis.getVoices().filter(v => (v.lang || '').startsWith('en'));
+        return vs.find(v => /aria/i.test(v.name)) || vs.find(v => /natural/i.test(v.name))
+            || vs.find(v => /google/i.test(v.name)) || vs[0] || null;
+      } catch (e) { return null; }
+    },
     speakTTS(text) {
       if (!('speechSynthesis' in window)) return;
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'en-US'; u.rate = 0.85;
+      u.lang = 'en-US'; u.rate = 0.85; u.voice = this.pickTTSVoice();
       // iOS：cancel 后同步 speak 会静默丢句；resume + 短延迟是标准 workaround
       try { speechSynthesis.resume(); } catch (e) {}
       speechSynthesis.cancel();
-      setTimeout(() => { try { speechSynthesis.speak(u); } catch (e) {} }, 50);
+      const seq = ++this._ttsSeq;
+      setTimeout(() => {
+        if (seq !== this._ttsSeq) return;
+        try { speechSynthesis.speak(u); } catch (e) {}
+      }, 50);
     },
     speakZh(text) {
       if (!('speechSynthesis' in window)) return;
@@ -798,12 +838,20 @@ const app = Vue.createApp({
       u.lang = 'zh-CN'; u.rate = 0.9;
       try { speechSynthesis.resume(); } catch (e) {}
       speechSynthesis.cancel();
-      setTimeout(() => { try { speechSynthesis.speak(u); } catch (e) {} }, 50);
+      const seq = ++this._ttsSeq;
+      setTimeout(() => {
+        if (seq !== this._ttsSeq) return;
+        try { speechSynthesis.speak(u); } catch (e) {}
+      }, 50);
     },
     playSentence(word, order, text) {   // 例句朗读：edge-tts 音频优先（AriaNeural），无文件回退浏览器 TTS
-      const a = new Audio('/audio/sent/' + encodeURIComponent(word) + '__' + order + '.mp3');
-      a.onerror = () => this.speakTTS(text);
-      a.play().catch(() => this.speakTTS(text));
+      this._takeoverAudio();   // 单词音频/残留 TTS 不与例句重叠
+      const a = new Audio(this.sentUrl(word, order));
+      a._settled = false;
+      this._curAudio = a;
+      const fallback = () => { if (a._settled) return; a._settled = true; this.speakTTS(text); };
+      a.onerror = fallback;
+      a.play().catch(fallback);
     },
 
     // ---------- 词条弹层（答错看卡 / 词典查看）----------
