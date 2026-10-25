@@ -482,12 +482,16 @@ def _bump_log(db, user_id, field):
 
 
 # ---------- 答题状态机 ----------
-def submit_answer(user_id, word_id, phase, correct):
+def submit_answer(user_id, word_id, phase, correct, quiz_type=""):
     """phase: 'learn'=新词首学, 'review'=复习测试。
-    首学 2 题 / 热身轮 / 当日重现轮均不调用此接口——只有「进入下一个新词」与复习首答才提交。"""
+    首学 2 题 / 热身轮 / 当日重现轮均不调用此接口——只有「进入下一个新词」与复习首答才提交。
+    同时写 quiz_log（学习日报数据源；quiz_type 由前端带回）。"""
     db = get_db()
     try:
         t = _today()
+        db.execute("""INSERT INTO quiz_log(user_id, date, phase, word_id, quiz_type, correct)
+                      VALUES(?,?,?,?,?,?)""",
+                   (user_id, t.isoformat(), phase, word_id, quiz_type or "", 1 if correct else 0))
         if phase == "learn":
             # 防重复首学双计数：仅首次落 first_learned_date 时记 daily_logs
             existing = db.execute("""SELECT first_learned_date FROM user_word_state

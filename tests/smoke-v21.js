@@ -100,6 +100,14 @@ const ok = (c, n) => { c ? PASS++ : FAIL++; log((c ? '✓' : '✗ FAIL'), n); };
   };
 
   // ================= test（standard 五关）=================
+  let reportReq = 0;
+  page.on('request', r => { if (r.url().includes('/api/report/daily')) reportReq++; });
+  const waitCardUnlock = async () => {   // 卡片 2.5s 注视期
+    for (let i = 0; i < 12; i++) {
+      if (!(await page.evaluate(() => window.__vm.cardLocked))) return;
+      await page.waitForTimeout(400);
+    }
+  };
   await login('test', 'test123');
   await ensurePlan();
   let s = await vm();
@@ -107,12 +115,18 @@ const ok = (c, n) => { c ? PASS++ : FAIL++; log((c ? '✓' : '✗ FAIL'), n); };
 
   let cards = 0, reviews = 0, quizLevels = [], gates = [], wrongPopupDone = false, quizWrongDone = false;
   let firstGatePassed = false, mutedChecked = false, emptySpellChecked = false;
+  let cardLockSeen = false, advGuardChecked = false;
   for (let step = 0; step < 400; step++) {
     s = await vm();
     if (!s.cur) break;
     const cur = s.cur;
     if (cur.type === 'newcard') {
       cards++;
+      if (!cardLockSeen) {
+        cardLockSeen = true;
+        ok(await page.evaluate(() => window.__vm.cardLocked) === true, '新词卡片进卡注视期锁定（防秒过）');
+      }
+      await waitCardUnlock();
       const btn = await page.locator('button:has-text("记住了，下一个"), button:has-text("都记住了")').count();
       if (btn) await page.click('button:has-text("记住了，下一个"), button:has-text("都记住了")');
       await page.waitForTimeout(250);
@@ -131,6 +145,14 @@ const ok = (c, n) => { c ? PASS++ : FAIL++; log((c ? '✓' : '✗ FAIL'), n); };
       }
     } else if (cur.type === 'quiz') {
       quizLevels.push(cur.level);
+      // 未作答硬闸：直接调 advance 不得推进
+      if (!advGuardChecked) {
+        advGuardChecked = true;
+        const before = await page.evaluate(() => window.__vm.today.qIdx);
+        await page.evaluate(() => window.__vm.advance());
+        const after = await page.evaluate(() => window.__vm.today.qIdx);
+        ok(before === after, '未作答调用 advance 不推进（硬闸生效）');
+      }
       // zh_word/cloze 不显示 🔊（读出目标词=报答案）
       if ((s.qtype === 'zh_word' || s.qtype === 'cloze') && !mutedChecked) {
         mutedChecked = true;
@@ -187,10 +209,12 @@ const ok = (c, n) => { c ? PASS++ : FAIL++; log((c ? '✓' : '✗ FAIL'), n); };
   const bodyTxt = await page.textContent('body');
   ok(bodyTxt.includes('今日任务完成'), '完成屏文案');
   ok(bodyTxt.includes('关') && bodyTxt.includes('🏅'), '完成屏含闯关统计');
+  await page.waitForTimeout(500);
+  ok(reportReq >= 1, `完成触发学习日报 POST（${reportReq} 次）`);
   await page.click('button:has-text("退出")'); await page.waitForTimeout(400);
 
-  // ================= mido（junior 三关 + 跟读）=================
-  await login('mido', 'mido123');
+  // ================= junior（三关 + 跟读）——用临时账号 jrsmoke，勿动生产 mido ==================
+  await login(process.env.WL_JR_USER || 'jrsmoke', 'test123');
   await ensurePlan();
   let jLevels = new Set(), jCards = 0, readAloudSeen = false;
   for (let step = 0; step < 300; step++) {
@@ -199,6 +223,7 @@ const ok = (c, n) => { c ? PASS++ : FAIL++; log((c ? '✓' : '✗ FAIL'), n); };
     if (s.cur.type === 'newcard') {
       jCards++;
       if (await page.locator('.readaloud').count()) readAloudSeen = true;
+      await waitCardUnlock();
       await page.click('button:has-text("记住了，下一个"), button:has-text("都记住了")');
       await page.waitForTimeout(250);
     } else if (s.cur.type === 'quiz') {

@@ -146,6 +146,33 @@ s, r = api(cj, '/api/calendar?month=' + TODAY_STR[:7])
 day = next((d for d in r['days'] if d['date'] == TODAY_STR), None)
 check('calendar 今日条目', s == 200 and day is not None and day['in_plan'])
 
+# ---- 学习日报：埋点 → 聚合 → 幂等发送 ----
+# 热身 2 题 + 第4关听写 3 题（1 错）+ 补测 1 题（对）
+wid0 = db.execute("SELECT word_id FROM user_word_state WHERE user_id=? LIMIT 1", (uid,)).fetchone()['word_id']
+s, r = api(cj, '/api/quiz_log', 'POST', {'entries': [
+    {'word_id': wid0, 'phase': 'warmup', 'quiz_type': 'word_zh', 'correct': True},
+    {'word_id': wid0, 'phase': 'gate', 'level': 4, 'quiz_type': 'spell', 'correct': True},
+    {'word_id': wid0, 'phase': 'gate', 'level': 4, 'quiz_type': 'spell', 'correct': False},
+    {'word_id': wid0, 'phase': 'gate', 'level': 4, 'quiz_type': 'spell', 'correct': True, 'retry': True},
+]})
+check('quiz_log 埋点写入', s == 200)
+n_log = db.execute("SELECT COUNT(*) c FROM quiz_log WHERE user_id=?", (uid,)).fetchone()['c']
+check('learn/review 答案已入 quiz_log（/api/answer 埋点）', n_log >= 9, n_log)   # 5 状态机 + 4 手动
+s, r = api(cj, '/api/report/preview')
+rep = r['report']
+rounds = {x['label']: x for x in rep['rounds']}
+check('日报含热身/复习/关卡轮', all(k in rounds for k in ('晨间热身', '复习轮')) and any('听写' in k for k in rounds), list(rounds))
+g4 = next((x for x in rep['rounds'] if '听写' in x['label']), None)
+check('关卡首答正确率排除补测（2题1对=50%，补测1）',
+      g4 and g4['n'] == 2 and g4['ok'] == 1 and g4['acc'] == 50 and g4['retries'] == 1, g4)
+check('日报错词清单非空', len(rep['wrong_words']) >= 1, rep['wrong_words'])
+check('日报给家长建议非空', len(rep['tips']) >= 1)
+check('日报近7日趋势', len(rep['trend']) == 7 and rep['trend'][-1]['date'] == TODAY_STR)
+s, r = api(cj, '/api/report/daily', 'POST')
+check('日报发送（SMTP 未配置→不发送不置位）', s == 200 and r['sent'] is False and 'SMTP' in r['reason'], r)
+flag = db.execute("SELECT report_sent FROM daily_logs WHERE user_id=? AND date=?", (uid, TODAY_STR)).fetchone()
+check('未配置时 report_sent 不置位（可重试）', flag and flag['report_sent'] == 0)
+
 # ================= 画像 B：junior（1A）=================
 uname_j, uid_j, cj_j = mk_user('jr', '1A')
 s, r = api(cj_j, '/api/me')
@@ -171,6 +198,7 @@ def _cleanup(uname):
     db.execute("DELETE FROM daily_logs WHERE user_id=?", (u,))
     db.execute("DELETE FROM user_word_state WHERE user_id=?", (u,))
     db.execute("DELETE FROM user_quiz_used WHERE user_id=?", (u,))
+    db.execute("DELETE FROM quiz_log WHERE user_id=?", (u,))
     db.execute("DELETE FROM users WHERE id=?", (u,))
 
 for _un in (uname, uname_j):

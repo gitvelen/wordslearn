@@ -80,8 +80,24 @@ CREATE TABLE IF NOT EXISTS daily_logs (
   new_done    INTEGER DEFAULT 0,
   review_done INTEGER DEFAULT 0,
   minutes     INTEGER DEFAULT 0,
+  report_sent INTEGER DEFAULT 0,                 -- 1=当日学习日报已邮件发送（防重发）
   UNIQUE(user_id, date)
 );
+
+-- v2.2 学习行为埋点：全部作答（含不进调度的热身/关卡测验），供每日学习报告聚合
+CREATE TABLE IF NOT EXISTS quiz_log (
+  id         INTEGER PRIMARY KEY,
+  user_id    INTEGER NOT NULL REFERENCES users(id),
+  date       TEXT NOT NULL,
+  phase      TEXT NOT NULL,                      -- learn|review|warmup|gate
+  level      INTEGER,                            -- gate 关卡号 1-5（其余 NULL）
+  word_id    INTEGER NOT NULL REFERENCES words(id),
+  quiz_type  TEXT DEFAULT '',                    -- word_zh/listen_zh/zh_word/cloze/spell/emoji/card
+  correct    INTEGER NOT NULL,
+  retry      INTEGER DEFAULT 0,                  -- gate 关末补测标记
+  ts         TEXT DEFAULT (datetime('now'))      -- 会话时长估算用
+);
+CREATE INDEX IF NOT EXISTS idx_quizlog_user_date ON quiz_log(user_id, date);
 
 CREATE TABLE IF NOT EXISTS screening_batches (
   id         INTEGER PRIMARY KEY,
@@ -168,6 +184,9 @@ def _migrate(conn):
     senses_cols = [r["name"] for r in conn.execute("PRAGMA table_info(word_senses)")]
     if "confidence" not in senses_cols:
         conn.execute("ALTER TABLE word_senses ADD COLUMN confidence TEXT DEFAULT 'high'")
+    dl_cols = [r["name"] for r in conn.execute("PRAGMA table_info(daily_logs)")]
+    if "report_sent" not in dl_cols:
+        conn.execute("ALTER TABLE daily_logs ADD COLUMN report_sent INTEGER DEFAULT 0")
 
 
 def init_db():

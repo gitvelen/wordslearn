@@ -9,6 +9,7 @@ from pydantic import BaseModel
 import database
 import auth
 import scheduler
+import report
 
 BASE = Path(__file__).parent
 STATIC = BASE / "static"
@@ -59,6 +60,7 @@ class AnswerIn(BaseModel):
     word_id: int
     phase: str      # 'learn' | 'review'
     correct: bool
+    quiz_type: str = ""   # 学习日报埋点用（spell/zh_word/...）
 
 class ConfirmSubmitIn(BaseModel):
     known_ids: list   # 速选「认识」的词 ID
@@ -157,10 +159,42 @@ def answer(body: AnswerIn, request: Request):
     if body.phase not in ("learn", "review"):
         raise HTTPException(400, "phase 必须是 learn 或 review")
     try:
-        scheduler.submit_answer(user["id"], body.word_id, body.phase, body.correct)
+        scheduler.submit_answer(user["id"], body.word_id, body.phase, body.correct, body.quiz_type)
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"ok": True}
+
+
+class QuizLogIn(BaseModel):
+    entries: list   # [{word_id, phase, level?, quiz_type?, correct, retry?}]
+
+
+@app.post("/api/quiz_log")
+def quiz_log(body: QuizLogIn, request: Request):
+    """热身/关卡测验埋点（不进调度，仅入 quiz_log 供学习日报聚合）。"""
+    user = auth.current_user(request)
+    report.record_quiz(user["id"], body.entries)
+    return {"ok": True}
+
+
+@app.post("/api/report/daily")
+def report_daily(request: Request):
+    """当日学习完成事件：生成并邮件发送学习日报（幂等，未完成不发送）。"""
+    user = auth.current_user(request)
+    return report.send_daily_report(user["id"])
+
+
+@app.get("/api/report/preview")
+def report_preview(request: Request, date: str = "", user: str = ""):
+    """日报预览（家长自查/联调）：默认本人今日。"""
+    u = auth.current_user(request)
+    uid, day = u["id"], (date or None)
+    if user and u["username"] == "velen":      # 家长账号可查孩子
+        r = database.get_db().execute("SELECT id FROM users WHERE username=?", (user,)).fetchone()
+        if r:
+            uid = r["id"]
+    rep = report.build_daily_report(uid, day)
+    return {"report": rep, "html": report.render_html(rep)}
 
 
 @app.get("/api/word_detail")

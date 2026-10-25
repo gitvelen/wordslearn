@@ -289,8 +289,8 @@
         <div v-if="rec.err" class="err">{{rec.err}}</div>
       </div>
     </div>
-    <button class="btn primary big" @click="cardNext">
-      {{isLastCard() ? '都记住了！先复习，再来闯关 →' : '记住了，下一个 →'}}
+    <button class="btn primary big" :disabled="cardLocked" @click="cardNext">
+      {{cardLocked ? '🎧 先听一遍…' : (isLastCard() ? '都记住了！先复习，再来闯关 →' : '记住了，下一个 →')}}
     </button>
   </template>
 
@@ -459,6 +459,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b14"></script>
+<script src="/app.js?v=b15"></script>
 </body>
 </html>

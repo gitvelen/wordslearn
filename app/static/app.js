@@ -21,6 +21,7 @@ const app = Vue.createApp({
       welcome: { step: 1, goal: 0, days: 60 },
       // iOS 每次页面重载都重置媒体解锁——解锁标记不能跨刷新保留，否则刷新后全部播放被静默吞掉
       audioReady: false,
+      cardLocked: false,   // 新词卡片注视期（进卡 2.5s 内不可点「下一个」）
       // 表格确认（v4.1 摸底）：basic 快测 → table 速选 → verify 验证 → done
       confirm: { phase: 'basic', words: [], page: 0, known: {}, quiz: [], qidx: 0,
                  picked: null, pickedOk: null, result: null, knownCount: 0,
@@ -81,13 +82,21 @@ const app = Vue.createApp({
 
   watch: {
     curItem(w) {
-      if (!w || this.learnIntro) return;   // intro 未解锁时不自动播
-      // 拼写题：按答案字母数初始化格子
+      if (!w) return;
+      // 新词卡片注视期：至少听完一遍自动朗读（2.5s）才能翻下一张。
+      // 放在 learnIntro 判断之前——首张卡在解锁屏期间就已进入，同样要锁。
+      if (w.type === 'newcard') {
+        this.cardLocked = true;
+        clearTimeout(this._cardTimer);
+        this._cardTimer = setTimeout(() => { this.cardLocked = false; }, 2500);
+      }
+      // 拼写题：按答案字母数初始化格子（复习 d12 拼写可能在队首，不受解锁屏影响）
       if ((w.type === 'quiz' || w.type === 'review') && w.item.quiz &&
           w.item.quiz.quiz_type === 'spell') {
         const n = (w.item.quiz.answer.match(/[a-zA-Z]/g) || []).length;
         this.today.spellCells = Array(n).fill('');
       }
+      if (this.learnIntro) return;   // intro 未解锁时不自动播
       this.$nextTick(() => {
         this.autoPlayItem(w);
         this.prefetchAudio();
@@ -386,7 +395,10 @@ const app = Vue.createApp({
         gateWrong: {},
       };
       this.buildQueue();
-      if (this.todayPhaseDone()) { await this.loadMe(); }
+      if (this.todayPhaseDone()) {
+        await this.loadMe();
+        this.api('/api/report/daily', { method: 'POST' }).catch(() => {});   // 重开时发现当日已完成：补发日报（服务端幂等）
+      }
     },
     buildQueue() {
       /* v2.1 结构：热身 → 新词卡片连播（纯呈现） → 复习组（沉淀间隔）→ 分关测验（题型分批，
@@ -497,18 +509,27 @@ const app = Vue.createApp({
     },
     async advance() {   // 队列推进（自动/手动共用；防重由调用方的 locking 负责）
       if (!this.today) return;
+      const w = this.curItem;
+      // 硬闸：题目未作答不得推进（热身带题/复习/关卡题）；gate/无题热身/卡片不受限
+      if (w && !this.today.answered &&
+          (w.type === 'quiz' || w.type === 'review' ||
+           (w.type === 'warmup' && w.item.quiz))) return;
       this.today.qIdx++;
       this.today.answered = false; this.today.feedback = null; this.today.picked = null;
       this.today.spellCells = [];
-      if (this.todayPhaseDone()) { await this.loadMe(); this.playSfx(true); }
+      if (this.todayPhaseDone()) {
+        await this.loadMe(); this.playSfx(true);
+        this.api('/api/report/daily', { method: 'POST' }).catch(() => {});   // 完成事件：触发学习日报
+      }
     },
 
     // 新词卡片：纯呈现，手动推进（孩子自己控节奏）；learn 提交在卡片完成时
+    // cardLocked 注视期：进卡 2.5s 内「下一个」不可点——单词自动朗读一遍的时间，杜绝秒过连点
     async cardNext() {
-      if (this.locking) return;
+      if (this.locking || this.cardLocked) return;
       this.locking = true;
       try {
-        await this.api('/api/answer', { method: 'POST', body: { word_id: this.curItem.item.id, phase: 'learn', correct: true } });
+        await this.api('/api/answer', { method: 'POST', body: { word_id: this.curItem.item.id, phase: 'learn', correct: true, quiz_type: 'card' } });
         this.today.doneNew++;
         await this.advance();
       } finally { this.locking = false; }
@@ -526,6 +547,7 @@ const app = Vue.createApp({
       this.today.answered = true; this.today.picked = opt;
       this.today.feedback = { ok, warmup: true };
       this.playSfx(ok);
+      this.postQuizLog({ phase: 'warmup', correct: ok });
       if (ok) this.autoNext(900);
     },
 
@@ -608,7 +630,8 @@ const app = Vue.createApp({
         this.today.queue.push({ ...w, _requeued: true });
         this.openWordDetail(w.item.id, 'wrong');   // 弹卡：点「记住了，继续」即推进
       }
-      this.api('/api/answer', { method: 'POST', body: { word_id: w.item.id, phase: 'review', correct: ok } });
+      this.api('/api/answer', { method: 'POST', body: { word_id: w.item.id, phase: 'review', correct: ok,
+        quiz_type: (w.item.quiz && w.item.quiz.quiz_type) || '' } });
     },
 
     // 关卡测验题：不进调度；答错记入关末重测
@@ -624,6 +647,7 @@ const app = Vue.createApp({
       this.playSfx(ok);
       const level = w._level;
       if (!this.today.gateWrong[level]) this.today.gateWrong[level] = new Set();
+      this.postQuizLog({ phase: 'gate', level, correct: ok, retry: !!w._retry });
       if (ok) {
         this.today.gateWrong[level].delete(w.item.id);
         this.today.doneQuiz++;
@@ -632,6 +656,15 @@ const app = Vue.createApp({
         if (!w._retry) this.today.gateWrong[level].add(w.item.id);
         this.openWordDetail(w.item.id, 'wrong');
       }
+    },
+
+    // 学习行为埋点（热身/关卡不进调度，仅入 quiz_log 供日报）；失败静默不打断答题
+    postQuizLog(extra) {
+      const w = this.curItem;
+      if (!w || !w.item) return;
+      this.api('/api/quiz_log', { method: 'POST', body: { entries: [Object.assign({
+        word_id: w.item.id, quiz_type: (w.item.quiz && w.item.quiz.quiz_type) || '',
+      }, extra)] } }).catch(() => {});
     },
 
     // 关末结算：错词同题型重测（测到对为止）
