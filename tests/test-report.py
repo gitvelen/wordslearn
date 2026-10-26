@@ -46,7 +46,8 @@ def main():
     # 写临时文件并 patch SMTP_CONF——绝不写真实 app/data/smtp.json
     # （旧版收尾写回空 pass 占位，曾覆盖真实授权码导致日报静默停发）
     tmp_conf = Path(tempfile.mkdtemp()) / 'smtp.json'
-    tmp_conf.write_text('{"host":"smtp.126.com","port":465,"user":"weilingme@126.com","pass":"x","to":"velenh@qq.com"}')
+    tmp_conf.write_text('{"host":"smtp.126.com","port":465,"user":"weilingme@126.com","pass":"x",'
+                        '"to":"velenh@qq.com, feishengnan88@163.com"}')
     sent_mails = []
     try:
         with mock.patch.object(report, 'SMTP_CONF', tmp_conf), \
@@ -58,7 +59,7 @@ def main():
             assert out['sent'] is True, out
             assert len(sent_mails) == 1, '应发送一封'
             f, t, raw = sent_mails[0]
-            assert t == ['velenh@qq.com']
+            assert sorted(t) == ['feishengnan88@163.com', 'velenh@qq.com'], t  # 多收件人拆分
             # MIME 编码（主题 RFC2047、正文 base64）→ 解码后断言
             import email
             from email.header import decode_header

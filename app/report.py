@@ -354,10 +354,11 @@ def send_daily_report(user_id):
         msg = MIMEText(html, "html", "utf-8")
         msg["Subject"] = Header(subject, "utf-8")
         msg["From"] = f"单词星球 <{cfg['user']}>"
-        msg["To"] = cfg.get("to") or cfg["user"]
+        msg["To"] = cfg.get("to") or cfg["user"]          # 支持逗号分隔多收件人
+        to_list = [x.strip() for x in str(msg["To"]).split(",") if x.strip()]
         with smtplib.SMTP_SSL(cfg["host"], int(cfg.get("port", 465)), timeout=15) as s:
             s.login(cfg["user"], cfg["pass"])
-            s.sendmail(cfg["user"], [msg["To"]], msg.as_string())
+            s.sendmail(cfg["user"], to_list, msg.as_string())
     except Exception as e:
         print(f"[report] 日报发送失败（{uname} {day}）: {e}", flush=True)
         return {"sent": False, "reason": f"发送失败: {e}", "summary": summary}
