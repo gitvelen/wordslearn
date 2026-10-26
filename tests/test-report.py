@@ -4,14 +4,15 @@
 import os
 import sys
 import sqlite3
+import tempfile
 import datetime
+from pathlib import Path
 import unittest.mock as mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app'))
 import report  # noqa: E402
 
 DB = os.path.join(os.path.dirname(__file__), '..', 'app', 'data', 'wordslearn.db')
-SMTP_CONF = os.path.join(os.path.dirname(__file__), '..', 'app', 'data', 'smtp.json')
 TODAY = datetime.date.today().isoformat()
 
 
@@ -41,11 +42,15 @@ def main():
     db.commit()
     db.close()
 
-    # 临时 SMTP 配置（假主机；SMTP_SSL mock 掉不真实连接）
-    open(SMTP_CONF, 'w').write('{"host":"smtp.126.com","port":465,"user":"weilingme@126.com","pass":"x","to":"velenh@qq.com"}')
+    # 临时 SMTP 配置（假主机；SMTP_SSL mock 掉不真实连接）。
+    # 写临时文件并 patch SMTP_CONF——绝不写真实 app/data/smtp.json
+    # （旧版收尾写回空 pass 占位，曾覆盖真实授权码导致日报静默停发）
+    tmp_conf = Path(tempfile.mkdtemp()) / 'smtp.json'
+    tmp_conf.write_text('{"host":"smtp.126.com","port":465,"user":"weilingme@126.com","pass":"x","to":"velenh@qq.com"}')
     sent_mails = []
     try:
-        with mock.patch.object(report.smtplib, 'SMTP_SSL') as MS:
+        with mock.patch.object(report, 'SMTP_CONF', tmp_conf), \
+             mock.patch.object(report.smtplib, 'SMTP_SSL') as MS:
             inst = MS.return_value.__enter__.return_value
             inst.sendmail = lambda f, t, m: sent_mails.append((f, t, m))
 
@@ -80,9 +85,7 @@ def main():
             assert len(sent_mails) == 1, '幂等：不重发'
             print('✓ 二次调用幂等跳过（积分与邮件均不变）')
     finally:
-        os.remove(SMTP_CONF)
-        # 恢复 126 占位配置（pass 空=未配置态）
-        open(SMTP_CONF, 'w').write('{"host": "smtp.126.com", "port": 465, "user": "weilingme@126.com", "pass": "", "to": "velenh@qq.com"}')
+        os.remove(tmp_conf)
         db = sqlite3.connect(DB)
         db.execute("DELETE FROM quiz_log WHERE user_id=?", (uid,))
         db.execute("DELETE FROM daily_logs WHERE user_id=?", (uid,))

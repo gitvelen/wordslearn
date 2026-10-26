@@ -344,6 +344,7 @@ def send_daily_report(user_id):
         return {"sent": False, "reason": "测试账号不发信", "summary": summary}
     cfg = _smtp_conf()
     if not cfg:
+        print(f"[report] SMTP 未配置（pass 为空/文件缺失），{uname} {day} 日报未发送", flush=True)
         return {"sent": False, "reason": "SMTP 未配置（app/data/smtp.json，pass=邮箱授权码），报告已生成未发送",
                 "summary": summary}
     subject = (f"【单词星球】{rep['user']} {day[5:]} 学习日报 · {score}分 · "
@@ -358,6 +359,7 @@ def send_daily_report(user_id):
             s.login(cfg["user"], cfg["pass"])
             s.sendmail(cfg["user"], [msg["To"]], msg.as_string())
     except Exception as e:
+        print(f"[report] 日报发送失败（{uname} {day}）: {e}", flush=True)
         return {"sent": False, "reason": f"发送失败: {e}", "summary": summary}
     db = get_db()
     try:
