@@ -33,10 +33,12 @@ def reset_user(username):
                            (uid,)).rowcount
         db.execute("UPDATE users SET confirm_done=0 WHERE id=?", (uid,))
         db.execute("DELETE FROM user_quiz_used WHERE user_id=?", (uid,))
+        quiz_logs = db.execute("DELETE FROM quiz_log WHERE user_id=?", (uid,)).rowcount
         db.commit()
         print(f"已重置 {username}: 删除 learning={stats['learning']} mastered={stats['mastered']} "
               f"verify={stats['verify']}，保留 new={kept_new} skipped={kept_skipped}，"
-              f"删除日志 {logs} 天，废弃计划 {plans} 个，confirm_done=0")
+              f"删除日志 {logs} 天，废弃计划 {plans} 个，confirm_done=0，"
+              f"删除作答记录 quiz_log={quiz_logs}")
     finally:
         db.close()
 
