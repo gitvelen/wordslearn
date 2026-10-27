@@ -14,6 +14,7 @@ DB words.emoji，输出 gen_out/word_quiz.jsonl + 统计报告）
 """
 import json
 import random
+import re
 import sqlite3
 from collections import defaultdict
 from pathlib import Path
@@ -23,6 +24,29 @@ SEED = 20261024
 
 # 词形同族黑名单：互为变形/近形态的词不得互为干扰项（can↔could、will↔would、goes→go 等）——
 # 它们的释义在初学者眼里无法区分，"能；可以" 对 can/could 是双正确题。
+def norm(s):
+    return re.sub(r"\s+", "", s)
+
+
+def zh_senses(zh):
+    """中文释义拆义项集合：'照料；照顾' -> {'照料','照顾'}。"""
+    zh = re.sub(r"^[a-zA-Z.]+\.?", "", (zh or "").strip())
+    return {norm(p) for p in re.split(r"[；;，,、/]", zh) if norm(p)}
+
+
+def all_senses(ss):
+    """词条全部 senses 的义项并集。"""
+    out = set()
+    for s in ss or []:
+        out |= zh_senses(s.get("definition_zh"))
+    return out
+
+
+def senses_overlap(a_ss, b_ss):
+    """两词义项有交集 = 选择题双答案歧义（'也' vs '也；又'），禁止互为干扰。"""
+    return bool(all_senses(a_ss) & all_senses(b_ss))
+
+
 FAMILIES = [
     # 情态动词整体一族：释义（能/将/愿/会/必须）对初学者互不可分
     {"can", "could", "will", "would", "shall", "should", "may", "might", "must"},
@@ -105,13 +129,17 @@ def main():
 
     def distract_zh(w, pos, n=3, exclude=()):
         """同词性、frq 邻近的中文义干扰。exclude 里的 zh 排除。
-        同义排除：核心义与目标词相同的词不作干扰；同族排除：词形/时态变体不作干扰。"""
+        同义排除：核心义与目标词相同的词不作干扰；义项交集排除（'照料；照顾' vs '照顾'
+        双正确）；同族排除：词形/时态变体不作干扰。"""
         zh1 = senses.get(w, [{}])[0].get("definition_zh")
+        my_senses = senses.get(w)
         cand = [t for t in pool.get(pos, []) if t[1] != w and t[0] not in exclude
-                and t[0] != zh1 and not same_family(w, t[1])]
+                and t[0] != zh1 and not same_family(w, t[1])
+                and not senses_overlap(my_senses, senses.get(t[1]))]
         if not cand:
             cand = [t for k in pool for t in pool[k] if t[1] != w and t[0] not in exclude
-                    and t[0] != zh1 and not same_family(w, t[1])]
+                    and t[0] != zh1 and not same_family(w, t[1])
+                    and not senses_overlap(my_senses, senses.get(t[1]))]
         # frq 邻近：以当前词 frq 为中心窗口抽样，不足放宽到全池
         frq = (words.get(w) or {}).get("frq") or 999999
         for window in (200, 800, 3000, 10 ** 9):
@@ -123,11 +151,14 @@ def main():
     def distract_word(w, pos, n=3, exclude=()):
         zh1 = senses.get(w, [{}])[0].get("definition_zh")
         syn = {t[0] for k in pool for t in pool[k] if t[0] == zh1}   # 同义词条目集合
+        my_senses = senses.get(w)
         cand = [t[1] for t in pool.get(pos, []) if t[1] != w and t[1] not in exclude
-                and t[1] not in syn and not same_family(w, t[1])]
+                and t[1] not in syn and not same_family(w, t[1])
+                and not senses_overlap(my_senses, senses.get(t[1]))]
         if len(cand) < n:
             cand += [t[1] for k in pool for t in pool[k] if t[1] != w and t[1] not in exclude
-                     and t[1] not in syn and not same_family(w, t[1])]
+                     and t[1] not in syn and not same_family(w, t[1])
+                     and not senses_overlap(my_senses, senses.get(t[1]))]
         frq = (words.get(w) or {}).get("frq") or 999999
         for window in (200, 800, 3000, 10 ** 9):
             near = [t for t in pool.get(pos, []) if t[1] != w and abs(t[2] - frq) <= window
