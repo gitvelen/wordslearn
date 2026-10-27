@@ -1,5 +1,6 @@
 """wordslearn FastAPI 入口"""
 import secrets
+from datetime import date
 from pathlib import Path
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -31,11 +32,14 @@ app.add_middleware(SessionMiddleware, secret_key=_secret, max_age=30 * 86400)
 @app.middleware("http")
 async def no_cache_html(request, call_next):
     """HTML 不允许启发式缓存（ Safari 会按 Last-Modified 缓存数小时，版本更新不生效）；
-    带 ?v= 的 JS/CSS 仍可长缓存。"""
+    带 ?v= 的 JS/CSS 仍可长缓存；/api/* 一律 no-store——API 响应是动态用户态，
+    任何层（浏览器/代理/BF-cache）都不许缓存，防复活页拿到陈旧队列。"""
     resp = await call_next(request)
     ct = resp.headers.get("content-type", "")
     if "text/html" in ct:
         resp.headers["Cache-Control"] = "no-cache"
+    elif request.url.path.startswith("/api/"):
+        resp.headers["Cache-Control"] = "no-store"
     return resp
 
 
@@ -145,6 +149,12 @@ def create_plan(body: PlanIn, request: Request):
     if err:
         raise HTTPException(400, err)
     return plan
+
+
+@app.get("/api/date")
+def api_date():
+    """服务端权威日期（零副作用，供客户端复活守卫比对；勿用 /api/today——它有出题消耗）。"""
+    return {"date": date.today().isoformat()}
 
 
 @app.get("/api/today")

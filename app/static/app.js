@@ -112,6 +112,11 @@ const app = Vue.createApp({
   },
 
   async mounted() {
+    // 隔夜复活守卫：iOS PWA/挂起标签页原地复活不会重新走 mounted 之后的启动流程，
+    // 内存里仍是旧一天的队列。pageshow(persisted)/visibilitychange 时比对服务端日期，
+    // 跨日强制整页刷新（v2.2 刷新恢复已支持从中途状态重建）。
+    window.addEventListener('pageshow', (e) => { if (e.persisted) this.dayCheck(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) this.dayCheck(); });
     try {
       const me = await this.api('/api/me');
       this.me = me; this.user = me.user; this.route();
@@ -388,7 +393,7 @@ const app = Vue.createApp({
         return;
       }
       this.today = {
-        plan: r.plan,
+        plan: r.plan, date: r.date || null,
         warmup: r.warmup || [], new: r.new || [], learnedToday: r.learned_today || [],
         review: r.review || [],
         queue: [], qIdx: 0,
@@ -396,12 +401,34 @@ const app = Vue.createApp({
         doneNew: 0, doneReview: 0, doneQuiz: 0, requeuedCount: 0,
         gateWrong: {},
       };
-      this.buildQueue();
+      if (r.done) {
+        // 当日已完成（服务端 daily_logs 判定）：直呈完成屏，不重建可重放队列
+        // ——同日重开/隔夜复活若重建队列，会把旧内容整个再做一遍（10-27 事故）
+        this.today.doneNew = r.done_new || 0;
+        this.today.doneReview = r.done_review || 0;
+        this.today.doneQuiz = 1;
+      } else {
+        this.buildQueue();
+      }
       if (this.todayPhaseDone()) {
         await this.loadMe();
         this.api('/api/report/daily', { method: 'POST' })   // 重开时发现当日已完成：补发日报（服务端幂等）
           .catch(() => {}).finally(() => this.loadScore());
       }
+    },
+
+    async dayCheck() {
+      // 复活日期校验：静默进行，失败不打扰（离线复活照常答题，提交自会报错）；
+      // 30s 节流防频繁切换标签打爆；仅 today 会话在内存时需要比对。
+      if (!this.today || !this.today.date || this.view !== 'today') return;
+      const now = Date.now();
+      if (this._dayCheckAt && now - this._dayCheckAt < 30000) return;
+      this._dayCheckAt = now;
+      try {
+        const r = await fetch('/api/date');
+        const j = await r.json();
+        if (j.date && j.date !== this.today.date) location.reload();
+      } catch (e) {}
     },
 
     async loadScore() {   // 完成屏积分展示（服务端结算值，前端不可算分防刷）

@@ -419,6 +419,15 @@ def get_today_queue(user_id):
         junior = bool(user and user["mode"] == "junior")
         t = _today()
         t_str = t.isoformat()
+        # 当日完成态（完成事件已结算/已发报）：客户端据此直呈完成屏，防同日重开/隔夜复活重放队列
+        dl = db.execute("""SELECT new_done, review_done, score, report_sent FROM daily_logs
+                           WHERE user_id=? AND date=?""", (user_id, t_str)).fetchone()
+        done = bool(dl and (dl["score"] is not None or dl["report_sent"]))
+        if done:
+            # 已完成：不构建队列（省 get_quiz 配额消耗与抽检排样），客户端直呈完成屏
+            return {"plan": dict(plan), "date": t_str, "done": True,
+                    "done_new": dl["new_done"], "done_review": dl["review_done"],
+                    "warmup": [], "new": [], "learned_today": [], "review": []}
         cutoff = (date.fromisoformat(plan["end_date"]) - timedelta(days=REST_DAYS)).isoformat()
         new_allowance = 0
         if t_str <= cutoff:
@@ -500,7 +509,10 @@ def get_today_queue(user_id):
             item["audit"] = True
             review_items.append(item)
         db.commit()   # get_quiz 的 user_quiz_used 标记与抽检排样都要落盘（v2.6 修复：此前只读路径不 commit 全部回滚）
-        return {"plan": dict(plan), "warmup": warmup_items, "new": new_items,
+        return {"plan": dict(plan), "date": t_str, "done": done,
+                "done_new": dl["new_done"] if dl else 0,
+                "done_review": dl["review_done"] if dl else 0,
+                "warmup": warmup_items, "new": new_items,
                 "learned_today": learned_items, "review": review_items}
     finally:
         db.close()
