@@ -371,6 +371,10 @@ const app = Vue.createApp({
     },
 
     // ---------- 计划 ----------
+    renewPlan() {
+      this.applyGoalDefault();      // 复用建计划表单（记住的目标词量/天数）；旧计划已到期由后端自动完结
+      this.view = 'setup';
+    },
     async createPlan() {
       this.busy = true;
       try {
@@ -573,17 +577,28 @@ const app = Vue.createApp({
       return this.curItem && this.curItem.type === 'newcard' && this.curItem._i === this.today.new.length;
     },
 
-    // 热身轮：对自动过；错停手动（低压但要看到正确答案）
+    // 热身轮：对自动过；错弹卡+重现排尾（答错不再零成本——D+1 乱点会当场再看一遍；
+    // 仍不提交不调度，这些词的正式 D+2 复习本来就在明天）
     warmupAnswer(opt) {
       if (this.today.answered) return;
-      const q = this.curItem.item.quiz;
+      const w = this.curItem;
+      const q = w.item.quiz;
       if (!q) { this.advance(); return; }
       const ok = opt === q.answer;
       this.today.answered = true; this.today.picked = opt;
       this.today.feedback = { ok, warmup: true };
       this.playSfx(ok);
-      this.postQuizLog({ phase: 'warmup', correct: ok });
-      if (ok) this.autoNext(900);
+      this.postQuizLog({ phase: 'warmup', correct: ok, retry: !!w._requeued });
+      if (w._requeued) {                     // 重现轮：对过；错再看卡再排
+        if (ok) { this.autoNext(900); }
+        else { this.today.queue.push({ ...w }); this.openWordDetail(w.item.id, 'wrong'); }
+        return;
+      }
+      if (ok) { this.autoNext(900); }
+      else {
+        this.today.queue.push({ ...w, _requeued: true });
+        this.openWordDetail(w.item.id, 'wrong');
+      }
     },
 
     // 复习（调度轮）：首答提交；答对自动过；答错弹卡后点继续推进

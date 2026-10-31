@@ -418,6 +418,9 @@
         <div class="stat"><b>{{me.progress.dist.streak}}</b><span>连续天数</span></div>
       </div>
       <p class="hint">计划：{{me.progress.plan.start_date}} ～ {{me.progress.plan.end_date}}，每天 {{me.progress.plan.daily_new}} 个新词</p>
+      <div v-if="me.progress.plan.expired" style="margin-top:10px">
+        <button class="btn" @click="renewPlan">🎉 计划已完成，续订新目标</button>
+      </div>
     </div>
   </template>
   <div v-else class="card"><p>还没有学习计划，先去制定一个吧</p></div>

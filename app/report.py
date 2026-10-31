@@ -187,9 +187,13 @@ def build_daily_report(user_id, day=None):
             acc = round(q["ok"] / q["n"] * 100) if q and q["n"] and q["ok"] is not None else None
             trend.append({"date": d, "new": dl["new_done"] if dl else 0,
                           "review": dl["review_done"] if dl else 0, "acc": acc})
-        # 连续天数（与 progress 口径一致）
+        # 连续天数（与 progress 口径一致；报表日当天未学不断签，从前一天起算）
         streak = 0
         d = date.fromisoformat(day)
+        dl0 = db.execute("SELECT new_done, review_done FROM daily_logs WHERE user_id=? AND date=?",
+                         (user_id, d.isoformat())).fetchone()
+        if not (dl0 and (dl0["new_done"] > 0 or (dl0["review_done"] or 0) > 0)):
+            d -= timedelta(days=1)
         while True:
             dl = db.execute("SELECT new_done, review_done FROM daily_logs WHERE user_id=? AND date=?",
                             (user_id, d.isoformat())).fetchone()

@@ -24,7 +24,8 @@ from datetime import date, timedelta
 from database import get_db
 
 INTERVALS = [2, 5, 12]           # stage-1 → 间隔天数（从每次复习当天起算；扩张比≈2.5）
-REST_DAYS = 12                   # 计划尾部停投新词的天数（保证最后的词走完复习周期）
+REST_DAYS = 12                   # 计划尾部停投新词的天数（最后一批词的 D+12 复习会落到计划期之后，
+                                 # 由复习管道继续消化——复习查询不筛 plan，不随计划结束停止）
 REVIEW_CAP = 60                  # 单日复习上限（积压分日消化，不改动调度状态；稳态需求≈3×daily_new）
 NEW_THROTTLE_AT = 80             # 到期复习积压超过此值 → 当日新词减半（先还债再扩新）
 AUDIT_N = 5                      # 掌握词每日抽检数
@@ -354,9 +355,15 @@ def create_plan(user_id, target_words, days):
     段序（GRADE_ORDER）废弃——严格从易到难。摸底产物（skipped）与无归属词（人名）出局。"""
     db = get_db()
     try:
-        row = db.execute("SELECT id FROM study_plans WHERE user_id=? AND status='active'", (user_id,)).fetchone()
+        row = db.execute("SELECT id, end_date FROM study_plans WHERE user_id=? AND status='active'",
+                         (user_id,)).fetchone()
         if row:
-            return None, "已有进行中的计划"
+            if row["end_date"] >= _today().isoformat():
+                return None, "已有进行中的计划"
+            # 已到期计划自动完结并接续新计划（同事务完成，不存在"无 active 计划"的中间态）；
+            # 旧计划未走完复习周期的 learning/mastered 词状态保留——复习查询不筛 plan，
+            # 尾词在新计划下照常服务，新池自动排除已学词
+            db.execute("UPDATE study_plans SET status='completed' WHERE id=?", (row["id"],))
         user = db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
         if need_confirm(db, user):
             return None, "请先完成词表确认"
@@ -481,8 +488,17 @@ def get_today_queue(user_id):
         for r in review:
             item = _word_brief(db, r, user_id, junior, with_senses=False)
             stage_key = STAGE_BY_REVIEW.get(r["stage"], "d2")
-            item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
-                                    stage_key, user_id, junior) or None
+            if r["stage"] == 1 and not junior:
+                # stage1 晋级判定用产出型（语境挖空）优先：zh_word 再认蒙对底线 25%、
+                # "认得出"≠"用得了"，间隔跳 +5 的证据太弱；cloze 借用不耗 d5 配额
+                # （mark_used=False），无 cloze 词（约10%）退化原 d2 zh_word
+                item["quiz"] = (
+                    _quiz_by_type(db, r["id"], "d5", "cloze", user_id, mark_used=False)
+                    or get_quiz(db, r["id"], r["word"], r["definition_zh"],
+                                stage_key, user_id, junior)) or None
+            else:
+                item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
+                                        stage_key, user_id, junior) or None
             review_items.append(item)
         # 掌握词每日抽检（方案A）：当日排样一次，done 标记防重出；答错由 submit_answer 打回 D+2
         db.execute("DELETE FROM audit_schedule WHERE user_id=? AND date<?", (user_id, t_str))
@@ -637,6 +653,11 @@ def get_progress(user_id):
             dist[r["st"]] = r["c"]
         streak = 0
         d = _today()
+        # 今天未学不断签：无今日日志时从昨天起算（否则当天一打开 app 永远显示 0，挫伤积极性）
+        today_log = db.execute("SELECT new_done, review_done FROM daily_logs WHERE user_id=? AND date=?",
+                               (user_id, d.isoformat())).fetchone()
+        if not (today_log and (today_log["new_done"] > 0 or (today_log["review_done"] or 0) > 0)):
+            d -= timedelta(days=1)
         while True:
             log = db.execute("SELECT new_done, review_done FROM daily_logs WHERE user_id=? AND date=?",
                              (user_id, d.isoformat())).fetchone()
@@ -646,7 +667,9 @@ def get_progress(user_id):
                 d -= timedelta(days=1)
             else:
                 break
-        return {"plan": dict(plan), "dist": dist, "streak": streak,
+        p = dict(plan)
+        p["expired"] = plan["end_date"] < _today().isoformat()   # 到期可续订（前端续订入口依据）
+        return {"plan": p, "dist": dist, "streak": streak,
                 "learned_total": dist["mastered"] + dist["learning"]}
     finally:
         db.close()
