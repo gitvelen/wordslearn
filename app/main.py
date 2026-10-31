@@ -59,6 +59,11 @@ class GradeIn(BaseModel):
 class PlanIn(BaseModel):
     target_words: int
     days: int
+    library_id: int | None = None      # 自选词库（v3.0）；None=续订时继承旧库，新计划=年级推导池
+
+class LibraryCreateIn(BaseModel):
+    name: str
+    entries: list                      # [{word_id}] 已确认库内词 | [{word}] 库外词文本（按录入顺序）
 
 class AnswerIn(BaseModel):
     word_id: int
@@ -145,10 +150,53 @@ def create_plan(body: PlanIn, request: Request):
     user = auth.current_user(request)
     if not (10 <= body.target_words <= 3000 and 14 <= body.days <= 365):
         raise HTTPException(400, "参数范围: 词数10-3000, 天数14-365（含12天复习收尾期）")
-    plan, err = scheduler.create_plan(user["id"], body.target_words, body.days)
+    plan, err = scheduler.create_plan(user["id"], body.target_words, body.days, body.library_id)
     if err:
         raise HTTPException(400, err)
     return plan
+
+
+# ---------- 自选词库（v3.0）----------
+@app.get("/api/libraries")
+def libraries(request: Request):
+    user = auth.current_user(request)
+    return {"libraries": scheduler.list_libraries(user["id"])}
+
+
+@app.get("/api/library/lookup")
+def library_lookup(request: Request, q: str):
+    """词录入消歧：精确/同音/近似/中文反查（家长语音或手工输入）。"""
+    auth.current_user(request)
+    return scheduler.library_lookup(q)
+
+
+@app.post("/api/library/create")
+def library_create(body: LibraryCreateIn, request: Request):
+    user = auth.current_user(request)
+    try:
+        out = scheduler.create_library(user["id"], body.name.strip(), body.entries)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return out
+
+
+@app.get("/api/library/{lib_id}")
+def library_detail(request: Request, lib_id: int):
+    user = auth.current_user(request)
+    lib = scheduler.get_library(user["id"], lib_id)
+    if not lib:
+        raise HTTPException(404, "词库不存在")
+    return lib
+
+
+@app.delete("/api/library/{lib_id}")
+def library_delete(request: Request, lib_id: int):
+    user = auth.current_user(request)
+    try:
+        scheduler.delete_library(user["id"], lib_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"ok": True}
 
 
 @app.get("/api/date")

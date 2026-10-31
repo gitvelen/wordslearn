@@ -335,6 +335,198 @@ def confirm_finish(user_id):
         db.close()
 
 
+# ---------- 自选词库（v3.0）----------
+def _levenshtein(a, b):
+    """编辑距离（lookup 近似候选用；词表 2.4k 规模全扫可接受）"""
+    if a == b:
+        return 0
+    la, lb = len(a), len(b)
+    if la == 0:
+        return lb
+    if lb == 0:
+        return la
+    prev = list(range(lb + 1))
+    for i in range(1, la + 1):
+        cur = [i] + [0] * lb
+        for j in range(1, lb + 1):
+            cur[j] = min(prev[j] + 1, cur[j - 1] + 1,
+                         prev[j - 1] + (a[i - 1] != b[j - 1]))
+        prev = cur
+    return prev[lb]
+
+
+def _is_zh(q):
+    return any("一" <= ch <= "鿿" for ch in q)
+
+
+def _phono_keys(s):
+    """音标归一化：剥重音符/长音符/括号，多音标（'fɔr, for'）按逗号拆成多键。
+    phonetic_us 源自 CMUdict 同一转换器，同发音归一后必相等（two='tu'/too='ˈtuː'→'tu'）。"""
+    if not s:
+        return set()
+    return {"".join(ch for ch in part.lower() if ch not in "ˈˌː(). ")
+            for part in s.split(",")}
+
+
+def library_lookup(q):
+    """语音/手工录入的词消歧（三级）：
+    ① 英文精确命中 → match（若库内有同音词附 alternatives 供家长换选）
+    ② 未命中 → 编辑距离近似候选（含中文释义反查：家长念中文）
+    ③ 全落空 → not_found（前端标"待生成"，内容管线补齐）"""
+    q = " ".join((q or "").strip().lower().split())
+    if not q:
+        return {"q": q, "candidates": []}
+    db = get_db()
+    try:
+        if _is_zh(q):
+            rows = db.execute("""SELECT id, word, phonetic_uk, phonetic_us, definition_zh, emoji
+                                 FROM words WHERE definition_zh LIKE ?
+                                 ORDER BY COALESCE(frq, 999999), id LIMIT 8""", (f"%{q}%",)).fetchall()
+            return {"q": q, "zh": True,
+                    "candidates": [dict(r) for r in rows]}
+        exact = db.execute("""SELECT id, word, phonetic_uk, phonetic_us, definition_zh, emoji
+                              FROM words WHERE lower(word)=lower(?)
+                              LIMIT 1""", (q,)).fetchone()
+        if exact:
+            keys = _phono_keys(exact["phonetic_us"])
+            alternatives = []
+            if keys:
+                for r in db.execute("""SELECT word, phonetic_us, definition_zh, emoji, frq FROM words
+                                       WHERE phonetic_us IS NOT NULL AND word != ?""",
+                                     (q,)).fetchall():
+                    if _phono_keys(r["phonetic_us"]) & keys:
+                        alternatives.append(r)
+                alternatives.sort(key=lambda r: r["frq"] if r["frq"] else 999999)
+                alternatives = alternatives[:5]
+            out = {"q": q, "match": {k: exact[k] for k in
+                                     ("id", "word", "phonetic_uk", "phonetic_us", "definition_zh", "emoji")}}
+            if alternatives:
+                out["alternatives"] = [dict(r) for r in alternatives]
+            return out
+        # 近似候选：编辑距离 ≤（词长≤4 为1，否则2），按距离+词频排
+        cands = []
+        for r in db.execute("""SELECT id, word, phonetic_uk, phonetic_us, definition_zh, emoji, frq
+                               FROM words WHERE length(word) BETWEEN ? AND ?""",
+                            (max(2, len(q) - 2), len(q) + 2)).fetchall():
+            d = _levenshtein(q, r["word"])
+            if d <= (1 if len(q) <= 4 else 2):
+                cands.append((d, r["frq"] if r["frq"] else 999999, r))
+        cands.sort(key=lambda x: (x[0], x[1]))
+        return {"q": q, "candidates": [dict(r) for _, _, r in cands[:8]]}
+    finally:
+        db.close()
+
+
+def create_library(user_id, name, entries):
+    """建词库：entries = [{word_id}|{word}]（word=库外词文本，先插 words 占位，
+    释义/音标由内容管线从 ECDICT 补）。返回库 id 与待生成词数。"""
+    if not name or not entries:
+        raise ValueError("词库名和词都不能为空")
+    if len(entries) > 500:
+        raise ValueError("单个词库最多 500 词")
+    db = get_db()
+    try:
+        seen, resolved = set(), []
+        for e in entries:
+            if "word_id" in e:
+                wid, w = int(e["word_id"]), None
+                row = db.execute("SELECT word FROM words WHERE id=?", (wid,)).fetchone()
+                if not row:
+                    raise ValueError(f"word_id {wid} 不存在")
+            else:
+                w = " ".join(str(e.get("word", "")).strip().lower().split())
+                if not w:
+                    continue
+                row = db.execute("SELECT id FROM words WHERE word=?", (w,)).fetchone()
+                if row:
+                    wid = row["id"]
+                else:                       # 库外词：占位入库，管线补内容
+                    cur = db.execute("INSERT INTO words(word) VALUES(?)", (w,))
+                    wid = cur.lastrowid
+            if wid not in seen:
+                seen.add(wid)
+                resolved.append(wid)
+        if not resolved:
+            raise ValueError("没有有效词")
+        pending = [wid for wid in resolved
+                   if not db.execute("SELECT 1 FROM word_senses WHERE word_id=? LIMIT 1",
+                                     (wid,)).fetchone()]
+        cur = db.execute("""INSERT INTO word_libraries(user_id, name, source_type)
+                            VALUES(?,?,'custom')""", (user_id, name))
+        lib_id = cur.lastrowid
+        db.executemany("INSERT INTO library_words(library_id, word_id, seq) VALUES(?,?,?)",
+                       [(lib_id, wid, i + 1) for i, wid in enumerate(resolved)])
+        db.commit()
+        return {"library_id": lib_id, "total": len(resolved), "pending": len(pending)}
+    finally:
+        db.close()
+
+
+def library_ready(db, lib_id):
+    """库内容就绪判定：全部词已有义项（题库缺可现算兜底、音频缺走 TTS 兜底）"""
+    n = db.execute("""SELECT COUNT(*) c FROM library_words lw
+                      WHERE lw.library_id=?
+                        AND NOT EXISTS (SELECT 1 FROM word_senses s WHERE s.word_id=lw.word_id)""",
+                   (lib_id,)).fetchone()["c"]
+    return n == 0
+
+
+def list_libraries(user_id):
+    """可选词库：预置教材库（user_id IS NULL）+ 本用户自建库。"""
+    db = get_db()
+    try:
+        out = []
+        for r in db.execute("""SELECT l.*, COUNT(lw.word_id) n FROM word_libraries l
+                               LEFT JOIN library_words lw ON lw.library_id=l.id
+                               WHERE l.user_id IS NULL OR l.user_id=?
+                               GROUP BY l.id ORDER BY l.user_id IS NOT NULL, l.id""",
+                            (user_id,)).fetchall():
+            d = dict(r)
+            d["ready"] = library_ready(db, d["id"])
+            out.append(d)
+        return out
+    finally:
+        db.close()
+
+
+def get_library(user_id, lib_id, with_words=True):
+    db = get_db()
+    try:
+        r = db.execute("SELECT * FROM word_libraries WHERE id=?", (lib_id,)).fetchone()
+        if not r or (r["user_id"] and r["user_id"] != user_id):
+            return None
+        d = dict(r)
+        d["ready"] = library_ready(db, lib_id)
+        if with_words:
+            d["words"] = [dict(w) for w in db.execute("""
+                SELECT w.id, w.word, w.phonetic_uk, w.definition_zh, w.frq,
+                       CASE WHEN EXISTS (SELECT 1 FROM word_senses s WHERE s.word_id=w.id)
+                            THEN 0 ELSE 1 END AS pending
+                FROM library_words lw JOIN words w ON w.id=lw.word_id
+                WHERE lw.library_id=? ORDER BY lw.seq""", (lib_id,)).fetchall()]
+        return d
+    finally:
+        db.close()
+
+
+def delete_library(user_id, lib_id):
+    """仅自建库可删；被 active 计划引用的不可删。"""
+    db = get_db()
+    try:
+        r = db.execute("SELECT user_id FROM word_libraries WHERE id=?", (lib_id,)).fetchone()
+        if not r or r["user_id"] != user_id:
+            raise ValueError("词库不存在")
+        used = db.execute("""SELECT 1 FROM study_plans WHERE library_id=? AND status='active' LIMIT 1""",
+                          (lib_id,)).fetchone()
+        if used:
+            raise ValueError("词库正在被进行中的计划使用")
+        db.execute("DELETE FROM library_words WHERE library_id=?", (lib_id,))
+        db.execute("DELETE FROM word_libraries WHERE id=?", (lib_id,))
+        db.commit()
+    finally:
+        db.close()
+
+
 # ---------- 计划 ----------
 def _today() -> date:
     return date.today()
@@ -350,12 +542,13 @@ def _pool_grades(grade):
     return ("JUNIOR",)
 
 
-def create_plan(user_id, target_words, days):
+def create_plan(user_id, target_words, days, library_id=None):
     """v4.1：池 = 年级段内候选（无状态或 new/verify 遗留）按全局词频序取 target。
-    段序（GRADE_ORDER）废弃——严格从易到难。摸底产物（skipped）与无归属词（人名）出局。"""
+    v3.0：指定 library_id → 池 = 库内词按录入序（教材单元序），不改词频序语义。
+    续订继承：到期接续且未显式传库时，沿用旧计划的库。"""
     db = get_db()
     try:
-        row = db.execute("SELECT id, end_date FROM study_plans WHERE user_id=? AND status='active'",
+        row = db.execute("SELECT id, end_date, library_id FROM study_plans WHERE user_id=? AND status='active'",
                          (user_id,)).fetchone()
         if row:
             if row["end_date"] >= _today().isoformat():
@@ -364,27 +557,43 @@ def create_plan(user_id, target_words, days):
             # 旧计划未走完复习周期的 learning/mastered 词状态保留——复习查询不筛 plan，
             # 尾词在新计划下照常服务，新池自动排除已学词
             db.execute("UPDATE study_plans SET status='completed' WHERE id=?", (row["id"],))
+            if library_id is None:
+                library_id = row["library_id"]
         user = db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
         if need_confirm(db, user):
             return None, "请先完成词表确认"
-        grades = _pool_grades(user["grade"] if user else None)
-        pool = [r["id"] for r in db.execute("""
-            SELECT w.id FROM words w
-            JOIN word_levels l ON l.word_id=w.id AND l.grade_code IN (%s)
-            WHERE NOT EXISTS (SELECT 1 FROM user_word_state s
-                              WHERE s.user_id=? AND s.word_id=w.id
-                                AND s.state IN ('learning','mastered','skipped'))
-            GROUP BY w.id
-            ORDER BY COALESCE(w.frq, 999999), w.id""" % ",".join("?" * len(grades)),
-            (*grades, user_id)).fetchall()]
+        if library_id:
+            lib = db.execute("SELECT * FROM word_libraries WHERE id=?", (library_id,)).fetchone()
+            if not lib or (lib["user_id"] and lib["user_id"] != user_id):
+                return None, "词库不存在"
+            if not library_ready(db, library_id):
+                return None, "词库内容还在准备中，请稍后再试"
+            pool = [r["id"] for r in db.execute("""
+                SELECT w.id FROM library_words lw JOIN words w ON w.id=lw.word_id
+                WHERE lw.library_id=?
+                  AND NOT EXISTS (SELECT 1 FROM user_word_state s
+                                  WHERE s.user_id=? AND s.word_id=w.id
+                                    AND s.state IN ('learning','mastered','skipped'))
+                ORDER BY lw.seq""", (library_id, user_id)).fetchall()]
+        else:
+            grades = _pool_grades(user["grade"] if user else None)
+            pool = [r["id"] for r in db.execute("""
+                SELECT w.id FROM words w
+                JOIN word_levels l ON l.word_id=w.id AND l.grade_code IN (%s)
+                WHERE NOT EXISTS (SELECT 1 FROM user_word_state s
+                                  WHERE s.user_id=? AND s.word_id=w.id
+                                    AND s.state IN ('learning','mastered','skipped'))
+                GROUP BY w.id
+                ORDER BY COALESCE(w.frq, 999999), w.id""" % ",".join("?" * len(grades)),
+                (*grades, user_id)).fetchall()]
         target = min(target_words, len(pool))
         if target <= 0:
             return None, "没有可学的词"
         daily_new = max(1, math.ceil(target / max(1, days - REST_DAYS)))
         start, end = _today(), _today() + timedelta(days=days - 1)
-        cur = db.execute("""INSERT INTO study_plans(user_id, target_words, start_date, end_date, daily_new)
-                            VALUES(?,?,?,?,?)""",
-                         (user_id, target, start.isoformat(), end.isoformat(), daily_new))
+        cur = db.execute("""INSERT INTO study_plans(user_id, target_words, start_date, end_date, daily_new, library_id)
+                            VALUES(?,?,?,?,?,?)""",
+                         (user_id, target, start.isoformat(), end.isoformat(), daily_new, library_id))
         plan_id = cur.lastrowid
         db.executemany("INSERT INTO plan_words(plan_id, word_id, seq) VALUES(?,?,?)",
                        [(plan_id, wid, i + 1) for i, wid in enumerate(pool[:target])])

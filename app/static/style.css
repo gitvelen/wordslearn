@@ -277,3 +277,34 @@ label { display: block; margin: 10px 0; font-size: 15px; }
 .score-banner { font-size: 20px; font-weight: 700; color: #2f3852; margin: 6px 0 2px; }
 .score-banner b { font-size: 30px; color: #f5a623; }
 .score-banner .sub { font-size: 13px; font-weight: 400; color: #98a1b9; margin-left: 6px; }
+
+/* ===== v3.0 自选词库 ===== */
+.scope-row { display: flex; gap: 10px; margin-top: 8px; }
+.scope-btn { flex: 1; background: #e8ebf5; }
+.scope-btn.on { border-color: var(--primary); background: #eef1ff; }
+.lib-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+.lib-item { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            padding: 12px 14px; background: #fff; border: 2px solid #e3e7f2; border-radius: 14px; }
+.lib-item.sel { border-color: var(--primary); background: #eef1ff; }
+.lib-info { display: flex; flex-direction: column; gap: 2px; }
+.lib-ops { display: flex; gap: 6px; flex-shrink: 0; }
+.lib-input-row { display: flex; gap: 8px; margin-top: 6px; }
+.lib-input-row input { flex: 1; }
+.lib-input-row .btn.rec { background: #fde2e2; border-color: #e5534b; animation: pulse 1s infinite; }
+.lib-lookup-result { margin: 10px 0; padding: 10px 12px; background: #f6f8ff; border-radius: 12px; }
+.ok-line { color: #2c8a4b; font-weight: 600; }
+.pend-line { color: #b07a1a; }
+.alt-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.btn.chip { padding: 6px 10px; font-size: 14px; border-radius: 999px; }
+.btn.chip small { opacity: .65; font-size: 12px; }
+.btn.chip.del { color: #c0392b; }
+.lib-words { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.lib-word { padding: 8px 12px; background: #f4f6fb; border-radius: 10px; font-size: 15px;
+            display: flex; gap: 8px; align-items: center; }
+.lib-word.pend { background: #fdf3e0; }
+.word-chip { padding: 6px 10px; background: #eef1ff; border-radius: 999px; font-size: 15px; cursor: pointer; }
+.word-chip.pend { background: #fdf3e0; }
+.word-chip small { opacity: .7; }
+.pend-tag { color: #b07a1a; font-size: 12px; }
+.row { display: flex; gap: 10px; margin-top: 14px; }
+.row .btn { flex: 1; }

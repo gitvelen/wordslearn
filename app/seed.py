@@ -388,6 +388,39 @@ def seed_phonetic():
     print(f"音标补齐: {n} 词")
 
 
+def seed_enrich():
+    """v3.0 词库新增词富化（ECDICT+cmudict 产物）：data/parsed/library_enrich.jsonl
+    每行: {word, definition_zh, phonetic_uk, phonetic_us, frq}——只填空缺不覆盖。"""
+    import json
+    f = BASE.parent / "data" / "parsed" / "library_enrich.jsonl"
+    if not f.exists():
+        print("缺 data/parsed/library_enrich.jsonl（先跑 gen_library_content.py）"); return
+    init_db()
+    db = get_db()
+    n = 0
+    for line in f.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        d = json.loads(line)
+        row = db.execute("SELECT id, definition_zh, phonetic_uk, phonetic_us, frq FROM words WHERE word=?",
+                         (d["word"],)).fetchone()
+        if not row:
+            print(f"  跳过（词表无此词）: {d['word']}")
+            continue
+        db.execute("""UPDATE words SET
+                        definition_zh=COALESCE(definition_zh, ?),
+                        phonetic_uk=COALESCE(phonetic_uk, ?),
+                        phonetic_us=COALESCE(phonetic_us, ?),
+                        frq=COALESCE(frq, ?) WHERE id=?""",
+                   (d.get("definition_zh"), d.get("phonetic_uk"), d.get("phonetic_us"),
+                    d.get("frq"), row["id"]))
+        n += 1
+    db.commit()
+    db.close()
+    print(f"词库富化: {n} 词")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
     if cmd == "words":
@@ -408,6 +441,8 @@ if __name__ == "__main__":
         seed_phonetic()
     elif cmd == "forms":
         seed_forms()
+    elif cmd == "enrich":
+        seed_enrich()
     else:
-        print("用法: python seed.py words|users|audio|emoji|frq|senses|quiz|forms|phonetic")
+        print("用法: python seed.py words|users|audio|emoji|frq|senses|quiz|forms|phonetic|enrich")
         sys.exit(1)

@@ -1,10 +1,11 @@
 """SQLite 数据模型与初始化 — wordslearn
 表结构按设计定稿实现（详见交接简报），schema_migrations 用于版本追踪。
 """
+import os
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "data" / "wordslearn.db"
+DB_PATH = Path(os.environ.get("WL_DB") or (Path(__file__).parent / "data" / "wordslearn.db"))
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS words (
@@ -44,7 +45,25 @@ CREATE TABLE IF NOT EXISTS users (
   created_at    TEXT DEFAULT (datetime('now'))
 );
 
+-- v3.0 自选词库：user_id NULL=预置教材库（全局共享），非 NULL=用户自建
+CREATE TABLE IF NOT EXISTS word_libraries (
+  id          INTEGER PRIMARY KEY,
+  user_id     INTEGER REFERENCES users(id),
+  name        TEXT NOT NULL,
+  source_type TEXT NOT NULL DEFAULT 'custom',   -- 'textbook' | 'custom'
+  note        TEXT,
+  created_at  TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS library_words (
+  library_id INTEGER NOT NULL REFERENCES word_libraries(id),
+  word_id    INTEGER NOT NULL REFERENCES words(id),
+  seq        INTEGER NOT NULL,                  -- 学习顺序（教材单元序/录入序）
+  UNIQUE(library_id, word_id)
+);
+CREATE INDEX IF NOT EXISTS idx_library_words ON library_words(library_id, seq);
+
 CREATE TABLE IF NOT EXISTS study_plans (
+  library_id   INTEGER REFERENCES word_libraries(id),   -- NULL=年级推导池（默认路径）
   id           INTEGER PRIMARY KEY,
   user_id      INTEGER NOT NULL REFERENCES users(id),
   status       TEXT NOT NULL DEFAULT 'active',      -- active|completed|abandoned
@@ -199,6 +218,9 @@ def _migrate(conn):
         conn.execute("ALTER TABLE daily_logs ADD COLUMN report_sent INTEGER DEFAULT 0")
     if "score" not in dl_cols:
         conn.execute("ALTER TABLE daily_logs ADD COLUMN score INTEGER")
+    sp_cols = [r["name"] for r in conn.execute("PRAGMA table_info(study_plans)")]
+    if "library_id" not in sp_cols:
+        conn.execute("ALTER TABLE study_plans ADD COLUMN library_id INTEGER")
 
 
 def init_db():
