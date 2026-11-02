@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="单词星球">
-<link rel="stylesheet" href="/style.css?v=b22">
+<link rel="stylesheet" href="/style.css?v=b23">
 </head>
 <body>
 <div id="app">
@@ -209,34 +209,38 @@
 <section v-if="view==='library'" class="wrap">
   <template v-if="libDetail">
     <h2>{{libDetail.name}}</h2>
-    <p class="sub">{{libDetail.words.length}} 词<span v-if="!libDetail.ready">（内容准备中，暂不能用）</span></p>
+    <p class="sub">{{libDetail.words.length}} 词 · {{libStatusText(libDetail)}}</p>
     <div class="lib-words">
       <div v-for="(w,i) in libDetail.words" :key="w.id" class="lib-word" :class="{pend: w.pending}">
         <b>{{i+1}}. {{w.word}}</b>
-        <span v-if="w.pending" class="pend-tag">待生成</span>
+        <span v-if="w.pending" class="pend-tag">精修中</span>
         <span v-else class="sub">{{w.definition_zh}}</span>
+        <span v-if="libDetail.user_id && !libDetail.in_use" class="word-del" @click="libRemoveWord(w)">✕</span>
       </div>
     </div>
-    <button class="btn big" @click="libDetail=null">← 返回</button>
-    <button v-if="libDetail.user_id" class="btn primary big" @click="libChoose(libDetail)">用这个学</button>
+    <div class="row">
+      <button class="btn big" @click="libDetail=null">← 返回</button>
+      <button v-if="libDetail.user_id" class="btn big" @click="libOpenBuilder(libDetail)">＋ 加词</button>
+      <button v-if="libDetail.user_id" class="btn primary big" @click="libChoose(libDetail)">用这个学</button>
+    </div>
   </template>
 
   <template v-else-if="libBuilder.open">
-    <h2>新建词单 ✏️</h2>
+    <h2>{{libBuilder.editing ? '往词单加词 ➕' : '新建词单 ✏️'}}</h2>
     <div class="card">
-      <label>词单名字
+      <label v-if="!libBuilder.editing">词单名字
         <input type="text" v-model="libBuilder.name" placeholder="如：一年级教材词 / 老师词单" maxlength="30">
       </label>
-      <label>添加单词（念出来或打出来）
+      <label>{{libBuilder.editing ? '添加单词' : '添加单词（念出来或打出来）'}}
         <div class="lib-input-row">
           <input type="text" v-model="libBuilder.input" placeholder="如 apple"
                  @keyup.enter="libLookup" autocapitalize="off" autocorrect="off" spellcheck="false">
-          <button v-if="speechSupported()" class="btn" :class="{rec: rec2.listening}"
-                  @click="startLibVoice" :disabled="rec2.listening">🎤</button>
+          <button class="btn" :class="{rec: rec2.recording}"
+                  @click="libVoiceToggle">{{rec2.recording ? '⏹' : '🎤'}}</button>
           <button class="btn primary" @click="libLookup" :disabled="libBuilder.looking">添加</button>
         </div>
       </label>
-      <p class="hint">📱 用键盘上的 🎤 麦克风键可以语音输入</p>
+      <p class="hint">{{rec2.recording ? '🔴 录音中…念完点 ⏹' : '🎤 念出来（自动识别）或用键盘打字/听写'}}</p>
 
       <div v-if="libBuilder.result" class="lib-lookup-result">
         <template v-if="libBuilder.result.kind==='added'">
@@ -252,21 +256,21 @@
           <button v-for="c in libBuilder.result.candidates" :key="c.id" class="btn chip"
                   @click="libPickCand(c)">{{c.word}} <small>{{c.definition_zh}}</small></button>
         </template>
-        <p v-else class="pend-line">⏳ 词库外的新词已加入，学习内容（释义/题目/发音）会随后生成</p>
+        <p v-else class="pend-line">🆕 新词已加入，释义自动补齐，例句和题目正在生成</p>
       </div>
 
-      <p class="sub" v-if="libBuilder.words.length">
-        共 {{libBuilder.words.length}} 词<span v-if="libBuilder.words.filter(w=>w.pending).length">，其中 {{libBuilder.words.filter(w=>w.pending).length}} 个待生成</span>
-      </p>
+      <p class="sub" v-if="libBuilder.words.length">本次 {{libBuilder.words.length}} 词</p>
       <div class="lib-words">
         <span v-for="(w,i) in libBuilder.words" :key="(w.word_id||w.word)+'-'+i"
               class="word-chip" :class="{pend: w.pending}" @click="libRemove(i)">
-          {{w.word}} <small v-if="w.pending">待生成</small> ✕
+          {{w.word}} ✕
         </span>
       </div>
       <div class="row">
         <button class="btn big" @click="libBuilder.open=false">← 返回</button>
-        <button class="btn primary big" @click="libSave" :disabled="busy || !libBuilder.words.length">保存词单</button>
+        <button class="btn primary big" @click="libSave" :disabled="busy || !libBuilder.words.length">
+          {{libBuilder.editing ? '加进去' : '保存词单'}}
+        </button>
       </div>
     </div>
   </template>
@@ -278,18 +282,18 @@
       <div v-for="l in libraries" :key="l.id" class="lib-item" :class="{sel: planForm.library_id===l.id}">
         <div class="lib-info">
           <b>{{l.name}}</b>
-          <span class="sub">{{l.n}} 词 · {{l.ready ? '可用' : '内容准备中'}}</span>
+          <span class="sub">{{l.n}} 词 · {{libStatusText(l)}}</span>
         </div>
         <div class="lib-ops">
           <button class="btn chip" @click="libView(l.id)">查看</button>
           <button v-if="l.user_id" class="btn chip del" @click="libDelete(l)">删除</button>
-          <button class="btn chip primary" v-if="l.ready" @click="libChoose(l)">选用</button>
+          <button class="btn chip primary" v-if="l.usable" @click="libChoose(l)">选用</button>
         </div>
       </div>
     </div>
     <div class="row">
       <button class="btn big" @click="libChooseNone">← 用系统推荐</button>
-      <button class="btn primary big" @click="libOpenBuilder">＋ 新建词单</button>
+      <button class="btn primary big" @click="libOpenBuilder()">＋ 新建词单</button>
     </div>
   </template>
 </section>
@@ -565,6 +569,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b22"></script>
+<script src="/app.js?v=b23"></script>
 </body>
 </html>

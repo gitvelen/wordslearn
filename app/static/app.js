@@ -35,7 +35,7 @@ const app = Vue.createApp({
       libDetail: null,               // 查看中的词库详情
       libBuilder: { open: false, name: '', input: '', looking: false,
                     result: null, words: [] },   // words: [{word_id?, word, definition_zh?, pending}]
-      rec2: { listening: false },    // 🎤 SpeechRecognition（iOS 不稳仅作辅助；主路径=键盘听写）
+      rec2: { recording: false, mediaRecorder: null, chunks: [], err: '' },   // 🎤 录音→服务端 ASR
       GRADE_LABELS: { '1A': '一年级上', '1B': '一年级下', '2A': '二年级上', '2B': '二年级下',
                       '3A': '三年级上', '3B': '三年级下', '4A': '四年级上', '4B': '四年级下',
                       '5A': '五年级上', '5B': '五年级下', '6A': '六年级上', '6B': '六年级下',
@@ -136,7 +136,8 @@ const app = Vue.createApp({
     async api(path, opts = {}) {
       const init = { headers: {}, credentials: 'same-origin' };
       if (opts.method) init.method = opts.method;
-      if (opts.body) { init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(opts.body); }
+      if (opts.raw) { init.body = opts.raw; }             // FormData（录音上传等），浏览器自动设 boundary
+      else if (opts.body) { init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(opts.body); }
       let r;
       try {
         r = await fetch(path, init);
@@ -378,9 +379,11 @@ const app = Vue.createApp({
       this.view = 'setup';
     },
 
-    // ---------- 自选词库（v3.0）----------
-    speechSupported() {
-      return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    // ---------- 自选词库（v3.0/v3.1）----------
+    libStatusText(l) {
+      if (l.ready) return '✅ 完整版';
+      if (l.usable) return l.pend_senses ? `可学 · ${l.pend_senses} 词精修中` : '可学';
+      return '准备中';
     },
     async loadLibraries() {
       const r = await this.api('/api/libraries');
@@ -395,12 +398,22 @@ const app = Vue.createApp({
       if (!this.libLoaded) await this.loadLibraries();
       this.libDetail = null; this.libBuilder.open = false;
       this.view = 'library';
+      if (!this._libTimer) this._libTimer = setInterval(() => this.libRefresh(), 5000);
     },
     async libView(id) {
       this.libDetail = await this.api(`/api/library/${id}`);
     },
+    async libRefresh() {          // 轮询刷新：精修完成后状态自动升级
+      if (this.view !== 'library') return;
+      await this.loadLibraries();
+      if (this.libDetail && !this.libBuilder.open) {
+        const id = this.libDetail.id;
+        const fresh = this.libraries.find(x => x.id === id);
+        if (fresh && fresh.pend_senses !== this.libDetail.pend_senses) this.libDetail = await this.api(`/api/library/${id}`);
+      }
+    },
     libChoose(lib) {
-      if (!lib.ready) { this.showToast('这个词库的内容还在准备中', 'bad'); return; }
+      if (!lib.usable) { this.showToast('这个词库还有词在准备中，几秒后重试', 'bad'); return; }
       this.planForm.library_id = lib.id;
       this.view = 'setup';
     },
@@ -417,8 +430,20 @@ const app = Vue.createApp({
         this.showToast('已删除', 'ok');
       } catch (e) { this.showToast(e.message, 'bad'); }
     },
-    libOpenBuilder() {
-      this.libBuilder = { open: true, name: '', input: '', looking: false, result: null, words: [] };
+    libOpenBuilder(editing = null) {
+      // editing=库详情对象 → 编辑模式（追加词到已有库）
+      this.libBuilder = { open: true, editing: editing ? editing.id : null,
+                          name: editing ? editing.name : '', input: '',
+                          looking: false, result: null, words: [] };
+    },
+    async libRemoveWord(w) {
+      if (!confirm(`从词单移除「${w.word}」？`)) return;
+      try {
+        await this.api(`/api/library/${this.libDetail.id}/remove_word`,
+                       { method: 'POST', body: { word_id: w.id } });
+        this.libDetail = await this.api(`/api/library/${this.libDetail.id}`);
+        await this.loadLibraries();
+      } catch (e) { this.showToast(e.message, 'bad'); }
     },
     async libLookup() {
       const q = this.libBuilder.input.trim();
@@ -458,34 +483,86 @@ const app = Vue.createApp({
     libRemove(idx) { this.libBuilder.words.splice(idx, 1); this.libBuilder.result = null; },
     async libSave() {
       const B = this.libBuilder;
-      if (!B.name.trim()) { this.showToast('先给词单起个名字', 'bad'); return; }
+      if (!B.editing && !B.name.trim()) { this.showToast('先给词单起个名字', 'bad'); return; }
       if (!B.words.length) { this.showToast('至少加一个词', 'bad'); return; }
       this.busy = true;
       try {
         const entries = B.words.map(w => w.word_id ? { word_id: w.word_id } : { word: w.word });
-        const r = await this.api('/api/library/create', { method: 'POST',
-                                                          body: { name: B.name.trim(), entries } });
+        if (B.editing) {
+          const r = await this.api(`/api/library/${B.editing}/add_words`,
+                                   { method: 'POST', body: { entries } });
+          this.libBuilder.open = false;
+          this.libDetail = await this.api(`/api/library/${B.editing}`);
+          this.showToast(`已加 ${r.added} 词`, 'ok');
+        } else {
+          const r = await this.api('/api/library/create', { method: 'POST',
+                                                            body: { name: B.name.trim(), entries } });
+          this.libBuilder.open = false;
+          this.showToast(`已保存「${B.name}」，可以开始学了`, 'ok');
+        }
         await this.loadLibraries();
-        this.libBuilder.open = false;
-        this.showToast(r.pending ? `已保存「${B.name}」，${r.pending} 个新词的学习内容稍后生成`
-                                 : `已保存「${B.name}」`, 'ok');
       } catch (e) { this.showToast(e.message, 'bad'); }
       this.busy = false;
     },
-    startLibVoice() {                        // 🎤 辅助路径（iOS 不稳）；主路径=键盘麦克风听写
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR || this.rec2.listening) return;
-      const r = new SR();
-      r.lang = 'en-US'; r.interimResults = false; r.maxAlternatives = 1;
-      r.onstart = () => { this.rec2.listening = true; };
-      r.onend = () => { this.rec2.listening = false; };
-      r.onerror = () => { this.rec2.listening = false;
-                          this.showToast('语音识别不可用，请用键盘上的 🎤 听写', 'bad'); };
-      r.onresult = (e) => {
-        const t = (e.results[0][0].transcript || '').trim();
-        if (t) { this.libBuilder.input = t; this.libLookup(); }
-      };
-      r.start();
+    async blobToWav(blob) {                  // 录音 blob → 16k 单声道 WAV（智谱 ASR 只收 mp3/wav）
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+      await ctx.close();
+      const rate = 16000, ch = buf.getChannelData(0);
+      const ratio = buf.sampleRate / rate, n = Math.floor(ch.length / ratio);
+      const out = new Float32Array(n);
+      for (let i = 0; i < n; i++) out[i] = ch[Math.floor(i * ratio)];
+      const pcm = new Int16Array(n);
+      for (let i = 0; i < n; i++) pcm[i] = Math.max(-1, Math.min(1, out[i])) * 32767;
+      const head = new ArrayBuffer(44), v = new DataView(head);
+      const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+      ws(0, 'RIFF'); v.setUint32(4, 36 + pcm.length * 2, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+      v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true);
+      v.setUint16(32, 2, true); v.setUint16(34, 16, true); ws(36, 'data');
+      v.setUint32(40, pcm.length * 2, true);
+      return new Blob([head, pcm], { type: 'audio/wav' });
+    },
+    async libVoiceToggle() {                 // 🎤 录音 → 服务端 ASR（glm-asr）
+      const R = this.rec2;
+      if (R.recording) {
+        if (R.mediaRecorder && R.mediaRecorder.state !== 'inactive') R.mediaRecorder.stop();
+        return;
+      }
+      if (!navigator.mediaDevices || !window.MediaRecorder) {
+        this.showToast('此设备不支持录音，请用键盘上的 🎤 听写', 'bad'); return;
+      }
+      R.err = '';
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mime = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4'
+                   : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+        const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+        R.chunks = []; R.recording = true; R.mediaRecorder = mr;
+        mr.ondataavailable = e => { if (e.data && e.data.size) R.chunks.push(e.data); };
+        mr.onstop = async () => {
+          stream.getTracks().forEach(t => t.stop());
+          R.recording = false;
+          const blob = new Blob(R.chunks, { type: mr.mimeType || 'audio/mp4' });
+          if (blob.size < 1200) { this.showToast('录音太短，再试一次', 'bad'); return; }
+          this.busy = true;
+          try {
+            const wav = await this.blobToWav(blob);
+            const fd = new FormData();
+            fd.append('file', wav, 'voice.wav');
+            const r = await this.api('/api/asr', { method: 'POST', raw: fd });
+            if (r.text) { this.libBuilder.input = r.text; this.libLookup(); }
+          } catch (e) { this.showToast(e.message || '识别失败', 'bad'); }
+          this.busy = false;
+        };
+        mr.start();
+        setTimeout(() => {                   // 15s 上限自动停
+          if (R.recording && mr.state !== 'inactive') mr.stop();
+        }, 15000);
+      } catch (e) {
+        R.recording = false;
+        this.showToast('麦克风权限被拒绝，请用键盘上的 🎤 听写', 'bad');
+      }
     },
 
     // ---------- 计划 ----------

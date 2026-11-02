@@ -2,7 +2,7 @@
 import secrets
 from datetime import date
 from pathlib import Path
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, BackgroundTasks, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
@@ -11,6 +11,8 @@ import database
 import auth
 import scheduler
 import report
+import pipeline
+import llm
 
 BASE = Path(__file__).parent
 STATIC = BASE / "static"
@@ -47,6 +49,31 @@ async def no_cache_html(request, call_next):
 def _startup():
     database.init_db()
     AUDIO.mkdir(parents=True, exist_ok=True)
+    pipeline.ensure_mini(background=True)      # ECDICT 精简索引懒建（首建 ~30s，后台不阻塞）
+    _resume_pipelines()                       # 容器重启后恢复未完成的 LLM 精修任务
+
+
+def _resume_pipelines():
+    """恢复扫描：有词无 senses 的库且 LLM 已配置 → 后台重跑管线（幂等）。"""
+    if llm.conf() is None:
+        return
+    import threading
+
+    def go():
+        try:
+            db = database.get_db()
+            try:
+                lib_ids = [r["id"] for r in db.execute("""SELECT DISTINCT l.id FROM word_libraries l
+                    JOIN library_words lw ON lw.library_id=l.id
+                    WHERE NOT EXISTS (SELECT 1 FROM word_senses s WHERE s.word_id=lw.word_id)""")]
+            finally:
+                db.close()
+            for lid in lib_ids:
+                pipeline.run_library_pipeline(lid)
+        except Exception as e:
+            print(f"[startup] 管线恢复失败: {e}")
+
+    threading.Thread(target=go, daemon=True).start()
 
 
 class LoginIn(BaseModel):
@@ -171,13 +198,62 @@ def library_lookup(request: Request, q: str):
 
 
 @app.post("/api/library/create")
-def library_create(body: LibraryCreateIn, request: Request):
+def library_create(body: LibraryCreateIn, request: Request, background: BackgroundTasks):
     user = auth.current_user(request)
     try:
         out = scheduler.create_library(user["id"], body.name.strip(), body.entries)
     except ValueError as e:
         raise HTTPException(400, str(e))
+    if llm.conf() is not None:                 # 后台 LLM 精修（义项/例句/题库/音频），完成自动升级
+        background.add_task(pipeline.run_library_pipeline, out["library_id"])
     return out
+
+
+class LibraryEditIn(BaseModel):
+    entries: list                       # [{word_id}] | [{word}]（同 create）
+
+class LibraryRemoveIn(BaseModel):
+    word_id: int
+
+
+@app.post("/api/library/{lib_id}/add_words")
+def library_add_words(body: LibraryEditIn, request: Request, lib_id: int, background: BackgroundTasks):
+    user = auth.current_user(request)
+    try:
+        out = scheduler.add_words_to_library(user["id"], lib_id, body.entries)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    if llm.conf() is not None:
+        background.add_task(pipeline.run_library_pipeline, lib_id)
+    return out
+
+
+@app.post("/api/library/{lib_id}/remove_word")
+def library_remove_word(body: LibraryRemoveIn, request: Request, lib_id: int):
+    user = auth.current_user(request)
+    try:
+        scheduler.remove_word_from_library(user["id"], lib_id, body.word_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"ok": True}
+
+
+@app.post("/api/asr")
+async def asr(request: Request, file: UploadFile = File(...)):
+    """语音→文本（智谱 glm-asr）：词单语音录入用。"""
+    auth.current_user(request)
+    if llm.conf() is None:
+        raise HTTPException(503, "语音识别未配置")
+    data = await file.read()
+    if len(data) > 2_000_000:
+        raise HTTPException(400, "录音太长")
+    try:
+        text = llm.transcribe(data, file.filename or "audio.mp3")
+    except Exception as e:
+        raise HTTPException(502, f"识别失败: {e}")
+    if not text:
+        raise HTTPException(400, "没听到内容，请靠近一点再试")
+    return {"text": text}
 
 
 @app.get("/api/library/{lib_id}")

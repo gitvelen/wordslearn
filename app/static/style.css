@@ -308,3 +308,7 @@ label { display: block; margin: 10px 0; font-size: 15px; }
 .pend-tag { color: #b07a1a; font-size: 12px; }
 .row { display: flex; gap: 10px; margin-top: 14px; }
 .row .btn { flex: 1; }
+
+/* v3.1 库编辑与录音 */
+.word-del { color: #c0392b; cursor: pointer; padding: 0 4px; font-size: 14px; }
+.btn.rec { background: #fde2e2; border-color: #e5534b; animation: pulse 1s infinite; }

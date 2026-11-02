@@ -37,12 +37,36 @@ JUNIOR_TYPES = ("word_zh", "listen_zh", "zh_word")   # junior 可用题型（无
 
 # ---------- 出题引擎 ----------
 def _gen_fallback_quiz(db, word, definition_zh, stage, quiz_type="word_zh"):
-    """题库缺题时的兜底：现算看词选义四选一（同词性干扰优先）。
-    cloze/spell 等题型无法现算，统一降级为 word_zh。"""
+    """题库缺题时的兜底现算（v3.1 全题型）：word_zh/listen_zh 看词听音选义、
+    zh_word 选词、spell 拼写（前端拼写格）。干扰项同词性优先+词频邻近。"""
     pos = POS_RE.match(definition_zh or "")
     short = (definition_zh or "").split(" | ")[0].strip()
     if not short:
         return None
+    if quiz_type == "spell":
+        return {"quiz_id": None, "quiz_type": "spell", "stage": stage,
+                "stem": word, "options": [], "answer": word}
+    if quiz_type == "zh_word":
+        pool = []
+        if pos:
+            pool = [p["word"] for p in db.execute("""
+                SELECT word, frq FROM words WHERE definition_zh LIKE ? AND word != ?
+                ORDER BY ABS(COALESCE(frq,999999) - COALESCE((SELECT frq FROM words WHERE word=?), 999999))
+                LIMIT 40""", (pos.group(1) + "%", word, word))]
+        pool = [p for p in pool if abs(len(p) - len(word)) <= 6][:3]
+        if len(pool) < 3:
+            extra = [p["word"] for p in db.execute("""
+                SELECT word FROM words WHERE definition_zh IS NOT NULL AND word != ?
+                ORDER BY RANDOM() LIMIT ?""", (word, 3 - len(pool)))]
+            pool += extra
+        opts = list(dict.fromkeys(pool[:3] + [word]))
+        if len(opts) < 4:
+            return None
+        import random as _r
+        _r.shuffle(opts)
+        return {"quiz_id": None, "quiz_type": "zh_word", "stage": stage,
+                "stem": short, "options": opts, "answer": word}
+    # word_zh / listen_zh / confirm 同构：释义四选一
     distract = []
     if pos:
         distract = [p["definition_zh"].split(" | ")[0].strip() for p in db.execute("""
@@ -58,7 +82,8 @@ def _gen_fallback_quiz(db, word, definition_zh, stage, quiz_type="word_zh"):
     opts = list(dict.fromkeys(distract[:3] + [short]))
     if len(opts) < 4:                      # 干扰枯竭，凑不齐四选一
         return None
-    random.shuffle(opts)
+    import random as _r
+    _r.shuffle(opts)
     return {"quiz_id": None, "quiz_type": quiz_type, "stage": stage,
             "stem": word, "options": opts, "answer": short}
 
@@ -120,6 +145,10 @@ def get_learn_quizzes(db, user_id, word_id, word, definition_zh, junior, emoji=N
         q = _quiz_by_type(db, word_id, "learn", t, user_id)
         if q:
             out.append(q)
+        elif t != "emoji":                 # emoji 无现算干扰源；其余缺题按题型现算（v3.1）
+            q = _gen_fallback_quiz(db, word, definition_zh, "learn", t)
+            if q:
+                out.append(q)
     if not out:
         q = _gen_fallback_quiz(db, word, definition_zh, "learn")
         return [q] if q else []
@@ -418,15 +447,15 @@ def library_lookup(q):
 
 
 def create_library(user_id, name, entries):
-    """建词库：entries = [{word_id}|{word}]（word=库外词文本，先插 words 占位，
-    释义/音标由内容管线从 ECDICT 补）。返回库 id 与待生成词数。"""
+    """建词库：entries = [{word_id}|{word}]（word=库外词文本）。库外词即时 ECDICT 富化
+    （释义/音标/词频，毫秒级）→ 库即 usable 可建计划；LLM 精修由后台管线异步补齐。"""
     if not name or not entries:
         raise ValueError("词库名和词都不能为空")
     if len(entries) > 500:
         raise ValueError("单个词库最多 500 词")
     db = get_db()
     try:
-        seen, resolved = set(), []
+        seen, resolved, new_words = set(), [], []
         for e in entries:
             if "word_id" in e:
                 wid, w = int(e["word_id"]), None
@@ -440,35 +469,104 @@ def create_library(user_id, name, entries):
                 row = db.execute("SELECT id FROM words WHERE word=?", (w,)).fetchone()
                 if row:
                     wid = row["id"]
-                else:                       # 库外词：占位入库，管线补内容
+                else:                       # 库外词：占位入库，下方即时富化
                     cur = db.execute("INSERT INTO words(word) VALUES(?)", (w,))
                     wid = cur.lastrowid
+                    new_words.append(w)
             if wid not in seen:
                 seen.add(wid)
                 resolved.append(wid)
         if not resolved:
             raise ValueError("没有有效词")
-        pending = [wid for wid in resolved
-                   if not db.execute("SELECT 1 FROM word_senses WHERE word_id=? LIMIT 1",
-                                     (wid,)).fetchone()]
         cur = db.execute("""INSERT INTO word_libraries(user_id, name, source_type)
                             VALUES(?,?,'custom')""", (user_id, name))
         lib_id = cur.lastrowid
         db.executemany("INSERT INTO library_words(library_id, word_id, seq) VALUES(?,?,?)",
                        [(lib_id, wid, i + 1) for i, wid in enumerate(resolved)])
         db.commit()
-        return {"library_id": lib_id, "total": len(resolved), "pending": len(pending)}
+        pending_senses = 0
+        if new_words:                       # 库外词 ECDICT 即时富化（同步，词表即可用）
+            import pipeline
+            pipeline.enrich_words(new_words)
+        pending_senses = db.execute("""SELECT COUNT(*) c FROM library_words lw
+                                       JOIN words w ON w.id=lw.word_id
+                                       WHERE lw.library_id=? AND w.definition_zh IS NULL""",
+                                    (lib_id,)).fetchone()["c"]
+        return {"library_id": lib_id, "total": len(resolved),
+                "pending": pending_senses, "new_words": len(new_words)}
     finally:
         db.close()
 
 
-def library_ready(db, lib_id):
-    """库内容就绪判定：全部词已有义项（题库缺可现算兜底、音频缺走 TTS 兜底）"""
-    n = db.execute("""SELECT COUNT(*) c FROM library_words lw
-                      WHERE lw.library_id=?
-                        AND NOT EXISTS (SELECT 1 FROM word_senses s WHERE s.word_id=lw.word_id)""",
-                   (lib_id,)).fetchone()["c"]
-    return n == 0
+def library_status(db, lib_id):
+    """库状态（动态计算）：usable=全词有释义（可建计划，词典版）；
+    ready=全词有精修义项（完整版）。pend_senses=待精修词数（前端进度显示）。"""
+    r = db.execute("""SELECT
+        SUM(CASE WHEN w.definition_zh IS NULL OR w.definition_zh='' THEN 1 ELSE 0 END) no_def,
+        SUM(CASE WHEN NOT EXISTS (SELECT 1 FROM word_senses s WHERE s.word_id=lw.word_id)
+                 THEN 1 ELSE 0 END) pend
+        FROM library_words lw JOIN words w ON w.id=lw.word_id WHERE lw.library_id=?""",
+                   (lib_id,)).fetchone()
+    return {"usable": (r["no_def"] or 0) == 0, "ready": (r["pend"] or 0) == 0,
+            "pend_senses": r["pend"] or 0}
+
+
+def add_words_to_library(user_id, lib_id, entries):
+    """库编辑：追加词（尾部，seq 续接）。返回新增数与新增的库外词数。"""
+    db = get_db()
+    try:
+        lib = db.execute("SELECT * FROM word_libraries WHERE id=?", (lib_id,)).fetchone()
+        if not lib or (lib["user_id"] and lib["user_id"] != user_id):
+            raise ValueError("词库不存在")
+        have = {r["word_id"] for r in db.execute(
+            "SELECT word_id FROM library_words WHERE library_id=?", (lib_id,))}
+        max_seq = db.execute("SELECT COALESCE(MAX(seq),0) m FROM library_words WHERE library_id=?",
+                             (lib_id,)).fetchone()["m"]
+        added, new_words = 0, []
+        for e in entries:
+            if "word_id" in e:
+                wid = int(e["word_id"])
+            else:
+                w = " ".join(str(e.get("word", "")).strip().lower().split())
+                if not w:
+                    continue
+                row = db.execute("SELECT id FROM words WHERE word=?", (w,)).fetchone()
+                if row:
+                    wid = row["id"]
+                else:
+                    wid = db.execute("INSERT INTO words(word) VALUES(?)", (w,)).lastrowid
+                    new_words.append(w)
+            if wid in have:
+                continue
+            have.add(wid)
+            max_seq += 1
+            db.execute("INSERT INTO library_words(library_id, word_id, seq) VALUES(?,?,?)",
+                       (lib_id, wid, max_seq))
+            added += 1
+        db.commit()
+        if new_words:
+            import pipeline
+            pipeline.enrich_words(new_words)
+        return {"added": added, "new_words": len(new_words)}
+    finally:
+        db.close()
+
+
+def remove_word_from_library(user_id, lib_id, word_id):
+    """库编辑：删词（仅未被 active 计划引用的库开放——在用计划以 plan_words 快照为准）。"""
+    db = get_db()
+    try:
+        lib = db.execute("SELECT * FROM word_libraries WHERE id=?", (lib_id,)).fetchone()
+        if not lib or (lib["user_id"] and lib["user_id"] != user_id):
+            raise ValueError("词库不存在")
+        used = db.execute("""SELECT 1 FROM study_plans WHERE library_id=? AND status='active' LIMIT 1""",
+                          (lib_id,)).fetchone()
+        if used:
+            raise ValueError("计划进行中的词库不能删词（可继续加词）；请先完成或放弃计划")
+        db.execute("DELETE FROM library_words WHERE library_id=? AND word_id=?", (lib_id, word_id))
+        db.commit()
+    finally:
+        db.close()
 
 
 def list_libraries(user_id):
@@ -482,7 +580,7 @@ def list_libraries(user_id):
                                GROUP BY l.id ORDER BY l.user_id IS NOT NULL, l.id""",
                             (user_id,)).fetchall():
             d = dict(r)
-            d["ready"] = library_ready(db, d["id"])
+            d.update(library_status(db, d["id"]))
             out.append(d)
         return out
     finally:
@@ -496,7 +594,10 @@ def get_library(user_id, lib_id, with_words=True):
         if not r or (r["user_id"] and r["user_id"] != user_id):
             return None
         d = dict(r)
-        d["ready"] = library_ready(db, lib_id)
+        d.update(library_status(db, lib_id))
+        d["in_use"] = bool(db.execute(
+            "SELECT 1 FROM study_plans WHERE library_id=? AND status='active' LIMIT 1",
+            (lib_id,)).fetchone())
         if with_words:
             d["words"] = [dict(w) for w in db.execute("""
                 SELECT w.id, w.word, w.phonetic_uk, w.definition_zh, w.frq,
@@ -566,8 +667,8 @@ def create_plan(user_id, target_words, days, library_id=None):
             lib = db.execute("SELECT * FROM word_libraries WHERE id=?", (library_id,)).fetchone()
             if not lib or (lib["user_id"] and lib["user_id"] != user_id):
                 return None, "词库不存在"
-            if not library_ready(db, library_id):
-                return None, "词库内容还在准备中，请稍后再试"
+            if not library_status(db, library_id)["usable"]:
+                return None, "词库还有词没准备好（稍等几秒重试）"
             pool = [r["id"] for r in db.execute("""
                 SELECT w.id FROM library_words lw JOIN words w ON w.id=lw.word_id
                 WHERE lw.library_id=?
