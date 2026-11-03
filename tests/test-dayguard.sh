@@ -32,6 +32,22 @@ export DG_USER DG_TODAY=$(date +%F) DG_BASE=http://localhost:8091
 echo "===== main 阶段（复活守卫）====="
 node tests/test-dayguard.js main
 
+echo "===== midway 阶段（中途退出重开——11-03 事故回归）====="
+python3 -c "
+import sqlite3,datetime
+db=sqlite3.connect('$DB')
+u=db.execute(\"SELECT id FROM users WHERE username='$DG_USER'\").fetchone()[0]
+db.execute('INSERT INTO daily_logs(user_id,date,new_done,review_done,minutes,report_sent,score) VALUES(?,?,3,0,0,0,NULL)',
+           (u, datetime.date.today().isoformat()))
+db.commit()"
+node tests/test-dayguard.js midway
+python3 -c "
+import sqlite3,datetime
+db=sqlite3.connect('$DB')
+u=db.execute(\"SELECT id FROM users WHERE username='$DG_USER'\").fetchone()[0]
+db.execute('DELETE FROM daily_logs WHERE user_id=? AND date=?',(u,datetime.date.today().isoformat()))
+db.commit()"
+
 echo "===== 造完成态（daily_logs score=100 report_sent=1）====="
 USED_BEFORE=$(python3 -c "
 import sqlite3,sys

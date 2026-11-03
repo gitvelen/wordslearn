@@ -83,6 +83,32 @@ const ok = (name, cond, extra) => {
     ok('date校验失败时保持原页（离线复活照常可用）', await page.evaluate(() => window.__marker2) === 7);
     ok('页面仍可响应（无崩溃）', await page.evaluate(() => 1 + 1) === 2);
 
+  } else if (process.argv[2] === 'midway') {
+    /* 中途退出重开（11-03 事故回归）：当日有 new_done、无 score →
+     * 服务端 done 必须===false，前端重建队列，绝不发完成事件 */
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.__vm);
+    await page.evaluate(async (u) => {
+      const v = window.__vm;
+      v.loginForm = { username: u, password: 'test123' };
+      await v.doLogin();
+    }, USER);
+    await page.waitForFunction(() => window.__vm && window.__vm.today, null, { timeout: 15000 });
+    await page.waitForTimeout(1500);
+    const apiDone = await page.evaluate(async () => {
+      const r = await fetch('/api/today'); const j = await r.json();
+      return j.done;   // 修复前这里是 new_done 整数(3)——truthy 误判
+    });
+    ok('/api/today 的 done 严格为 false（非 truthy 整数）', apiDone === false, `done=${JSON.stringify(apiDone)}`);
+    const st = await page.evaluate(() => ({
+      q: window.__vm.today.queue.length, doneQuiz: window.__vm.today.doneQuiz,
+      screen: document.body.textContent.includes('今日任务完成'),
+    }));
+    ok('中途重开重建队列（可续学，关卡不丢）', st.q > 0, `queue=${st.q}`);
+    ok('不误判完成（doneQuiz 未置位）', st.doneQuiz !== 1, `doneQuiz=${st.doneQuiz}`);
+    ok('不误呈完成屏', !st.screen);
+    ok('未触发完成事件（无 POST report/daily）', cnt.report === 0, `report=${cnt.report}`);
+
   } else { // done 阶段
     await page.goto(BASE);
     await page.waitForFunction(() => window.__vm);

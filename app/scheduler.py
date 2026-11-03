@@ -750,8 +750,11 @@ def get_today_queue(user_id):
         if t_str <= cutoff:
             log = db.execute("SELECT new_done FROM daily_logs WHERE user_id=? AND date=?",
                              (user_id, t_str)).fetchone()
-            done = log["new_done"] if log else 0
-            new_allowance = max(0, plan["daily_new"] - done)
+            # 勿复用 done：它已表示"当日完成态"(bool)，此处仅是已学新词数。
+            # 复用会让响应返回 done=19 之类 truthy，前端误判"当日已完成"→补发完成事件
+            # →误结算积分+误发日报（11-03 mily 中途退出重开即踩此雷）
+            learned_new = log["new_done"] if log else 0
+            new_allowance = max(0, plan["daily_new"] - learned_new)
         # 积压调节：到期复习过多时当日新词减半（先还债再扩新，防缺勤后滚雪球）
         due_n = db.execute("""SELECT COUNT(*) c FROM user_word_state
                               WHERE user_id=? AND state='learning' AND next_review_date<=?""",

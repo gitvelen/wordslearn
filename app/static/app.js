@@ -603,7 +603,7 @@ const app = Vue.createApp({
         doneNew: 0, doneReview: 0, doneQuiz: 0, requeuedCount: 0,
         gateWrong: {},
       };
-      if (r.done) {
+      if (r.done === true) {   // 严格等于：防御服务端再传出 truthy 非 bool（11-03 done=19 误判事故）
         // 当日已完成（服务端 daily_logs 判定）：直呈完成屏，不重建可重放队列
         // ——同日重开/隔夜复活若重建队列，会把旧内容整个再做一遍（10-27 事故）
         this.today.doneNew = r.done_new || 0;
