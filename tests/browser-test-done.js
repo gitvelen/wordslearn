@@ -2,7 +2,7 @@
 const { chromium } = require('playwright-core');
 const { execFileSync } = require('child_process');
 
-const BASE = 'https://words.velen.ltd';
+const BASE = process.env.WL_BASE || 'https://words.velen.ltd';
 const PW = 'Test123456';
 const U = 'brtest_done';
 const SHOTS = '/tmp/wltest/shots';
@@ -71,6 +71,24 @@ db.commit()`);
   await page.waitForTimeout(400);
   check('今天=绿达标+蓝框高亮', (await page.locator('.cal-cell.today.done').count()) === 1);
   await page.screenshot({ path: SHOTS + '/10-calendar-today.png' });
+
+  // v3.3 当日报告：完成后今天可点 → 双层渲染 + 新词手风琴
+  await page.locator('.cal-cell.today').click();
+  await page.waitForSelector('.rep-card', { timeout: 5000 });
+  const repTxt = await page.locator('.rep-card').textContent();
+  check('报告概览渲染（日期/得分/统计）',
+        repTxt.includes('新学单词') && repTxt.includes('分'));
+  check('家长详情默认折叠', (await page.locator('.rep-parent-body:visible').count()) === 0);
+  await page.locator('.rep-word-row').first().click();
+  await page.waitForSelector('.rep-word-detail', { timeout: 5000 });
+  check('新词手风琴展开释义', (await page.locator('.rep-word-detail .sense-block, .rep-word-detail .def-zh').count()) >= 1);
+  await page.locator('.rep-word-row').first().click();
+  await page.waitForTimeout(200);
+  check('再次点击收起', (await page.locator('.rep-word-detail').count()) === 0);
+  await page.locator('.rep-parent button').click();
+  await page.waitForTimeout(300);
+  check('家长详情可展开', (await page.locator('.rep-parent-body:visible').count()) === 1);
+  await page.screenshot({ path: SHOTS + '/11-report.png', fullPage: true });
 
   // 清理
   dockerPy(`import sqlite3

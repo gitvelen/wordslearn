@@ -229,8 +229,10 @@ def build_daily_report(user_id, day=None):
                 "review_done": (log["review_done"] if log else 0) or 0,
                 "minutes": minutes, "rounds": rounds,
                 "score": score if score is not None else score_detail["total"],
+                "settled": score is not None,   # 完成事件结算过（未结算=当日未完成，分值仅为估算）
                 "score_detail": score_detail,
-                "new_words": [{"word": r["word"], "def": defs.get(r["id"], "")} for r in new_words],
+                # id 供前端日历报告懒加载词条（手风琴展开释义/例句）
+                "new_words": [{"id": r["id"], "word": r["word"], "def": defs.get(r["id"], "")} for r in new_words],
                 "review_words": review_words,
                 "weak_types": [{"label": TYPE_LABEL.get(t, t), "n": s["n"], "ok": s["ok"]} for t, s in weak_types],
                 "wrong_words": [{"word": w, "def": v["def"], "rounds": v["rounds"]}

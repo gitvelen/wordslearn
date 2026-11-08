@@ -13,7 +13,9 @@ const app = Vue.createApp({
       toast: { show: false, msg: '', type: 'info' },
       planForm: { target_words: 900, days: 60, library_id: null },   // library_id null=系统推荐
       today: null, todayErr: false,
-      cal: { month: '', days: [] },
+      cal: { month: '', days: [], sel: null, report: null, repLoading: false },
+      calOpen: {}, calWd: {},      // 日历报告新词手风琴：word_id → 展开态 / word_detail 缓存
+      repParentOpen: false,        // 报告家长详情折叠（每日默认收起）
       audioCtx: null,
       // 词条弹层（复习答错看卡 / 词典查看）
       wordDetail: null, detailMode: 'view', detailLocked: false,
@@ -65,6 +67,15 @@ const app = Vue.createApp({
     calOffset() {
       if (!this.cal.days.length) return 0;
       return new Date(this.cal.days[0].date + 'T00:00:00').getDay();
+    },
+    // 今日任务进行中（热身/新卡/复习/关卡，未到完成屏）：日历不可进（v3.3 专注闸）
+    quizLocked() {
+      return this.view === 'today' && !!this.today && this.today.queue.length > 0
+        && !this.todayPhaseDone();
+    },
+    calReportEmpty() {   // 无任何学习痕迹 → 空态文案（覆盖隔夜复活等误点场景）
+      const r = this.cal.report;
+      return !r || ((r.new_done || 0) === 0 && !(r.review_done > 0) && !(r.rounds || []).length);
     },
     todayStr() {
       const d = new Date();
@@ -223,6 +234,10 @@ const app = Vue.createApp({
     },
 
     switchView(v) {
+      if (v === 'calendar' && this.quizLocked) {
+        this.showToast('先完成今天的学习，再来看日历吧 📅', 'info');
+        return;
+      }
       this.view = v;
       if (v === 'calendar') this.loadCal();
       if (v === 'progress') this.loadMe();
@@ -1032,7 +1047,7 @@ const app = Vue.createApp({
       return '';
     },
 
-    // ---------- 日历 ----------
+    // ---------- 日历（v3.3：点日期看当日报告） ----------
     async loadCal() {
       if (!this.cal.month) this.cal.month = this.todayStr.slice(0, 7);
       const r = await this.api('/api/calendar?month=' + this.cal.month);
@@ -1042,8 +1057,50 @@ const app = Vue.createApp({
       const [y, m] = this.cal.month.split('-').map(Number);
       const d = new Date(y, m - 1 + n, 1);
       this.cal.month = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      this.cal.sel = null; this.cal.report = null;   // 切月清空选中（报告不指向看不见的日期）
       this.loadCal();
     },
+    // 可点：有学习记录 &&（过去日 || 今日已完成——完成屏才总结今天，进行中不给半份报告）
+    calDayClickable(d) {
+      if (!(d.new_done > 0 || d.review_done > 0)) return false;
+      if (d.date < this.todayStr) return true;
+      return d.date === this.todayStr && !!this.today && this.todayPhaseDone();
+    },
+    async calPick(d) {
+      if (!this.calDayClickable(d)) return;
+      if (this.cal.sel === d.date) {          // 再点同一天：收起
+        this.cal.sel = null; this.cal.report = null;
+        return;
+      }
+      this.cal.sel = d.date;
+      this.cal.report = null; this.cal.repLoading = true;
+      this.calOpen = {}; this.repParentOpen = false;
+      try {
+        const r = await this.api('/api/report/day?day=' + d.date);
+        if (this.cal.sel !== d.date) return;  // 请求期间点了别的天/收起：丢弃过期响应
+        this.cal.report = r;
+      } catch (e) {
+        if (this.cal.sel === d.date) { this.cal.sel = null; this.showToast(e.message, 'bad'); }
+      } finally {
+        if (this.cal.sel === d.date) this.cal.repLoading = false;
+      }
+    },
+    // 新词手风琴：展开时懒加载词条（会话内缓存），再点收起
+    async calToggleWord(w) {
+      if (this.calOpen[w.id]) {
+        const o = { ...this.calOpen }; delete o[w.id]; this.calOpen = o;
+        return;
+      }
+      this.calOpen = { ...this.calOpen, [w.id]: true };
+      if (this.calWd[w.id]) return;
+      try {
+        this.calWd[w.id] = await this.api('/api/word_detail?id=' + w.id);
+      } catch (e) {
+        const o = { ...this.calOpen }; delete o[w.id]; this.calOpen = o;
+        this.showToast('释义加载失败，再点一次试试', 'bad');
+      }
+    },
+    repAccClass(a) { return a == null ? '' : a >= 80 ? 'rep-ok' : a >= 60 ? 'rep-mid' : 'rep-bad'; },
 
     // ---------- 学习前手势解锁（iOS 声音）----------
     startLearning() {

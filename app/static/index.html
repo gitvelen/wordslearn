@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="单词星球">
-<link rel="stylesheet" href="/style.css?v=b26">
+<link rel="stylesheet" href="/style.css?v=b27">
 </head>
 <body>
 <div id="app">
@@ -504,13 +504,110 @@
                        (d.in_plan && d.target_new===0 && d.review_done>0),
                   part: d.new_done>0 && d.new_done<d.target_new,
                   future: d.date>todayStr,
-                  today: d.date===todayStr}">
+                  today: d.date===todayStr,
+                  clickable: calDayClickable(d),
+                  sel: cal.sel===d.date}"
+         @click="calPick(d)">
       <div class="cal-date">{{d.date.slice(8)}}</div>
       <div v-if="d.in_plan" class="cal-num">{{d.new_done}}<span v-if="d.target_new">/{{d.target_new}}</span></div>
       <div v-else-if="d.new_done" class="cal-num">{{d.new_done}}</div>
     </div>
   </div>
-  <p class="hint">绿色=当日达标 · 橙色=部分完成 · 蓝框=今天 · 数字=新学词数/目标</p>
+  <p class="hint">绿色=当日达标 · 橙色=部分完成 · 蓝框=今天 · 数字=新学词数/目标 · 点日期看当天报告</p>
+
+  <!-- v3.3 当日学习报告（双层：孩子概览 + 折叠的家长详情） -->
+  <div v-if="cal.repLoading" class="hint" style="margin-top:10px">加载中…</div>
+  <div v-else-if="cal.report && calReportEmpty" class="card" style="margin-top:12px">
+    <p class="sub">这一天还没有学习记录</p>
+  </div>
+  <div v-else-if="cal.report" class="rep-card">
+    <div class="rep-head">
+      <b>{{cal.report.date}}</b>
+      <span v-if="cal.report.settled" class="rep-score">⭐ {{cal.report.score}} 分</span>
+      <span v-else class="rep-unsettled">未完成</span>
+      <span class="rep-streak">🔥 连续 {{cal.report.streak}} 天</span>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><b>{{cal.report.new_done}}</b><span>新学单词</span></div>
+      <div class="stat"><b>{{cal.report.review_done}}</b><span>复习通过</span></div>
+      <div class="stat"><b>{{cal.report.minutes || '—'}}</b><span>用时(分)</span></div>
+    </div>
+
+    <h3 class="rep-h3">📚 当日新词（{{cal.report.new_words.length}} 个）<span class="sub">· 点单词看释义</span></h3>
+    <p class="sub" v-if="!cal.report.new_words.length">这一天没有新词</p>
+    <div v-for="w in cal.report.new_words" :key="w.id" class="rep-word">
+      <div class="rep-word-row" @click="calToggleWord(w)">
+        <b>{{w.word}}</b>
+        <span class="sub">{{w.def}}</span>
+        <span class="rep-caret">{{calOpen[w.id] ? '▲' : '▼'}}</span>
+      </div>
+      <div v-if="calOpen[w.id] && calWd[w.id]" class="rep-word-detail">
+        <div class="rep-word-title" @click="playWord(calWd[w.id].word)">{{calWd[w.id].word}} <span class="phonetic" v-if="!isJunior && calWd[w.id].phonetic_uk">🔈 {{calWd[w.id].phonetic_uk}}</span></div>
+        <template v-if="calWd[w.id].senses && calWd[w.id].senses.length">
+          <div v-for="s in (isJunior ? calWd[w.id].senses.slice(0,1) : calWd[w.id].senses)"
+               :key="s.sense_order" class="sense-block">
+            <div class="sense-line"><span v-if="s.pos" class="sense-pos">{{s.pos}}</span><span class="sense-zh">{{s.definition_zh}}</span></div>
+            <div v-if="s.definition_en && !isJunior" class="sense-en">{{s.definition_en}}</div>
+            <div v-if="s.example_en" class="example">📝 {{s.example_en}}
+              <button class="btn ghost mini" @click="playSentence(calWd[w.id].word, s.sense_order, s.example_en)">🔈</button></div>
+            <div v-if="s.example_zh" class="example-zh">{{s.example_zh}}</div>
+          </div>
+        </template>
+        <div v-else class="def-zh">{{calWd[w.id].definition_zh}}</div>
+        <div v-if="wordFormsText(calWd[w.id])" class="forms-row">🔄 {{wordFormsText(calWd[w.id])}}</div>
+      </div>
+      <div v-else-if="calOpen[w.id]" class="hint" style="padding:6px 4px">加载中…</div>
+    </div>
+
+    <div class="rep-parent">
+      <button class="btn ghost" @click="repParentOpen=!repParentOpen">
+        {{repParentOpen ? '收起详细数据 ▲' : '给家长看的数据 ▼'}}
+      </button>
+      <div v-show="repParentOpen" class="rep-parent-body">
+        <h4>各轮表现（首答正确率）</h4>
+        <table class="rep-table">
+          <tr><th>轮次</th><th>题数</th><th>正确率</th><th>补测</th><th>错词</th></tr>
+          <tr v-for="r in cal.report.rounds" :key="r.label">
+            <td>{{r.label}}</td><td>{{r.n}}</td>
+            <td :class="repAccClass(r.acc)">{{r.acc==null ? '—' : r.acc+'%'}}</td>
+            <td>{{r.retries}}</td>
+            <td>{{r.wrong_words.slice(0,6).join('、') || '—'}}</td>
+          </tr>
+        </table>
+        <h4>今日复习（{{cal.report.review_words.length}} 个）</h4>
+        <table class="rep-table">
+          <tr><th>单词</th><th>释义</th><th>结果</th></tr>
+          <tr v-for="w in cal.report.review_words" :key="w.word">
+            <td><b>{{w.word}}</b></td><td>{{w.def}}</td>
+            <td :class="w.ok ? '' : 'rep-bad'">{{w.ok ? '✓ 通过' : '✗ 有错'}}</td>
+          </tr>
+          <tr v-if="!cal.report.review_words.length"><td colspan="3" class="sub">这天没有复习任务</td></tr>
+        </table>
+        <h4>错词清单（{{cal.report.wrong_words.length}} 个）</h4>
+        <table class="rep-table">
+          <tr><th>单词</th><th>释义</th><th>错在</th></tr>
+          <tr v-for="w in cal.report.wrong_words" :key="w.word">
+            <td><b>{{w.word}}</b></td><td>{{w.def}}</td><td>{{w.rounds.join('、')}}</td>
+          </tr>
+          <tr v-if="!cal.report.wrong_words.length"><td colspan="3" class="sub">没有错词 🎉</td></tr>
+        </table>
+        <template v-if="cal.report.weak_types.length">
+          <h4>⚠️ 薄弱题型</h4>
+          <p class="sub">{{cal.report.weak_types.map(w=>w.label+'（'+w.ok+'/'+w.n+'）').join('、')}}</p>
+        </template>
+        <h4>近 7 日</h4>
+        <div class="rep-trend">
+          <div v-for="t in cal.report.trend" :key="t.date">
+            <span class="sub">{{t.date.slice(5)}}</span>
+            <b>{{t.new}}词</b>
+            <span :class="repAccClass(t.acc)">{{t.acc==null ? '—' : t.acc+'%'}}</span>
+          </div>
+        </div>
+        <h4>💡 给家长的建议</h4>
+        <ul class="rep-tips"><li v-for="t in cal.report.tips" :key="t">{{t}}</li></ul>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ========== 进度 ========== -->
@@ -540,7 +637,7 @@
 <!-- ========== 底部导航 ========== -->
 <nav v-if="view!=='login' && ['today','calendar','progress'].includes(view)" class="tabbar">
   <button :class="{on: view==='today'}" @click="switchView('today')">📚 今日</button>
-  <button :class="{on: view==='calendar'}" @click="switchView('calendar')">📅 日历</button>
+  <button :class="{on: view==='calendar', locked: quizLocked}" @click="switchView('calendar')">📅 日历</button>
   <button :class="{on: view==='progress'}" @click="switchView('progress')">📈 进度</button>
 </nav>
 
@@ -577,6 +674,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b26"></script>
+<script src="/app.js?v=b27"></script>
 </body>
 </html>

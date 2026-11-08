@@ -3,7 +3,7 @@ const { chromium } = require('playwright-core');
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 
-const BASE = 'https://words.velen.ltd';
+const BASE = process.env.WL_BASE || 'https://words.velen.ltd';
 const PW = 'Test123456';
 const STD = 'brtest_std';
 const JUN = 'brtest_jun';
@@ -137,12 +137,13 @@ print('cleaned')
   await page.waitForTimeout(350);
   check('推进到 3/15', (await page.locator('.phase-tag').textContent()).includes('新词 3 / 15'));
 
-  console.log('— 8. 日历 —');
+  console.log('— 8. 日历锁定（做题中不可进；日历渲染断言移至 done 测试）—');
   await page.click('.tabbar button:has-text("日历")');
-  await page.waitForSelector('.cal-grid');
   await page.waitForTimeout(400);
-  check('今日格子有记录', (await page.locator('.cal-cell.done, .cal-cell.part').count()) >= 1);
-  await page.screenshot({ path: SHOTS + '/05-calendar.png' });
+  check('做题中点日历被拦截（v3.3，日历未渲染）', (await page.locator('.cal-grid').count()) === 0);
+  check('拦截提示出现', (await page.locator('.toast').count()) >= 1);
+  check('日历按钮置灰', (await page.locator('.tabbar button.locked').count()) === 1);
+  await page.screenshot({ path: SHOTS + '/05-calendar-locked.png' });
 
   console.log('— 9. 进度 —');
   await page.click('.tabbar button:has-text("进度")');
