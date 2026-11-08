@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="单词星球">
-<link rel="stylesheet" href="/style.css?v=b25">
+<link rel="stylesheet" href="/style.css?v=b26">
 </head>
 <body>
 <div id="app">
@@ -336,12 +336,13 @@
         <div class="stat" v-if="me && me.progress"><b>{{me.progress.streak}}</b><span>连续天数</span></div>
       </div>
       <p v-if="me && me.progress" class="sub">已学会 {{me.progress.learned_total}} 个单词（牢牢掌握 {{me.progress.dist.mastered}} 个），明天继续加油！💪</p>
+      <p v-if="today.dueLeft" class="sub">今天还有 {{today.dueLeft}} 个复习排队到明天 💤</p>
     </div>
   </template>
 
   <!-- 热身轮：昨日词快闪（不提交不调度） -->
   <template v-else-if="curItem.type==='warmup'">
-    <div class="phase-tag">晨间热身 · 昨天的词 {{today.qIdx+1}} / {{today.warmup.length}}</div>
+    <div class="phase-tag">晨间热身 · 昨天的词 {{curItem._wi}} / {{today.warmup.length}}</div>
     <div class="bar slim"><div class="bar-fill" :style="{width: todayPct+'%'}"></div></div>
     <div class="card quiz-card">
       <div v-if="curItem.item.quiz" class="quiz-hint">{{quizLabel(curItem)}}</div>
@@ -520,10 +521,12 @@
       <div class="bar"><div class="bar-fill" :style="{width: progressPct+'%'}"></div></div>
       <p class="sub">{{me.progress.dist.mastered + me.progress.dist.learning}} / {{me.progress.plan.target_words}} 词
         （已牢牢掌握 {{me.progress.dist.mastered}}）</p>
+      <p class="sub" v-if="me.progress.stages">复习冲刺线：巩固 {{me.progress.stages[0]}} 词 · 进阶 {{me.progress.stages[1]}} 词 · 冲刺毕业 {{me.progress.stages[2]}} 词
+        <span v-if="!me.progress.dist.mastered">（学满 19 天且全对，第一批词就会「牢牢掌握」）</span></p>
       <div class="stat-row">
         <div class="stat"><b>{{me.progress.dist.mastered}}</b><span>已掌握</span></div>
         <div class="stat"><b>{{me.progress.dist.learning}}</b><span>复习中</span></div>
-        <div class="stat"><b>{{me.progress.dist.streak}}</b><span>连续天数</span></div>
+        <div class="stat"><b>{{me.progress.streak}}</b><span>连续天数</span></div>
       </div>
       <p class="hint">计划：{{me.progress.plan.start_date}} ～ {{me.progress.plan.end_date}}，每天 {{me.progress.plan.daily_new}} 个新词</p>
       <div v-if="me.progress.plan.expired" style="margin-top:10px">
@@ -574,6 +577,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b25"></script>
+<script src="/app.js?v=b26"></script>
 </body>
 </html>

@@ -97,6 +97,7 @@ class AnswerIn(BaseModel):
     phase: str      # 'learn' | 'review'
     correct: bool
     quiz_type: str = ""   # 学习日报埋点用（spell/zh_word/...）
+    quiz_id: int | None = None   # v3.2.1 评测题作答时记账（取题不标，防刷新烧 fresh 题）
 
 class ConfirmSubmitIn(BaseModel):
     known_ids: list   # 速选「认识」的词 ID
@@ -293,7 +294,8 @@ def answer(body: AnswerIn, request: Request):
     if body.phase not in ("learn", "review", "audit"):
         raise HTTPException(400, "phase 必须是 learn、review 或 audit")
     try:
-        scheduler.submit_answer(user["id"], body.word_id, body.phase, body.correct, body.quiz_type)
+        scheduler.submit_answer(user["id"], body.word_id, body.phase, body.correct,
+                                body.quiz_type, body.quiz_id)
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"ok": True}

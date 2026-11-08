@@ -38,10 +38,27 @@ def _today() -> str:
 
 
 # ---------- 每日积分 ----------
+def _dedup_gate_first(rows):
+    """关卡首答按 (word_id, level) 去重取首条（v3.2.1）。
+    中途退出重开会整轮重做关卡并再写一批 retry=0 埋点（11-04 实测 182 条首答=两批），
+    积分/日报双计即由此来——读时聚合去重，不改历史数据。"""
+    seen, out = set(), []
+    for r in rows:
+        if r["phase"] == "gate" and not r["retry"]:
+            k = (r["word_id"], r["level"] or 0)
+            if k in seen:
+                continue
+            seen.add(k)
+        out.append(r)
+    return out
+
+
 def compute_daily_score(db, user_id, day):
-    """当日积分：完成即 100，闯关首答每错一题 -1（0 分保底）。补测不返分。"""
-    rows = db.execute("""SELECT correct, retry FROM quiz_log
-                         WHERE user_id=? AND date=? AND phase='gate'""", (user_id, day)).fetchall()
+    """当日积分：完成即 100，闯关首答每错一题 -1（0 分保底）。补测不返分。
+    首答按 (词, 关) 去重（重开重做产生的双批埋点只计一批）。"""
+    rows = db.execute("""SELECT correct, retry, phase, word_id, level FROM quiz_log
+                         WHERE user_id=? AND date=? AND phase='gate' ORDER BY id""", (user_id, day)).fetchall()
+    rows = _dedup_gate_first(rows)
     errors = sum(1 for r in rows if not r["retry"] and not r["correct"])
     total = max(0, SCORE_FULL - SCORE_WRONG_COST * errors)
     return {"total": total, "errors": errors}
@@ -119,6 +136,7 @@ def build_daily_report(user_id, day=None):
         log = db.execute("SELECT * FROM daily_logs WHERE user_id=? AND date=?", (user_id, day)).fetchone()
         qrows = db.execute("""SELECT q.*, w.word FROM quiz_log q JOIN words w ON w.id=q.word_id
                               WHERE q.user_id=? AND q.date=? ORDER BY q.id""", (user_id, day)).fetchall()
+        qrows = _dedup_gate_first(qrows)   # v3.2.1 关卡首答去重（与积分同口径）
         # 今日新词（附释义，供家长辅导）
         new_words = db.execute("""SELECT w.id, w.word FROM user_word_state s JOIN words w ON w.id=s.word_id
                                   WHERE s.user_id=? AND s.first_learned_date=? ORDER BY w.id""",

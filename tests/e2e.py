@@ -103,8 +103,23 @@ check('巩固题 = d5 zh_word 借用（v3.2：cloze 收归 stage-2 评测独占�
 check('新词带义项（senses）', bool(n0['senses']))
 wid = n0['id']
 
+# ---- v3.2.1 热身只在当日首段会话出 ----
+# 造一个"昨日首学"的词：当日无活动 → 热身出；learn 提交（当日有活动）→ 热身不再供
+w2 = db.execute("""SELECT p.word_id FROM plan_words p WHERE p.plan_id=? AND p.word_id!=?
+                   AND NOT EXISTS (SELECT 1 FROM user_word_state s WHERE s.user_id=? AND s.word_id=p.word_id)
+                   LIMIT 1""", (plan_id, wid, uid)).fetchone()
+db.execute("""INSERT INTO user_word_state(user_id, word_id, state, stage, first_learned_date, next_review_date)
+              VALUES(?,?, 'learning', 1, date('now','localtime','-1 day'), date('now','localtime','+1 day'))""",
+           (uid, w2['word_id']))
+db.commit()
+s, r = api(cj, '/api/today')
+check('昨日首学词进热身（当日尚无学习活动）',
+      any(x['id'] == w2['word_id'] for x in r['warmup']), len(r['warmup']))
+
 # ---- learn 提交 ----
 s, _ = api(cj, '/api/answer', 'POST', {'word_id': wid, 'phase': 'learn', 'correct': True})
+s, r = api(cj, '/api/today')
+check('当日已有提交 → 热身不再供（v3.2.1 重开不重放）', not r['warmup'], len(r['warmup']))
 row = st(uid, wid)
 check('learn → learning/stage1/next=D+2', row['state'] == 'learning' and row['stage'] == 1
       and row['next_review_date'] == (datetime.date.today() + datetime.timedelta(days=2)).isoformat())
@@ -128,7 +143,16 @@ q2 = served_quiz(wid)
 check('D+5 评测题 = d5 cloze（语境·独占 fresh；无 cloze 词约10%降级 zh_word）',
       q2 and q2['quiz_type'] in ('cloze', 'zh_word'), q2 and q2['quiz_type'])
 cloze_id = q2.get('quiz_id') if q2 and q2['quiz_type'] == 'cloze' else None
-s, _ = api(cj, '/api/answer', 'POST', {'word_id': wid, 'phase': 'review', 'correct': True})
+if cloze_id:
+    used_n = db.execute("SELECT COUNT(*) c FROM user_quiz_used WHERE user_id=? AND quiz_id=?",
+                        (uid, cloze_id)).fetchone()['c']
+    check('评测取题不记账（v3.2.1 作答时才标——防刷新烧 fresh 题）', used_n == 0, used_n)
+s, _ = api(cj, '/api/answer', 'POST', {'word_id': wid, 'phase': 'review', 'correct': True,
+                                       'quiz_id': cloze_id})
+if cloze_id:
+    used_n = db.execute("SELECT COUNT(*) c FROM user_quiz_used WHERE user_id=? AND quiz_id=?",
+                        (uid, cloze_id)).fetchone()['c']
+    check('作答提交 quiz_id → 记账落库', used_n == 1, used_n)
 check('D+5 答对 → stage3', st(uid, wid)['stage'] == 3)
 force_due(uid, wid, 3)
 q3 = served_quiz(wid)
@@ -187,6 +211,7 @@ db.commit()
 s, r = api(cj, '/api/today')
 check('积压>80 → 当日新词减半', len(r['new']) <= 2, len(r['new']))
 check('复习上限 60 生效（85 到期只出 60）', 60 <= len(r['review']) <= 65, len(r['review']))
+check('due_remaining=85-60（v3.2.1 完成屏"排明天"提示）', r.get('due_remaining') == 25, r.get('due_remaining'))
 
 # ---- word_detail ----
 s, r = api(cj, '/api/word_detail?id=%d' % wid)
@@ -197,6 +222,10 @@ db.execute("UPDATE daily_logs SET new_done=0 WHERE user_id=? AND date=?", (uid, 
 db.commit()
 s, r = api(cj, '/api/progress')
 check('纯复习日 streak 续（review_done 计入）', r['streak'] >= 1, r.get('streak'))
+check('stages 复习冲刺线分布（v3.2.1）', isinstance(r.get('stages'), list) and len(r['stages']) == 3
+      and sum(r['stages']) == db.execute(
+          "SELECT COUNT(*) c FROM user_word_state WHERE user_id=? AND state='learning'", (uid,)
+      ).fetchone()['c'], r.get('stages'))
 
 # ---- calendar ----
 s, r = api(cj, '/api/calendar?month=' + TODAY_STR[:7])
@@ -215,13 +244,21 @@ s, r = api(cj, '/api/quiz_log', 'POST', {'entries': [
 check('quiz_log 埋点写入', s == 200)
 n_log = db.execute("SELECT COUNT(*) c FROM quiz_log WHERE user_id=?", (uid,)).fetchone()['c']
 check('learn/review 答案已入 quiz_log（/api/answer 埋点）', n_log >= 9, n_log)   # 5 状态机 + 4 手动
+# v3.2.1 双批埋点（模拟重开重做关卡）：同 (词,关) 第二批首答——日报与积分都只计首批
+db.execute("INSERT INTO quiz_log(user_id, date, phase, level, word_id, quiz_type, correct, retry) "
+           "VALUES(?,?,?,?,?,?,0,0)", (uid, TODAY_STR, 'gate', 4, wid0, 'word_zh'))   # (wid0,4) 第二批错 → 首批=对，不扣
+db.execute("INSERT INTO quiz_log(user_id, date, phase, level, word_id, quiz_type, correct, retry) "
+           "VALUES(?,?,?,?,?,?,0,0)", (uid, TODAY_STR, 'gate', 3, wid, 'word_zh'))    # (wid,3) 首批错 → 计 1 错
+db.execute("INSERT INTO quiz_log(user_id, date, phase, level, word_id, quiz_type, correct, retry) "
+           "VALUES(?,?,?,?,?,?,1,0)", (uid, TODAY_STR, 'gate', 3, wid, 'word_zh'))    # (wid,3) 第二批对 → 首批错为准
+db.commit()
 s, r = api(cj, '/api/report/preview')
 rep = r['report']
 rounds = {x['label']: x for x in rep['rounds']}
 check('日报含热身/复习/关卡轮', all(k in rounds for k in ('晨间热身', '复习轮')) and any('听写' in k for k in rounds), list(rounds))
 g4 = next((x for x in rep['rounds'] if '听写' in x['label']), None)
-check('关卡首答正确率排除补测（2题1对=50%，补测1）',
-      g4 and g4['n'] == 2 and g4['ok'] == 1 and g4['acc'] == 50 and g4['retries'] == 1, g4)
+check('关卡首答按(词,关)去重：(wid0,4)第二批错不计，n=1 全对',
+      g4 and g4['n'] == 1 and g4['ok'] == 1 and g4['acc'] == 100 and g4['retries'] == 1, g4)
 check('日报错词清单非空', len(rep['wrong_words']) >= 1, rep['wrong_words'])
 check('日报给家长建议非空', len(rep['tips']) >= 1)
 check('日报近7日趋势', len(rep['trend']) == 7 and rep['trend'][-1]['date'] == TODAY_STR)
@@ -231,7 +268,8 @@ flag = db.execute("SELECT report_sent FROM daily_logs WHERE user_id=? AND date=?
 check('测试账号 report_sent 不置位', flag and flag['report_sent'] == 0)
 
 # ---- 积分：100 分制，首结算为准 ----
-# 埋点造的关卡数据：首答 2 题 1 错（-1）→ 99（补测不返分）
+# 上面的双批埋点已就位：去重后唯一计错 = (wid,3) 首批错 → 99；
+# 若无去重会双计 (wid0,4) 第二批错 + (wid,3) 错 = 98——此断言即防回归
 sc = db.execute("SELECT score FROM daily_logs WHERE user_id=? AND date=?", (uid, TODAY_STR)).fetchone()
 check('完成事件结算积分 99（100-1错题）', sc and sc['score'] == 99, sc['score'] if sc else None)
 s, r = api(cj, '/api/score')

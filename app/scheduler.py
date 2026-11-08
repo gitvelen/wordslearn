@@ -768,19 +768,24 @@ def get_today_queue(user_id):
                            (user_id, t_str)).fetchone()["c"]
         if due_n > NEW_THROTTLE_AT:
             new_allowance //= 2
-        # 热身轮：昨天首学的词（快闪巩固，不提交不调度）
+        # 热身轮：昨天首学的词（快闪巩固，不提交不调度）。
+        # v3.2.1 只在当日首段会话出：当日已有学习提交（new/review）后重开不再重放热身——
+        # 中途退出重开的孩子不应把 19 题热身再做一遍
         yesterday = (t - timedelta(days=1)).isoformat()
-        warmup = db.execute("""
-            SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
-            FROM user_word_state s JOIN words w ON w.id=s.word_id
-            WHERE s.user_id=? AND s.first_learned_date=?
-            ORDER BY w.id""", (user_id, yesterday)).fetchall()
+        acted = db.execute("""SELECT new_done, review_done FROM daily_logs
+                              WHERE user_id=? AND date=?""", (user_id, t_str)).fetchone()
         warmup_items = []
-        for r in warmup:
-            item = _word_brief(db, r, user_id, junior, with_senses=False)
-            item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
-                                    "confirm", user_id, junior) or None
-            warmup_items.append(item)
+        if not (acted and (acted["new_done"] > 0 or (acted["review_done"] or 0) > 0)):
+            warmup = db.execute("""
+                SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
+                FROM user_word_state s JOIN words w ON w.id=s.word_id
+                WHERE s.user_id=? AND s.first_learned_date=?
+                ORDER BY w.id""", (user_id, yesterday)).fetchall()
+            for r in warmup:
+                item = _word_brief(db, r, user_id, junior, with_senses=False)
+                item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
+                                        "confirm", user_id, junior) or None
+                warmup_items.append(item)
         new_words = db.execute("""
             SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
             FROM plan_words p JOIN words w ON w.id=p.word_id
@@ -815,20 +820,24 @@ def get_today_queue(user_id):
                 # v3.2 晋级证据阶梯：每级用该间隔下最诚实（猜测底噪最低）且未练过的题。
                 # stage-1(D+2) d2 zh_word 再认；stage-2(D+7) d5 cloze 语境（独占 fresh，
                 # 无 cloze 词降级 d5 通用）；stage-3(D+19→mastered) d12 spell 自由拼写
-                # （题库全覆盖；缺题降级 d12 通用/兜底现算）。均 mark_used 记账。
+                # （题库全覆盖；缺题降级 d12 通用/兜底现算）。
+                # v3.2.1 评测主取题 mark_used=False——改作答时记账（submit_answer 收 quiz_id）：
+                # 取题即标会在"作答前刷新/重开"时烧掉唯一 fresh 题，毕业门静默降级 MCQ
                 if r["stage"] == 1:
                     item["quiz"] = (
-                        _quiz_by_type(db, r["id"], "d2", "zh_word", user_id)
+                        _quiz_by_type(db, r["id"], "d2", "zh_word", user_id, mark_used=False)
                         or get_quiz(db, r["id"], r["word"], r["definition_zh"],
                                     "d2", user_id, junior)) or None
                 elif r["stage"] == 2:
                     item["quiz"] = (
-                        _quiz_by_type(db, r["id"], "d5", "cloze", user_id, fresh_only=True)
+                        _quiz_by_type(db, r["id"], "d5", "cloze", user_id,
+                                      fresh_only=True, mark_used=False)
                         or get_quiz(db, r["id"], r["word"], r["definition_zh"],
                                     "d5", user_id, junior)) or None
                 else:
                     item["quiz"] = (
-                        _quiz_by_type(db, r["id"], "d12", "spell", user_id, fresh_only=True)
+                        _quiz_by_type(db, r["id"], "d12", "spell", user_id,
+                                      fresh_only=True, mark_used=False)
                         or get_quiz(db, r["id"], r["word"], r["definition_zh"],
                                     "d12", user_id, junior)) or None
             review_items.append(item)
@@ -860,6 +869,7 @@ def get_today_queue(user_id):
         return {"plan": dict(plan), "date": t_str, "done": done,
                 "done_new": dl["new_done"] if dl else 0,
                 "done_review": dl["review_done"] if dl else 0,
+                "due_remaining": max(0, due_n - REVIEW_CAP),   # v3.2.1 完成屏"还有N个排明天"提示
                 "warmup": warmup_items, "new": new_items,
                 "learned_today": learned_items, "review": review_items}
     finally:
@@ -877,16 +887,21 @@ def _bump_log(db, user_id, field):
 
 
 # ---------- 答题状态机 ----------
-def submit_answer(user_id, word_id, phase, correct, quiz_type=""):
+def submit_answer(user_id, word_id, phase, correct, quiz_type="", quiz_id=None):
     """phase: 'learn'=新词首学, 'review'=复习测试, 'audit'=掌握词抽检。
     首学 2 题 / 热身轮 / 当日重现轮均不调用此接口——只有「进入下一个新词」与复习首答才提交。
-    同时写 quiz_log（学习日报数据源；quiz_type 由前端带回）。"""
+    同时写 quiz_log（学习日报数据源；quiz_type 由前端带回）。
+    quiz_id（v3.2.1）：评测题作答时记账——取题不标（防作答前刷新/重开烧掉唯一 fresh 题，
+    spell 毕业门静默降级 MCQ），首答提交时才落 user_quiz_used。旧客户端不带则不标（退化无害）。"""
     db = get_db()
     try:
         t = _today()
         db.execute("""INSERT INTO quiz_log(user_id, date, phase, word_id, quiz_type, correct)
                       VALUES(?,?,?,?,?,?)""",
                    (user_id, t.isoformat(), phase, word_id, quiz_type or "", 1 if correct else 0))
+        if quiz_id:
+            db.execute("INSERT OR IGNORE INTO user_quiz_used(user_id, quiz_id) VALUES(?,?)",
+                       (user_id, quiz_id))
         if phase == "audit":
             db.execute("UPDATE audit_schedule SET done=1 WHERE user_id=? AND word_id=? AND date=?",
                        (user_id, word_id, t.isoformat()))
@@ -986,6 +1001,13 @@ def get_progress(user_id):
                                LEFT JOIN user_word_state s ON s.word_id=p.word_id AND s.user_id=?
                                WHERE p.plan_id=? GROUP BY st""", (user_id, plan["id"])):
             dist[r["st"]] = r["c"]
+        # 复习冲刺线（v3.2.1）：learning 词的 stage 分布——进度页呈现复习里程碑，
+        # 治"266 词一整坨复习中、掌握恒 0"两周看不到推进的家长观感
+        stages = [0, 0, 0]
+        for r in db.execute("""SELECT stage, COUNT(*) c FROM user_word_state
+                               WHERE user_id=? AND state='learning' GROUP BY stage""", (user_id,)):
+            if 1 <= r["stage"] <= 3:
+                stages[r["stage"] - 1] = r["c"]
         streak = 0
         d = _today()
         # 今天未学不断签：无今日日志时从昨天起算（否则当天一打开 app 永远显示 0，挫伤积极性）
@@ -1004,7 +1026,7 @@ def get_progress(user_id):
                 break
         p = dict(plan)
         p["expired"] = plan["end_date"] < _today().isoformat()   # 到期可续订（前端续订入口依据）
-        return {"plan": p, "dist": dist, "streak": streak,
+        return {"plan": p, "dist": dist, "stages": stages, "streak": streak,
                 "learned_total": dist["mastered"] + dist["learning"]}
     finally:
         db.close()

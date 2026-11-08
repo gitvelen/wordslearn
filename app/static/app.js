@@ -57,8 +57,9 @@ const app = Vue.createApp({
     curItem() { return (this.today && this.todayQueue[this.today.qIdx]) || null; },
     todayPct() {
       if (!this.today || !this.today.queue.length) return 0;
-      // 分母用建队快照：错词重插只加长队列不改分母，进度条单调不回跳
-      const total = this._len0 || this.today.queue.length;
+      // 分母单调只增（v3.2.1）：建队快照与当前队列长度取大——错词重插/关末补测加长
+      // 队列时进度条同步走完，不再提前钉死 100%；队列只增不减，单调不回跳保持
+      const total = Math.max(this._len0 || 0, this.today.queue.length);
       return Math.min(100, Math.round(this.today.qIdx / total * 100));
     },
     calOffset() {
@@ -600,7 +601,7 @@ const app = Vue.createApp({
         review: r.review || [],
         queue: [], qIdx: 0,
         answered: false, feedback: null, picked: null, spellCells: [], spellReveal: false,
-        doneNew: 0, doneReview: 0, doneQuiz: 0, requeuedCount: 0,
+        doneNew: 0, doneReview: 0, doneQuiz: 0, requeuedCount: 0, dueLeft: 0,
         gateWrong: {},
       };
       if (r.done === true) {   // 严格等于：防御服务端再传出 truthy 非 bool（11-03 done=19 误判事故）
@@ -610,6 +611,10 @@ const app = Vue.createApp({
         this.today.doneReview = r.done_review || 0;
         this.today.doneQuiz = 1;
       } else {
+        // v3.2.1 重开恢复当日基数：后端给了 done_review（当日已通过数），不恢复会让
+        // "已过X"从0重数、完成屏"复习通过3"而实际71（同日自相矛盾）
+        this.today.doneReview = r.done_review || 0;
+        this.today.dueLeft = r.due_remaining || 0;
         this.buildQueue();
       }
       if (this.todayPhaseDone()) {
@@ -642,7 +647,8 @@ const app = Vue.createApp({
       关卡覆盖「今天待学 + 今天已学」（learnedToday）——中途刷新页面关卡不丢。
       standard 五关：认词/听音/回想/听写/用词(组词)；junior 三关：认词/听音/选词。 */
       const q = [];
-      for (const w of this.today.warmup) q.push({ type: 'warmup', item: w });
+      let wi = 0;
+      for (const w of this.today.warmup) q.push({ type: 'warmup', item: w, _wi: ++wi });
       // 新卡乱序呈现（v3.2）：库模式同日新词常来自同一教材单元（语义近似互扰，
       // Tinkham/Waring），洗牌只影响呈现顺序——后端按 plan seq 分配、learnedToday
       // 重建均不受影响
@@ -657,13 +663,19 @@ const app = Vue.createApp({
       const todayAll = [...this.today.new, ...this.today.learnedToday];   // 今日全部新词
       this.today.newAll = todayAll;
       const junior = this.isJunior;
+      // 关卡会话记忆（v3.2.1）：当日已答过的关卡题重开不再重出——关卡不进调度，
+      // 重做只费时间且产生双批埋点（积分双扣的根源）。localStorage 仅本设备生效，
+      // 跨设备/清缓存退化为全量重做（无数据损害）
+      const mem = this._gateMem();
       const gates = junior
         ? [['word_zh', '认词'], ['listen_zh', '听音'], ['_pick', '选词']]
         : [['word_zh', '认词'], ['listen_zh', '听音'], ['zh_word', '回想'],
            ['spell', '听写'], ['_reinforce', '用词']];
       gates.forEach(([t, name], gi) => {
+        const doneSet = new Set(mem[gi + 1] || []);
         const items = [];
         todayAll.forEach(n => {
+          if (doneSet.has(n.id)) return;   // 本会话周期内已答过，跳过
           let quiz = null;
           if (t === '_reinforce') quiz = n.reinforce;
           else if (t === '_pick') quiz = (n.quizzes || []).find(x => x.quiz_type === 'emoji')
@@ -677,16 +689,45 @@ const app = Vue.createApp({
           [items[i], items[j]] = [items[j], items[i]];
         }
         items.forEach((it, i) => { it._qi = i + 1; it._qn = items.length; });
-        if (items.length) {           // 无新词日（纯复习）不出空关卡
+        if (items.length) {           // 剩余未答的题 + 关屏；整关已答完则连关屏一起跳过
           q.push(...items);
           q.push({ type: 'gate', _level: gi + 1, _gname: name });
         }
       });
+      this.today.hadGates = q.some(x => x.type === 'gate') || Object.keys(mem).length > 0;
       this.today.queue = q;
       this.today.gateWrong = {};      // level → Set(word_id)（本关未过关词）
       this._setSpellReveal(q[0]);     // 支架态初始化（正常首题不会是补测，防御性设置）
       this.today.doneNew = this.today.learnedToday.length;   // 刷新恢复：已学卡计入统计
       this._len0 = q.length;          // 进度条分母快照（todayPct 用）
+    },
+    // 关卡会话记忆（v3.2.1）：{date, answered: {level: [word_id]}}，跨日自动重置
+    _gateMem() {
+      try {
+        const m = JSON.parse(localStorage.getItem('wl_gate_v1') || 'null');
+        if (m && m.date === (this.today && this.today.date)) return m.answered || {};
+      } catch (e) {}
+      const fresh = { date: this.today && this.today.date, answered: {} };
+      try { localStorage.setItem('wl_gate_v1', JSON.stringify(fresh)); } catch (e) {}
+      return fresh.answered;
+    },
+    _gateMemAdd(level, wordId) {
+      try {
+        const m = JSON.parse(localStorage.getItem('wl_gate_v1') || 'null');
+        if (!m || m.date !== (this.today && this.today.date)) return;
+        (m.answered[level] = m.answered[level] || []).push(wordId);
+        localStorage.setItem('wl_gate_v1', JSON.stringify(m));
+      } catch (e) {}
+    },
+    // 错词重现插回本阶段块尾（v3.2.1）：不再推全队列尾——热身/复习的重现留在本阶段内，
+    // 关卡打完后不再冒出"巩固重现"，热身标签序号也不再用全局下标
+    _requeuePhase(w) {
+      const q = this.today.queue;
+      let ins = q.length;
+      for (let i = this.today.qIdx + 1; i < q.length; i++) {
+        if (q[i].type !== w.type) { ins = i; break; }
+      }
+      q.splice(ins, 0, w);
     },
     todayPhaseDone() { return this.today && this.today.qIdx >= this.today.queue.length; },
     autoPlayItem(w) {
@@ -774,6 +815,8 @@ const app = Vue.createApp({
       this.today.spellCells = [];
       this._setSpellReveal(this.today.queue[this.today.qIdx]);
       if (this.todayPhaseDone()) {
+        // v3.2.1：当日有关卡（含会话记忆里已完成的关）且队列走完 → 完成屏"全过"牌一致亮起
+        if (this.today.hadGates) this.today.doneQuiz = 1;
         await this.loadMe(); this.playSfx(true);
         this.api('/api/report/daily', { method: 'POST' })   // 完成事件：结算积分 + 学习日报
           .catch(() => {}).finally(() => this.loadScore());
@@ -809,12 +852,12 @@ const app = Vue.createApp({
       this.postQuizLog({ phase: 'warmup', correct: ok, retry: !!w._requeued });
       if (w._requeued) {                     // 重现轮：对过；错再看卡再排
         if (ok) { this.autoNext(900); }
-        else { this.today.queue.push({ ...w }); this.openWordDetail(w.item.id, 'wrong'); }
+        else { this._requeuePhase({ ...w }); this.openWordDetail(w.item.id, 'wrong'); }
         return;
       }
       if (ok) { this.autoNext(900); }
       else {
-        this.today.queue.push({ ...w, _requeued: true });
+        this._requeuePhase({ ...w, _requeued: true });
         this.openWordDetail(w.item.id, 'wrong');
       }
     },
@@ -885,7 +928,7 @@ const app = Vue.createApp({
       this.today.feedback = { ok, spell: !!isSpell };
       this.playSfx(ok);
       if (w._requeued) {
-        if (!ok) this.today.queue.push({ ...w });
+        if (!ok) this._requeuePhase({ ...w });
         else this.today.doneReview++;
         this.autoNext(ok ? 900 : 2200);
         return;
@@ -895,11 +938,12 @@ const app = Vue.createApp({
         this.autoNext(900);
       } else {
         this.today.requeuedCount++;
-        this.today.queue.push({ ...w, _requeued: true });
+        this._requeuePhase({ ...w, _requeued: true });
         this.openWordDetail(w.item.id, 'wrong');   // 弹卡：点「记住了，继续」即推进
       }
       this.api('/api/answer', { method: 'POST', body: { word_id: w.item.id, phase: w.item.audit ? 'audit' : 'review',
-        correct: ok, quiz_type: (w.item.quiz && w.item.quiz.quiz_type) || '' } });
+        correct: ok, quiz_type: (w.item.quiz && w.item.quiz.quiz_type) || '',
+        quiz_id: (w.item.quiz && w.item.quiz.quiz_id) || null } });   // v3.2.1 作答时记账（取题不标）
     },
 
     // 关卡测验题：不进调度；答错记入关末重测
@@ -914,6 +958,7 @@ const app = Vue.createApp({
       this.today.feedback = { ok, spell: !!isSpell };
       this.playSfx(ok);
       const level = w._level;
+      this._gateMemAdd(level, w.item.id);   // v3.2.1 关卡会话记忆：答过即记（对错都算，重开不重出）
       if (!this.today.gateWrong[level]) this.today.gateWrong[level] = new Set();
       this.postQuizLog({ phase: 'gate', level, correct: ok, retry: !!w._retry });
       if (ok) {
@@ -964,8 +1009,11 @@ const app = Vue.createApp({
             // 先揭示完整拼写再默写
             _scaffold: quiz.quiz_type === 'spell' });
         }
+        retry.forEach((it, i) => { it._qi = i + 1; it._qn = retry.length; });   // v3.2.1 补齐关内编号（防"补测 · / "空标签）
         // 移除当前 gate，重测题紧随其后；重测完会再遇 gate（此时若清空则放行）
         this.today.queue.splice(this.today.qIdx, 1, ...retry, g);
+        // v3.2.1：splice 进入不经 advance——首道补测题的支架态需在此手动设置
+        this._setSpellReveal(this.today.queue[this.today.qIdx]);
       } finally { this.locking = false; }
     },
 
