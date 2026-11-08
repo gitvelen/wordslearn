@@ -1,16 +1,21 @@
-"""调度核心 v4.2：计划生成（全局词频序）、每日队列（热身轮+新词4题+波次复习+巩固轮供题）、
+"""调度核心 v4.2：计划生成（全局词频序）、每日队列（热身轮+新词4题+复习轮+巩固轮供题）、
 答题状态机、表格确认流程（取代旧 spot 抽查+全量摸底）。
 
-状态机（不变）: 首学 stage=1,next=D+2 → 复习答对 stage=2,next=复习日+5
+状态机: 首学 stage=1,next=D+2 → 复习答对 stage=2,next=复习日+5
 → 答对 stage=3,next=复习日+12 → 答对 mastered（全对时即首学后第 2/7/19 天）。
-复习答错: stage 重置为 1, next=D+2 完整回炉；当日重现由前端推回队尾。
+复习答错: 部分重置（v3.2）——stage-3 降一级回 stage-2，stage-1/2 回 stage-1 完整回炉，
+next 均 D+2；audit 失败仍完整回炉（长间隔遗忘是强证据）。当日重现由前端推回队尾。
+晋级证据阶梯（v3.2，判卷与练习分离）：stage-1 用 d2 zh_word（再认）、stage-2 用 d5 cloze
+（语境·独占 fresh——D+0 用词关不再消耗，旧实现每词仅 1 道 cloze 被 D+0/D+2 两次借用，
+100% 同题且实测判据与两天前同题表现零相关）、stage-3 用 d12 spell（自由拼写·0 猜测底噪）。
+junior 不变（再认管线，无 cloze/spell）。
 掌握词每日抽检（v2.6 方案A）：audit_schedule 当日随机抽 AUDIT_N 个已掌握词混入复习队列，
 答对无事、答错打回 D+2 重走——掌握后仍有留存防线，且产出真实留存率数据。
 
 v4.2 新词首学 4 题（多角度）：word_zh(形→义) + listen_zh(音→义) + zh_word(义→形)
 + spell(音→形·当天听写)；junior 为 word_zh + listen_zh + emoji(听音选词，无 emoji
-词退化 zh_word)。巩固轮（前端在主循环后编排）：每词 1 题从 d5/d2 池借用
-（mark_used=False 不消耗正式复习配额），不进调度。
+词退化 zh_word)。巩固轮（前端在主循环后编排）：每词 1 题从 d5 借 zh_word（v3.2 起
+d5 cloze 收归 stage-2 评测独占），mark_used=False 不消耗正式复习配额，不进调度。
 
 v4.1 摸底 = 表格确认三步：速选（认识的标 verify）→ 验证轮（1 题四选一，对→skipped
 错→回候选池即删状态）→ 建计划时按全局词频序续补至目标词量。
@@ -112,9 +117,11 @@ def get_quiz(db, word_id, word, definition_zh, stage, user_id=None, junior=False
     return _gen_fallback_quiz(db, word, definition_zh, stage)
 
 
-def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None, mark_used=True):
-    """按题型精确取题（learn 题型序列用）：排除已用，耗尽复用，题库缺该题型返回 None。
-    mark_used=False 供用词关借用 cloze 题而不消耗正式 d5 复习的防重复配额。"""
+def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None, mark_used=True, fresh_only=False):
+    """按题型精确取题：排除已用，耗尽默认复用，题库缺该题型返回 None。
+    mark_used=False 供借题（用词关）而不消耗正式复习的防重复配额。
+    fresh_only=True（v3.2 评测抽题）：耗尽不复用旧题，返回 None 交上层降级——
+    判卷的题绝不能是刚练过的题。"""
     rows = db.execute("""SELECT id, quiz_type, stem, options, answer FROM word_quiz
                          WHERE word_id=? AND stage=? AND quiz_type=?""",
                       (word_id, stage, quiz_type)).fetchall()
@@ -124,7 +131,10 @@ def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None, mark_used=True):
     if user_id:
         used = {r["quiz_id"] for r in db.execute(
             "SELECT quiz_id FROM user_quiz_used WHERE user_id=?", (user_id,))}
-    pool = [r for r in rows if r["id"] not in used] or rows
+    pool = [r for r in rows if r["id"] not in used]
+    if fresh_only and not pool:
+        return None
+    pool = pool or rows
     r = random.choice(pool)
     if user_id and mark_used:
         db.execute("INSERT OR IGNORE INTO user_quiz_used(user_id, quiz_id) VALUES(?,?)",
@@ -160,14 +170,11 @@ def _new_word_item(db, r, user_id, junior):
     item = _word_brief(db, r, user_id, junior)
     item["quizzes"] = get_learn_quizzes(db, user_id, r["id"], r["word"],
                                         r["definition_zh"], junior, r["emoji"])
-    # 用词关题：组词（cloze 挖空）优先——当天学的词当天练用词；无 cloze 的词退化 d5/d2。
-    # 借题不记 user_quiz_used，不消耗正式复习的防重复配额。
+    # 用词关题（v3.2）：只借 d5 zh_word（义→形，不耗配额）。不再借 cloze——d5 每词仅 1 道
+    # cloze 收归 stage-2(D+7) 正式评测独占（旧实现 D+0/D+2 100% 同题，晋级判据被污染）。
+    # 无 d5 zh_word 的词该关自动跳过（前端 buildQueue 对 reinforce=None 已兼容）。
     item["reinforce"] = (
-        (None if junior else _quiz_by_type(db, r["id"], "d5", "cloze", user_id, mark_used=False))
-        or get_quiz(db, r["id"], r["word"], r["definition_zh"], "d5",
-                    user_id, junior, mark_used=False)
-        or get_quiz(db, r["id"], r["word"], r["definition_zh"], "d2",
-                    user_id, junior, mark_used=False))
+        None if junior else _quiz_by_type(db, r["id"], "d5", "zh_word", user_id, mark_used=False))
     return item
 
 
@@ -726,7 +733,7 @@ def _word_brief(db, r, user_id, junior, with_senses=True):
 
 def get_today_queue(user_id):
     """v4.1 队列：warmup（昨日词快闪）+ new（每词带 2 道首学题）+ review（每词带阶段题）。
-    波次交错由前端编排（每 5 新词插一组复习）；后端只供原料。"""
+    顺序由前端 buildQueue 整块编排（热身→新词卡连播→复习→分关测验，关内独立乱序）；后端只供原料。"""
     db = get_db()
     try:
         plan = get_active_plan(db, user_id)
@@ -801,17 +808,29 @@ def get_today_queue(user_id):
         for r in review:
             item = _word_brief(db, r, user_id, junior, with_senses=False)
             stage_key = STAGE_BY_REVIEW.get(r["stage"], "d2")
-            if r["stage"] == 1 and not junior:
-                # stage1 晋级判定用产出型（语境挖空）优先：zh_word 再认蒙对底线 25%、
-                # "认得出"≠"用得了"，间隔跳 +5 的证据太弱；cloze 借用不耗 d5 配额
-                # （mark_used=False），无 cloze 词（约10%）退化原 d2 zh_word
-                item["quiz"] = (
-                    _quiz_by_type(db, r["id"], "d5", "cloze", user_id, mark_used=False)
-                    or get_quiz(db, r["id"], r["word"], r["definition_zh"],
-                                stage_key, user_id, junior)) or None
-            else:
+            if junior:
                 item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
                                         stage_key, user_id, junior) or None
+            else:
+                # v3.2 晋级证据阶梯：每级用该间隔下最诚实（猜测底噪最低）且未练过的题。
+                # stage-1(D+2) d2 zh_word 再认；stage-2(D+7) d5 cloze 语境（独占 fresh，
+                # 无 cloze 词降级 d5 通用）；stage-3(D+19→mastered) d12 spell 自由拼写
+                # （题库全覆盖；缺题降级 d12 通用/兜底现算）。均 mark_used 记账。
+                if r["stage"] == 1:
+                    item["quiz"] = (
+                        _quiz_by_type(db, r["id"], "d2", "zh_word", user_id)
+                        or get_quiz(db, r["id"], r["word"], r["definition_zh"],
+                                    "d2", user_id, junior)) or None
+                elif r["stage"] == 2:
+                    item["quiz"] = (
+                        _quiz_by_type(db, r["id"], "d5", "cloze", user_id, fresh_only=True)
+                        or get_quiz(db, r["id"], r["word"], r["definition_zh"],
+                                    "d5", user_id, junior)) or None
+                else:
+                    item["quiz"] = (
+                        _quiz_by_type(db, r["id"], "d12", "spell", user_id, fresh_only=True)
+                        or get_quiz(db, r["id"], r["word"], r["definition_zh"],
+                                    "d12", user_id, junior)) or None
             review_items.append(item)
         # 掌握词每日抽检（方案A）：当日排样一次，done 标记防重出；答错由 submit_answer 打回 D+2
         db.execute("DELETE FROM audit_schedule WHERE user_id=? AND date<?", (user_id, t_str))
@@ -903,13 +922,16 @@ def submit_answer(user_id, word_id, phase, correct, quiz_type=""):
                                   WHERE user_id=? AND word_id=?""",
                                (old + 1, next_date, user_id, word_id))
             else:
-                # 答错：stage 重置为 1，从最短间隔完整回炉（state 回 learning——
-                # 掌握词抽检答错时原 state='mastered'，不改回则永远进不了复习管道）
+                # 答错：部分重置（v3.2）——stage-3 失败降一级回 stage-2（防 D+2~D+19 共 31 天
+                # 完整回炉）；stage-1/2 失败回 stage-1 完整回炉；audit 失败仍满重置 stage-1
+                # （长间隔后的遗忘是强证据，与轨迹内失败性质不同）。
+                # state 回 learning——掌握词抽检答错时原 state='mastered'，不改回则永远进不了复习管道
+                new_stage = 1 if (phase == "audit" or row["stage"] <= 2) else 2
                 next_date = (t + timedelta(days=INTERVALS[0])).isoformat()
-                db.execute("""UPDATE user_word_state SET state='learning', stage=1, next_review_date=?,
+                db.execute("""UPDATE user_word_state SET state='learning', stage=?, next_review_date=?,
                               wrong_count=wrong_count+1
                               WHERE user_id=? AND word_id=?""",
-                           (next_date, user_id, word_id))
+                           (new_stage, next_date, user_id, word_id))
             _bump_log(db, user_id, "review")
         db.commit()
     finally:

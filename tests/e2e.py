@@ -1,5 +1,5 @@
-"""端到端 API 冒烟（v4.2）：临时测试用户 → confirm → 计划 → 今日队列（4题链+巩固题）→
-状态机全走查（D+2→D+5→D+12→mastered，答错回炉）→ 清理。
+"""端到端 API 冒烟（v3.2）：临时测试用户 → confirm → 计划 → 今日队列（4题链+巩固题）→
+状态机全走查（D+2→D+5→D+12→mastered，v3.2 晋级证据阶梯 + 部分重置 + fresh_only 防同题）→ 清理。
 容器内运行：
   docker cp tests/e2e.py wordslearn:/tmp/e2e.py && docker exec wordslearn python /tmp/e2e.py
 本地运行（默认 http://localhost:8091，库 ../app/data/wordslearn.db）：
@@ -97,7 +97,8 @@ n0 = r['new'][0]
 check('新词首学 4 题（word_zh/listen_zh/zh_word/spell）',
       [q['quiz_type'] for q in n0['quizzes']] == ['word_zh', 'listen_zh', 'zh_word', 'spell'],
       [q['quiz_type'] for q in n0['quizzes']])
-check('巩固题已预取（d5/d2 借用）', bool(n0['reinforce']) and n0['reinforce']['quiz_type'] in ('cloze', 'zh_word', 'spell', 'word_zh'),
+check('巩固题 = d5 zh_word 借用（v3.2：cloze 收归 stage-2 评测独占）',
+      bool(n0['reinforce']) and n0['reinforce']['quiz_type'] == 'zh_word',
       n0['reinforce'] and n0['reinforce']['quiz_type'])
 check('新词带义项（senses）', bool(n0['senses']))
 wid = n0['id']
@@ -110,17 +111,48 @@ check('learn → learning/stage1/next=D+2', row['state'] == 'learning' and row['
 log = db.execute("SELECT new_done FROM daily_logs WHERE user_id=? AND date=?", (uid, TODAY_STR)).fetchone()
 check('daily_logs 计 1 新词', log and log['new_done'] == 1)
 
-# ---- 复习状态机全走查：D+2→D+5→D+12→mastered ----
+# ---- 复习状态机全走查：D+2→D+5→D+12→mastered（v3.2 晋级证据阶梯） ----
+def served_quiz(word_id):
+    """取当前 /api/today 里该词的复习评测题（audit 词除外）。"""
+    _, r = api(cj, '/api/today')
+    return next((rv['quiz'] for rv in r['review'] if rv['id'] == word_id and not rv.get('audit')), None)
+
 force_due(uid, wid, 1)
+q1 = served_quiz(wid)
+check('D+2 评测题 = d2 zh_word（再认阶梯）', q1 and q1['quiz_type'] == 'zh_word',
+      q1 and q1['quiz_type'])
 s, _ = api(cj, '/api/answer', 'POST', {'word_id': wid, 'phase': 'review', 'correct': True})
 check('D+2 答对 → stage2', st(uid, wid)['stage'] == 2)
 force_due(uid, wid, 2)
+q2 = served_quiz(wid)
+check('D+5 评测题 = d5 cloze（语境·独占 fresh；无 cloze 词约10%降级 zh_word）',
+      q2 and q2['quiz_type'] in ('cloze', 'zh_word'), q2 and q2['quiz_type'])
+cloze_id = q2.get('quiz_id') if q2 and q2['quiz_type'] == 'cloze' else None
 s, _ = api(cj, '/api/answer', 'POST', {'word_id': wid, 'phase': 'review', 'correct': True})
 check('D+5 答对 → stage3', st(uid, wid)['stage'] == 3)
 force_due(uid, wid, 3)
+q3 = served_quiz(wid)
+check('D+12 毕业门 = d12 spell（自由拼写·0 猜测底噪）', q3 and q3['quiz_type'] == 'spell',
+      q3 and q3['quiz_type'])
 s, _ = api(cj, '/api/answer', 'POST', {'word_id': wid, 'phase': 'review', 'correct': True})
 row = st(uid, wid)
 check('D+12 答对 → mastered 且退池', row['state'] == 'mastered' and row['next_review_date'] is None)
+
+# ---- v3.2 部分重置：stage-3 答错降一级回 stage-2（不再 31 天完整回炉） ----
+force_due(uid, wid, 3)
+s, _ = api(cj, '/api/answer', 'POST', {'word_id': wid, 'phase': 'review', 'correct': False})
+row = st(uid, wid)
+check('stage-3 答错 → stage2 部分重置', row['stage'] == 2 and row['wrong_count'] == 1)
+# fresh_only 防同题：stage-2 重评不得复用刚判过卷的那道 cloze
+force_due(uid, wid, 2)
+q2b = served_quiz(wid)
+check('stage-2 重评不撞旧题（fresh_only）',
+      q2b and not (q2b['quiz_type'] == 'cloze' and q2b.get('quiz_id') == cloze_id),
+      q2b and (q2b['quiz_type'], q2b.get('quiz_id')))
+s, _ = api(cj, '/api/answer', 'POST', {'word_id': wid, 'phase': 'review', 'correct': True})   # stage2→3
+force_due(uid, wid, 3)
+s, _ = api(cj, '/api/answer', 'POST', {'word_id': wid, 'phase': 'review', 'correct': True})
+check('回流词 7 天二冲后 mastered', st(uid, wid)['state'] == 'mastered')
 
 # ---- 答错回炉 ----
 wid2 = api(cj, '/api/today')[1]['new'][1]['id'] if len(api(cj, '/api/today')[1]['new']) > 1 else None
@@ -229,8 +261,7 @@ nj = r['new'][0]
 jt = [q['quiz_type'] for q in nj['quizzes']]
 check('junior 3 题链（emoji 或退化 zh_word）',
       jt == ['word_zh', 'listen_zh', 'emoji'] or jt == ['word_zh', 'listen_zh', 'zh_word'], jt)
-check('junior 巩固题为 JUNIOR_TYPES 内', nj['reinforce']['quiz_type'] in ('word_zh', 'listen_zh', 'zh_word'),
-      nj['reinforce']['quiz_type'])
+check('junior 无巩固题（用词关仅 standard，v3.2 起 reinforce=None）', nj['reinforce'] is None)
 
 # ---- 清理 ----
 def _cleanup(uname):
@@ -252,5 +283,5 @@ for _un in (uname, uname_j):
 db.commit(); db.close()
 
 print()
-print('❌ FAILED: ' + ', '.join(FAILS) if FAILS else '✅ ALL PASS (v4.2 API 冒烟通过)')
+print('❌ FAILED: ' + ', '.join(FAILS) if FAILS else '✅ ALL PASS (v3.2 API 冒烟通过)')
 sys.exit(1 if FAILS else 0)

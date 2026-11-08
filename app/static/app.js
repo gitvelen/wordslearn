@@ -599,7 +599,7 @@ const app = Vue.createApp({
         warmup: r.warmup || [], new: r.new || [], learnedToday: r.learned_today || [],
         review: r.review || [],
         queue: [], qIdx: 0,
-        answered: false, feedback: null, picked: null, spellCells: [],
+        answered: false, feedback: null, picked: null, spellCells: [], spellReveal: false,
         doneNew: 0, doneReview: 0, doneQuiz: 0, requeuedCount: 0,
         gateWrong: {},
       };
@@ -643,7 +643,15 @@ const app = Vue.createApp({
       standard 五关：认词/听音/回想/听写/用词(组词)；junior 三关：认词/听音/选词。 */
       const q = [];
       for (const w of this.today.warmup) q.push({ type: 'warmup', item: w });
-      this.today.new.forEach((n, i) => q.push({ type: 'newcard', item: n, _i: i + 1 }));
+      // 新卡乱序呈现（v3.2）：库模式同日新词常来自同一教材单元（语义近似互扰，
+      // Tinkham/Waring），洗牌只影响呈现顺序——后端按 plan seq 分配、learnedToday
+      // 重建均不受影响
+      const newOrder = [...this.today.new];
+      for (let i = newOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newOrder[i], newOrder[j]] = [newOrder[j], newOrder[i]];
+      }
+      newOrder.forEach((n, i) => q.push({ type: 'newcard', item: n, _i: i + 1 }));
       for (const rv of this.today.review) q.push({ type: 'review', item: rv });
 
       const todayAll = [...this.today.new, ...this.today.learnedToday];   // 今日全部新词
@@ -676,6 +684,7 @@ const app = Vue.createApp({
       });
       this.today.queue = q;
       this.today.gateWrong = {};      // level → Set(word_id)（本关未过关词）
+      this._setSpellReveal(q[0]);     // 支架态初始化（正常首题不会是补测，防御性设置）
       this.today.doneNew = this.today.learnedToday.length;   // 刷新恢复：已学卡计入统计
       this._len0 = q.length;          // 进度条分母快照（todayPct 用）
     },
@@ -737,6 +746,16 @@ const app = Vue.createApp({
     },
     isGateItem(w) { return w && w.type === 'quiz'; },
 
+    // 听写补测支架（v3.2）：进入带 _scaffold 的拼写题先揭示完整拼写，再进默写
+    _setSpellReveal(w) {
+      this.today.spellReveal = !!(w && w._scaffold && w.item.quiz
+        && w.item.quiz.quiz_type === 'spell');
+    },
+    spellRevealDone() {
+      this.today.spellReveal = false;
+      if (this.curItem) this.playWord(this.curItem.item.word);   // 进默写前再读一遍
+    },
+
     autoNext(delay) {   // 答对自动下一题（统一只读一遍：进题自动播，答后不重播）
       clearTimeout(this._autoTimer);
       this._autoTimer = setTimeout(() => {
@@ -753,6 +772,7 @@ const app = Vue.createApp({
       this.today.qIdx++;
       this.today.answered = false; this.today.feedback = null; this.today.picked = null;
       this.today.spellCells = [];
+      this._setSpellReveal(this.today.queue[this.today.qIdx]);
       if (this.todayPhaseDone()) {
         await this.loadMe(); this.playSfx(true);
         this.api('/api/report/daily', { method: 'POST' })   // 完成事件：结算积分 + 学习日报
@@ -939,7 +959,10 @@ const app = Vue.createApp({
           else if (t === '_pick') quiz = (n.quizzes || []).find(x => x.quiz_type === 'emoji')
               || (n.quizzes || []).find(x => x.quiz_type === 'zh_word');
           else quiz = (n.quizzes || []).find(x => x.quiz_type === t);
-          if (quiz) retry.push({ type: 'quiz', item: { ...n, quiz }, _level: level, _retry: true });
+          if (quiz) retry.push({ type: 'quiz', item: { ...n, quiz }, _level: level, _retry: true,
+            // 听写补测支架（v3.2）：原题硬重测通过率仅 37%（看完卡仍拼不出），
+            // 先揭示完整拼写再默写
+            _scaffold: quiz.quiz_type === 'spell' });
         }
         // 移除当前 gate，重测题紧随其后；重测完会再遇 gate（此时若清空则放行）
         this.today.queue.splice(this.today.qIdx, 1, ...retry, g);

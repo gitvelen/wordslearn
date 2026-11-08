@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="单词星球">
-<link rel="stylesheet" href="/style.css?v=b24">
+<link rel="stylesheet" href="/style.css?v=b25">
 </head>
 <body>
 <div id="app">
@@ -436,7 +436,7 @@
              class="quiz-hint">👂 听音作答</div>
         <button v-if="!quizMuted(curItem)" class="btn round" @click="playWord(curItem.item.word)">🔊</button>
         <!-- 拼写：每字母一格（杜绝输入法联想上屏），空格/连字符显示为分隔 -->
-        <div v-if="quizShowSpell(curItem)" class="spell-row">
+        <div v-if="quizShowSpell(curItem) && !(curItem._scaffold && today.spellReveal)" class="spell-row">
           <template v-for="(s, si) in spellSlots(curItem)" :key="si">
             <input v-if="s.t==='L'" class="spell-cell" :value="today.spellCells[s.i] || ''"
                    autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
@@ -446,6 +446,11 @@
             <span v-else class="spell-sep" :class="{gap: s.ch===' '}">{{ s.ch===' ' ? '' : s.ch }}</span>
           </template>
         </div>
+        <!-- 听写补测支架（v3.2）：先看完整拼写+听音，再进默写（原题硬重测通过率仅37%） -->
+        <div v-if="curItem._scaffold && today.spellReveal" class="sense-block" style="text-align:center;margin-top:10px">
+          <div class="word-xl">{{curItem.item.quiz.answer}}</div>
+          <button class="btn primary big" style="margin-top:12px" @click="spellRevealDone">记住了，重新默写 →</button>
+        </div>
       </template>
     </div>
     <div class="quiz-grid" v-if="curItem.item.quiz && !quizShowSpell(curItem)">
@@ -453,7 +458,7 @@
               :class="optClass(opt)" :disabled="today.answered"
               @click="curItem.type==='quiz' ? quizAnswer(opt) : reviewAnswer(opt)">{{opt}}</button>
     </div>
-    <button v-if="quizShowSpell(curItem) && !today.answered" class="btn primary big" @click="spellSubmit">提交 ✓</button>
+    <button v-if="quizShowSpell(curItem) && !today.answered && !(curItem._scaffold && today.spellReveal)" class="btn primary big" @click="spellSubmit">提交 ✓</button>
     <div v-if="today.feedback" class="feedback" :class="today.feedback.ok ? 'ok':'bad'">
       <template v-if="today.feedback.spell">
         {{today.feedback.ok ? '✓ 拼对啦！' : '正确拼写：' + curItem.item.quiz.answer}}
@@ -569,6 +574,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b24"></script>
+<script src="/app.js?v=b25"></script>
 </body>
 </html>
