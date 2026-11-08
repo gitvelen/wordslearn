@@ -77,7 +77,7 @@ print('cleaned')
   page.on('pageerror', e => pageErrors.push(String(e.message)));
 
   console.log('— 1. 登录页 —');
-  await page.goto(BASE, { waitUntil: 'networkidle', timeout: 20000 });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 20000 });
   check('Vue 挂载(logo渲染)', (await page.locator('.logo').textContent()) === '🪐 单词星球');
   check('无未渲染指令残留', !(await page.content()).includes('v-if='));
   await page.screenshot({ path: SHOTS + '/01-login.png' });
@@ -111,7 +111,7 @@ print('cleaned')
 
   console.log('— 5. 补完摸底(SQL) → 计划设置 —');
   dockerPy(finishScreening);
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('h2:has-text("制定你的计划")', { timeout: 8000 });
   const hint = (await page.locator('.hint').first().textContent() || '').trim();
   check('每日新词预览', /每天新学约 \d+ 个/.test(hint), hint);

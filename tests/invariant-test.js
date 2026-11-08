@@ -133,7 +133,7 @@ async function step(page, ctx, action) {
 }
 
 async function login(page, user) {
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
   await page.fill('input[placeholder="用户名"]', user);
   await page.fill('input[placeholder="密码"]', PW);
   await page.click('button:has-text("进入")');
@@ -220,7 +220,7 @@ async function profileA(page, rng) {
       if (idx < 0) { await page.waitForTimeout(300); continue; }
       // 中途刷新一次（I8）
       if (guard === 17) {
-        await page.reload({ waitUntil: 'networkidle' });
+        await page.reload({ waitUntil: 'domcontentloaded' });
         await page.waitForTimeout(800);
         const s2 = await snap(page);
         check('I8 刷新后仍处于摸底流程', ['screening', 'setup'].includes(s2.view), s2.view);
