@@ -68,10 +68,10 @@ const app = Vue.createApp({
       if (!this.cal.days.length) return 0;
       return new Date(this.cal.days[0].date + 'T00:00:00').getDay();
     },
-    // 今日任务进行中（热身/新卡/复习/关卡，未到完成屏）：日历不可进（v3.3 专注闸）
+    // 今日任务进行中（热身/新卡/复习/关卡，未到完成屏）：日历不可进（v3.3 专注闸）。
+    // 不绑定 view——做题中经进度页两击仍可达日历的绕过路径一并封死；进度页本身不锁
     quizLocked() {
-      return this.view === 'today' && !!this.today && this.today.queue.length > 0
-        && !this.todayPhaseDone();
+      return !!this.today && this.today.queue.length > 0 && !this.todayPhaseDone();
     },
     calReportEmpty() {   // 无任何学习痕迹 → 空态文案（覆盖隔夜复活等误点场景）
       const r = this.cal.report;
@@ -264,6 +264,10 @@ const app = Vue.createApp({
       await this.api('/api/logout', { method: 'POST' });
       this.user = null; this.me = null; this.view = 'login';
       this.loginForm = { username: localStorage.getItem('wl_last_user') || '', password: '' };
+      // 报告状态随会话清空：换账号不得看到上一个孩子的当日报告（cal.sel/report 残留）
+      this.cal = { month: '', days: [], sel: null, report: null, repLoading: false };
+      this.calOpen = {}; this.calWd = {}; this.repParentOpen = false;
+      this._calSeq = (this._calSeq || 0) + 1;
     },
 
     // ---------- 表格确认（v4.1 摸底）----------
@@ -1085,7 +1089,8 @@ const app = Vue.createApp({
         if (seq !== this._calSeq) return;     // 请求期间点了别的天/收起/切月：丢弃过期响应
         this.cal.report = r;
       } catch (e) {
-        if (seq === this._calSeq) { this.cal.sel = null; this.showToast(e.message, 'bad'); }
+        // 网络失败 api() 已弹「网络异常」；此处不再重复 toast（原始报错对儿童无意义）
+        if (seq === this._calSeq) this.cal.sel = null;
       } finally {
         if (seq === this._calSeq) this.cal.repLoading = false;
       }

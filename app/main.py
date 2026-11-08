@@ -352,7 +352,7 @@ def report_preview(request: Request, date: str = "", user: str = ""):
 
 @app.get("/api/report/day")
 def report_day(request: Request, day: str = ""):
-    """当日学习报告（日历点选查看）：只读复用日报引擎，今天与过去可查，未来 400。"""
+    """当日学习报告（日历点选查看）：只读复用日报引擎，今天与过去可查，未来/越界 400。"""
     user = auth.current_user(request)
     try:
         d = date.fromisoformat(day)
@@ -360,7 +360,9 @@ def report_day(request: Request, day: str = ""):
         raise HTTPException(400, "day 格式: YYYY-MM-DD")
     if d > date.today():
         raise HTTPException(400, "还不能看未来的报告哦")
-    return report.build_daily_report(user["id"], day)
+    if d < date(2025, 1, 1):
+        raise HTTPException(400, "太早啦，那会儿还没有学习记录")   # 防 date.min 附近趋势回溯溢出 500
+    return report.build_daily_report(user["id"], d.isoformat())   # 规范化：非严格 ISO 形式不进查询
 
 
 @app.get("/api/word_detail")

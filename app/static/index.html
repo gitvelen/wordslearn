@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="单词星球">
-<link rel="stylesheet" href="/style.css?v=b28">
+<link rel="stylesheet" href="/style.css?v=b29">
 </head>
 <body>
 <div id="app">
@@ -574,7 +574,7 @@
             <td>{{r.wrong_words.slice(0,6).join('、') || '—'}}</td>
           </tr>
         </table>
-        <h4>今日复习（{{cal.report.review_words.length}} 个）</h4>
+        <h4>当天复习（{{cal.report.review_words.length}} 个）</h4>
         <table class="rep-table">
           <tr><th>单词</th><th>释义</th><th>结果</th></tr>
           <tr v-for="w in cal.report.review_words" :key="w.word">
@@ -674,6 +674,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b28"></script>
+<script src="/app.js?v=b29"></script>
 </body>
 </html>
