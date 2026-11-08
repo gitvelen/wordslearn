@@ -1058,6 +1058,8 @@ const app = Vue.createApp({
       const d = new Date(y, m - 1 + n, 1);
       this.cal.month = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
       this.cal.sel = null; this.cal.report = null;   // 切月清空选中（报告不指向看不见的日期）
+      this.cal.repLoading = false;
+      this._calSeq = (this._calSeq || 0) + 1;        // 作废在途报告请求
       this.loadCal();
     },
     // 可点：有学习记录 &&（过去日 || 今日已完成——完成屏才总结今天，进行中不给半份报告）
@@ -1070,19 +1072,22 @@ const app = Vue.createApp({
       if (!this.calDayClickable(d)) return;
       if (this.cal.sel === d.date) {          // 再点同一天：收起
         this.cal.sel = null; this.cal.report = null;
+        this.cal.repLoading = false;
+        this._calSeq = (this._calSeq || 0) + 1;   // 作废在途请求（否则其 finally 永不匹配，加载态卡死）
         return;
       }
+      const seq = (this._calSeq = (this._calSeq || 0) + 1);   // 序号守卫：只有最新请求可写状态
       this.cal.sel = d.date;
       this.cal.report = null; this.cal.repLoading = true;
       this.calOpen = {}; this.repParentOpen = false;
       try {
         const r = await this.api('/api/report/day?day=' + d.date);
-        if (this.cal.sel !== d.date) return;  // 请求期间点了别的天/收起：丢弃过期响应
+        if (seq !== this._calSeq) return;     // 请求期间点了别的天/收起/切月：丢弃过期响应
         this.cal.report = r;
       } catch (e) {
-        if (this.cal.sel === d.date) { this.cal.sel = null; this.showToast(e.message, 'bad'); }
+        if (seq === this._calSeq) { this.cal.sel = null; this.showToast(e.message, 'bad'); }
       } finally {
-        if (this.cal.sel === d.date) this.cal.repLoading = false;
+        if (seq === this._calSeq) this.cal.repLoading = false;
       }
     },
     // 新词手风琴：展开时懒加载词条（会话内缓存），再点收起
