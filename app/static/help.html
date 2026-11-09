@@ -25,9 +25,11 @@ th { color:var(--muted); font-weight:600; }
 footer { text-align:center; color:var(--muted); font-size:13px; margin-top:30px; }
 a { color:var(--primary); }
 .big-emoji { font-size:40px; text-align:center; margin:6px 0; }
+.back-float { position:fixed; top:12px; left:12px; z-index:10; background:#fff; color:var(--primary); font-weight:700; text-decoration:none; border-radius:20px; padding:8px 14px; box-shadow:0 2px 10px rgba(40,60,120,.15); font-size:14px; }
 </style>
 </head>
 <body>
+<a href="/" class="back-float" onclick="if(document.referrer){history.back();return false}">← 返回学习</a>
 <header>
   <h1>🪐 单词星球 · 使用手册</h1>
   <p>给爸爸妈妈和孩子们的说明 · 手册版本 v3.0</p>
