@@ -107,6 +107,17 @@ print('✓ 补发幂等：report_sent=1 score=100 未被改写')
 n=db.execute(\"SELECT COUNT(*) c FROM quiz_log WHERE user_id=? AND date=date('now')\",(u,)).fetchone()['c']
 assert n==0, f'完成日重开产生了作答记录 {n} 条'
 print('✓ 完成日重开零作答记录（不可重放）')
+# v3.3.5 时区统一 Asia/Shanghai：schema 默认值 localtime + 新写入为 CST
+schema = db.execute(\"SELECT sql FROM sqlite_master WHERE name='quiz_log'\").fetchone()[0]
+assert 'localtime' in schema, 'quiz_log 默认值未迁移到 localtime'
+print('✓ quiz_log 时间默认值已统一 localtime(Asia/Shanghai)')
+db.execute(\"INSERT INTO quiz_log(user_id,date,phase,word_id,quiz_type,correct) VALUES(?,date('now','localtime'),'warmup',556,'word_zh',1)\", (u,))
+ts = db.execute('SELECT ts FROM quiz_log WHERE rowid=last_insert_rowid()').fetchone()[0]
+local = db.execute(\"SELECT datetime('now','localtime')\").fetchone()[0]
+db.execute('DELETE FROM quiz_log WHERE rowid=last_insert_rowid()'); db.commit()
+diff = abs(db.execute(\"SELECT (julianday(?) - julianday(?)) * 86400\", (ts, local)).fetchone()[0])
+assert diff < 120, f'新写入 ts={ts} 偏离本地时钟 {diff}s（仍在写 UTC）'
+print(f'✓ 新写入时间戳为本地时区（ts={ts}）')
 db.execute('DELETE FROM quiz_log WHERE user_id=?',(u,))
 db.execute('DELETE FROM user_quiz_used WHERE user_id=?',(u,))
 db.execute('DELETE FROM plan_words WHERE plan_id IN (SELECT id FROM study_plans WHERE user_id=?)',(u,))

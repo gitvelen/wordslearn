@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS users (
   spot_done     INTEGER DEFAULT 0,                  -- legacy（v4.1 起停用）
   confirm_done  INTEGER DEFAULT 0,                  -- 1=表格确认流程已完成（v4.1）
   basic_quiz_done INTEGER DEFAULT 0,                -- 1=基础词快测已完成（v4.1.1）
-  created_at    TEXT DEFAULT (datetime('now'))
+  created_at    TEXT DEFAULT (datetime('now','localtime'))
 );
 
 -- v3.0 自选词库：user_id NULL=预置教材库（全局共享），非 NULL=用户自建
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS word_libraries (
   name        TEXT NOT NULL,
   source_type TEXT NOT NULL DEFAULT 'custom',   -- 'textbook' | 'custom'
   note        TEXT,
-  created_at  TEXT DEFAULT (datetime('now'))
+  created_at  TEXT DEFAULT (datetime('now','localtime'))
 );
 CREATE TABLE IF NOT EXISTS library_words (
   library_id INTEGER NOT NULL REFERENCES word_libraries(id),
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS study_plans (
   start_date   TEXT NOT NULL,
   end_date     TEXT NOT NULL,
   daily_new    INTEGER NOT NULL,
-  created_at   TEXT DEFAULT (datetime('now'))
+  created_at   TEXT DEFAULT (datetime('now','localtime'))
 );
 
 CREATE TABLE IF NOT EXISTS plan_words (
@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS quiz_log (
   quiz_type  TEXT DEFAULT '',                    -- word_zh/listen_zh/zh_word/cloze/spell/emoji/card
   correct    INTEGER NOT NULL,
   retry      INTEGER DEFAULT 0,                  -- gate 关末补测标记
-  ts         TEXT DEFAULT (datetime('now'))      -- 会话时长估算用
+  ts         TEXT DEFAULT (datetime('now','localtime'))      -- 会话时长估算用
 );
 CREATE INDEX IF NOT EXISTS idx_quizlog_user_date ON quiz_log(user_id, date);
 
@@ -171,7 +171,7 @@ CREATE INDEX IF NOT EXISTS idx_quiz_lookup ON word_quiz(word_id, stage);
 CREATE TABLE IF NOT EXISTS user_quiz_used (
   user_id INTEGER NOT NULL REFERENCES users(id),
   quiz_id INTEGER NOT NULL REFERENCES word_quiz(id),
-  used_at TEXT DEFAULT (datetime('now')),
+  used_at TEXT DEFAULT (datetime('now','localtime')),
   UNIQUE(user_id, quiz_id)
 );
 
@@ -223,11 +223,58 @@ def _migrate(conn):
         conn.execute("ALTER TABLE study_plans ADD COLUMN library_id INTEGER")
 
 
+# v3.3.5 时间戳统一 Asia/Shanghai：datetime('now') 存 UTC，与 date.today() 的 CST 日期
+# 双轨差 8h（CST 16:00 后 ts 比 date 早一天口径）。这些表把 DEFAULT 改为
+# datetime('now','localtime')（容器 TZ=Asia/Shanghai），存量 +8h 一次性修正。
+# 幂等：迁移后 schema 含 'localtime'，检测不再命中，重跑零变化。
+_TZ_LOCAL_TABLES = {
+    "users": ("created_at",),
+    "word_libraries": ("created_at",),
+    "study_plans": ("created_at",),
+    "quiz_log": ("ts",),
+    "user_quiz_used": ("used_at",),
+}
+
+
+def _migrate_tz_localtime(conn):
+    for table, tz_cols in _TZ_LOCAL_TABLES.items():
+        row = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone()
+        if not row or not row["sql"] or "localtime" in row["sql"]:
+            continue   # 表不存在（SCHEMA 稍后建，全新库直接新默认值）或已迁移
+        old_sql = row["sql"]
+        cols = [r["name"] for r in conn.execute(f"PRAGMA table_info({table})")]
+        idx_rows = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='index' AND tbl_name=? AND sql IS NOT NULL",
+            (table,)).fetchall()
+        new_sql = old_sql.replace("datetime('now')", "datetime('now','localtime')")
+        sel = ", ".join(f"datetime({c},'+8 hours')" if c in tz_cols else c for c in cols)
+        collist = ", ".join(cols)
+        # legacy_alter_table=ON：RENAME 不改写其他表的外键引用（≥3.25 默认会跟着改，
+        # 污染 REFERENCES 文本指向即将 DROP 的旧表）
+        conn.execute("PRAGMA legacy_alter_table=ON")
+        conn.execute("BEGIN")
+        try:
+            conn.execute(f"ALTER TABLE {table} RENAME TO {table}__old_tz")
+            conn.execute(new_sql)
+            conn.execute(f"INSERT INTO {table} ({collist}) SELECT {sel} FROM {table}__old_tz")
+            conn.execute(f"DROP TABLE {table}__old_tz")
+            for ir in idx_rows:   # 索引随旧表 DROP 而失，新表重放
+                conn.execute(ir["sql"])
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.execute("PRAGMA legacy_alter_table=OFF")
+
+
 def init_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = get_db()
     conn.executescript(SCHEMA)
     _migrate(conn)
+    _migrate_tz_localtime(conn)
     conn.commit()
     conn.close()
 
