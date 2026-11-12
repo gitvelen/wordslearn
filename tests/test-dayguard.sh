@@ -48,6 +48,34 @@ u=db.execute(\"SELECT id FROM users WHERE username='$DG_USER'\").fetchone()[0]
 db.execute('DELETE FROM daily_logs WHERE user_id=? AND date=?',(u,datetime.date.today().isoformat()))
 db.commit()"
 
+echo "===== gate 阶段（进关后重开不补位+进度条基数——11-12 mily 事故回归）====="
+python3 -c "
+import sqlite3, datetime
+db = sqlite3.connect('$DB')
+u = db.execute(\"SELECT id FROM users WHERE username='$DG_USER'\").fetchone()[0]
+t = datetime.date.today().isoformat()
+# 造 65 个 due 词（> REVIEW_CAP=60）：plan 外选词避免覆盖 main 阶段学的词
+words = [r[0] for r in db.execute(
+    'SELECT id FROM words WHERE id NOT IN (SELECT word_id FROM plan_words'
+    ' WHERE plan_id=(SELECT id FROM study_plans WHERE user_id=? AND status=\\'active\\'))'
+    ' ORDER BY id LIMIT 65', (u,)).fetchall()]
+assert len(words) == 65, f'词不够: {len(words)}'
+db.executemany(\"INSERT OR REPLACE INTO user_word_state(user_id,word_id,state,stage,first_learned_date,next_review_date,wrong_count,verify_count) VALUES(?,?,'learning',2,?,?,0,0)\",
+               [(u, w, (datetime.date.today()-datetime.timedelta(days=7)).isoformat(), t) for w in words])
+# 当日已有 gate 埋点 = 已进入关卡（11-12 mily 退出点在 gate4）
+pw = db.execute('SELECT word_id FROM plan_words WHERE plan_id=(SELECT id FROM study_plans WHERE user_id=? AND status=\\'active\\') LIMIT 1', (u,)).fetchone()[0]
+db.execute(\"INSERT INTO quiz_log(user_id,date,phase,word_id,quiz_type,correct) VALUES(?,?,'gate',?,'word_zh',1)\", (u, t, pw))
+db.commit()"
+node tests/test-dayguard.js gate
+python3 -c "
+import sqlite3, datetime
+db = sqlite3.connect('$DB')
+u = db.execute(\"SELECT id FROM users WHERE username='$DG_USER'\").fetchone()[0]
+db.execute('DELETE FROM quiz_log WHERE user_id=? AND date=?', (u, datetime.date.today().isoformat()))
+db.execute(\"DELETE FROM user_word_state WHERE user_id=? AND first_learned_date=?\",
+           (u, (datetime.date.today()-datetime.timedelta(days=7)).isoformat()))
+db.commit()"
+
 echo "===== 造完成态（daily_logs score=100 report_sent=1）====="
 USED_BEFORE=$(python3 -c "
 import sqlite3,sys

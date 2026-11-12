@@ -768,6 +768,13 @@ def get_today_queue(user_id):
                            (user_id, t_str)).fetchone()["c"]
         if due_n > NEW_THROTTLE_AT:
             new_allowance //= 2
+        # 进关后重开不补位（11-12 mily 事故）：当日已有 gate 埋点=已进入关卡测验，
+        # REVIEW_CAP 截断的尾巴 due 词不再补进队列——否则阶段倒退（退出在 gate4、
+        # 重开被拉回复习做当日没见过的词，观感"从头开始"）。尾巴词如数排明天。
+        # 掌握词抽检同理跳过（当日样本作废，明日首拉重新抽样，无调度损害）。
+        gate_started = db.execute(
+            "SELECT 1 FROM quiz_log WHERE user_id=? AND date=? AND phase='gate' LIMIT 1",
+            (user_id, t_str)).fetchone() is not None
         # 热身轮：昨天首学的词（快闪巩固，不提交不调度）。
         # v3.2.1 只在当日首段会话出：当日已有学习提交（new/review）后重开不再重放热身——
         # 中途退出重开的孩子不应把 19 题热身再做一遍
@@ -804,7 +811,7 @@ def get_today_queue(user_id):
             WHERE p.plan_id=? AND s.first_learned_date=?
             ORDER BY p.seq""", (user_id, plan["id"], t_str)).fetchall()
         learned_items = [_new_word_item(db, r, user_id, junior) for r in learned_words]
-        review = db.execute("""
+        review = [] if gate_started else db.execute("""
             SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji, s.stage
             FROM user_word_state s JOIN words w ON w.id=s.word_id
             WHERE s.user_id=? AND s.state='learning' AND s.next_review_date<=?
@@ -841,35 +848,45 @@ def get_today_queue(user_id):
                         or get_quiz(db, r["id"], r["word"], r["definition_zh"],
                                     "d12", user_id, junior)) or None
             review_items.append(item)
-        # 掌握词每日抽检（方案A）：当日排样一次，done 标记防重出；答错由 submit_answer 打回 D+2
+        # 掌握词每日抽检（方案A）：当日排样一次，done 标记防重出；答错由 submit_answer 打回 D+2。
+        # 进关后重开（gate_started）整段跳过：抽检词混进队列同样是阶段倒退；当日样本作废
         db.execute("DELETE FROM audit_schedule WHERE user_id=? AND date<?", (user_id, t_str))
-        audit_rows = db.execute("""SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
-                                   FROM audit_schedule a JOIN words w ON w.id=a.word_id
-                                   WHERE a.user_id=? AND a.date=? AND a.done=0 ORDER BY a.rowid""",
-                                 (user_id, t_str)).fetchall()
-        if not audit_rows:
-            has_today = db.execute("SELECT COUNT(*) c FROM audit_schedule WHERE user_id=? AND date=?",
-                                   (user_id, t_str)).fetchone()["c"]
-            if not has_today:   # 首次加载才抽样（全部完成后重开不重抽）
-                audit_rows = db.execute("""SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us,
-                                                  w.definition_zh, w.mp3, w.emoji
-                                           FROM user_word_state s JOIN words w ON w.id=s.word_id
-                                           WHERE s.user_id=? AND s.state='mastered'
-                                           ORDER BY RANDOM() LIMIT ?""",
-                                         (user_id, AUDIT_N)).fetchall()
-                db.executemany("INSERT OR IGNORE INTO audit_schedule(user_id, date, word_id) VALUES(?,?,?)",
-                               [(user_id, t_str, r["id"]) for r in audit_rows])
-        for r in audit_rows:
-            item = _word_brief(db, r, user_id, junior, with_senses=False)
-            item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
-                                    random.choice(("d2", "d5", "d12")), user_id, junior) or None
-            item["audit"] = True
-            review_items.append(item)
+        audit_rows = []
+        if not gate_started:
+            audit_rows = db.execute("""SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
+                                       FROM audit_schedule a JOIN words w ON w.id=a.word_id
+                                       WHERE a.user_id=? AND a.date=? AND a.done=0 ORDER BY a.rowid""",
+                                     (user_id, t_str)).fetchall()
+            if not audit_rows:
+                has_today = db.execute("SELECT COUNT(*) c FROM audit_schedule WHERE user_id=? AND date=?",
+                                       (user_id, t_str)).fetchone()["c"]
+                if not has_today:   # 首次加载才抽样（全部完成后重开不重抽）
+                    audit_rows = db.execute("""SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us,
+                                                      w.definition_zh, w.mp3, w.emoji
+                                               FROM user_word_state s JOIN words w ON w.id=s.word_id
+                                               WHERE s.user_id=? AND s.state='mastered'
+                                               ORDER BY RANDOM() LIMIT ?""",
+                                             (user_id, AUDIT_N)).fetchall()
+                    db.executemany("INSERT OR IGNORE INTO audit_schedule(user_id, date, word_id) VALUES(?,?,?)",
+                                   [(user_id, t_str, r["id"]) for r in audit_rows])
+            for r in audit_rows:
+                item = _word_brief(db, r, user_id, junior, with_senses=False)
+                item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
+                                        random.choice(("d2", "d5", "d12")), user_id, junior) or None
+                item["audit"] = True
+                review_items.append(item)
         db.commit()   # get_quiz 的 user_quiz_used 标记与抽检排样都要落盘（v2.6 修复：此前只读路径不 commit 全部回滚）
+        # 进关后重开：当日仍 due 的全部排明天（含 CAP 尾巴）；否则只有 CAP 外的存量
+        due_remaining = due_n if gate_started else max(0, due_n - REVIEW_CAP)
+        # 当日已完成题数基数（v3.3.4 进度条防回卷）：quiz_log 行数单调只增，
+        # 前端 todayPct = (baseDone+qIdx)/(baseDone+total)——重开不再从 0% 起跳
+        done_items = db.execute("SELECT COUNT(*) c FROM quiz_log WHERE user_id=? AND date=?",
+                                (user_id, t_str)).fetchone()["c"]
         return {"plan": dict(plan), "date": t_str, "done": done,
                 "done_new": dl["new_done"] if dl else 0,
                 "done_review": dl["review_done"] if dl else 0,
-                "due_remaining": max(0, due_n - REVIEW_CAP),   # v3.2.1 完成屏"还有N个排明天"提示
+                "due_remaining": due_remaining,   # v3.2.1 完成屏"还有N个排明天"提示
+                "done_items": done_items,
                 "warmup": warmup_items, "new": new_items,
                 "learned_today": learned_items, "review": review_items}
     finally:

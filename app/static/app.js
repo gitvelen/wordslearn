@@ -60,9 +60,13 @@ const app = Vue.createApp({
     todayPct() {
       if (!this.today || !this.today.queue.length) return 0;
       // 分母单调只增（v3.2.1）：建队快照与当前队列长度取大——错词重插/关末补测加长
-      // 队列时进度条同步走完，不再提前钉死 100%；队列只增不减，单调不回跳保持
+      // 队列时进度条同步走完，不再提前钉死 100%；队列只增不减，单调不回跳保持。
+      // v3.3.4 分子分母同加当日基数 baseDone（服务端 done_items=当日 quiz_log 行数）：
+      // 此前分子是本会话 qIdx，重开清零——文案写"今日总进度"算的却是会话进度，
+      // 11-12 mily 重开时 80% 跳回 0%，家长由此断定"从头开始学"。
       const total = Math.max(this._len0 || 0, this.today.queue.length);
-      return Math.min(100, Math.round(this.today.qIdx / total * 100));
+      const base = this.today.baseDone || 0;
+      return Math.min(100, Math.round((base + this.today.qIdx) / (base + total) * 100));
     },
     calOffset() {
       if (!this.cal.days.length) return 0;
@@ -620,7 +624,7 @@ const app = Vue.createApp({
         review: r.review || [],
         queue: [], qIdx: 0,
         answered: false, feedback: null, picked: null, spellCells: [], spellReveal: false,
-        doneNew: 0, doneReview: 0, doneQuiz: 0, requeuedCount: 0, dueLeft: 0,
+        doneNew: 0, doneReview: 0, doneQuiz: 0, requeuedCount: 0, dueLeft: 0, baseDone: 0,
         gateWrong: {},
       };
       if (r.done === true) {   // 严格等于：防御服务端再传出 truthy 非 bool（11-03 done=19 误判事故）
@@ -634,6 +638,9 @@ const app = Vue.createApp({
         // "已过X"从0重数、完成屏"复习通过3"而实际71（同日自相矛盾）
         this.today.doneReview = r.done_review || 0;
         this.today.dueLeft = r.due_remaining || 0;
+        // v3.3.4 进度条当日基数：重开后 qIdx 清零，但当日已做题数在——
+        // todayPct=(baseDone+qIdx)/(baseDone+total)，进度条不再回卷 0%
+        this.today.baseDone = r.done_items || 0;
         this.buildQueue();
       }
       if (this.todayPhaseDone()) {
@@ -720,22 +727,34 @@ const app = Vue.createApp({
       this.today.doneNew = this.today.learnedToday.length;   // 刷新恢复：已学卡计入统计
       this._len0 = q.length;          // 进度条分母快照（todayPct 用）
     },
-    // 关卡会话记忆（v3.2.1）：{date, answered: {level: [word_id]}}，跨日自动重置
+    // 关卡会话记忆（v3.2.1）：{date, answered: {level: [word_id]}}，跨日自动重置。
+    // v3.3.4 key 带用户名：全局 key 换号共享设备会串号（A 答过的题把 B 的跳过，
+    // 同族问题 v3.3.2 修过日历报告）。同日旧全局 key 一次性迁移，老设备不断档
+    _gateMemKey() { return 'wl_gate_v1_' + ((this.user && this.user.username) || ''); },
     _gateMem() {
+      const today = this.today && this.today.date;
+      const key = this._gateMemKey();
       try {
-        const m = JSON.parse(localStorage.getItem('wl_gate_v1') || 'null');
-        if (m && m.date === (this.today && this.today.date)) return m.answered || {};
+        let m = JSON.parse(localStorage.getItem(key) || 'null');
+        if (!m) {   // 旧全局 key（≤v3.3.3）同日迁移后删除
+          const old = JSON.parse(localStorage.getItem('wl_gate_v1') || 'null');
+          if (old && old.date === today) { m = old; localStorage.removeItem('wl_gate_v1'); }
+        }
+        if (m && m.date === today) {
+          localStorage.setItem(key, JSON.stringify(m));   // 迁移场景回写
+          return m.answered || {};
+        }
       } catch (e) {}
-      const fresh = { date: this.today && this.today.date, answered: {} };
-      try { localStorage.setItem('wl_gate_v1', JSON.stringify(fresh)); } catch (e) {}
+      const fresh = { date: today, answered: {} };
+      try { localStorage.setItem(key, JSON.stringify(fresh)); } catch (e) {}
       return fresh.answered;
     },
     _gateMemAdd(level, wordId) {
       try {
-        const m = JSON.parse(localStorage.getItem('wl_gate_v1') || 'null');
+        const m = JSON.parse(localStorage.getItem(this._gateMemKey()) || 'null');
         if (!m || m.date !== (this.today && this.today.date)) return;
         (m.answered[level] = m.answered[level] || []).push(wordId);
-        localStorage.setItem('wl_gate_v1', JSON.stringify(m));
+        localStorage.setItem(this._gateMemKey(), JSON.stringify(m));
       } catch (e) {}
     },
     // 错词重现插回本阶段块尾（v3.2.1）：不再推全队列尾——热身/复习的重现留在本阶段内，
