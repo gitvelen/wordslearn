@@ -76,6 +76,65 @@ db.execute(\"DELETE FROM user_word_state WHERE user_id=? AND first_learned_date=
            (u, (datetime.date.today()-datetime.timedelta(days=7)).isoformat()))
 db.commit()"
 
+echo "===== throttle 阶段（积压节流软着陆——11-14 mily 9词事故回归）====="
+THR_USER=$(python3 - "$DB" <<'EOF'
+import sqlite3, uuid, bcrypt, datetime, sys
+db = sqlite3.connect(sys.argv[1]); db.row_factory = sqlite3.Row
+uname = 'e2e_thr_' + uuid.uuid4().hex[:6]
+db.execute("INSERT INTO users(username, password_hash, display_name, mode, grade, confirm_done, basic_quiz_done)"
+           " VALUES(?,?,?,'standard','5A',1,1)",
+           (uname, bcrypt.hashpw(b'test123', bcrypt.gensalt()).decode(), 'thr'))
+uid = db.execute("SELECT id FROM users WHERE username=?", (uname,)).fetchone()['id']
+t = datetime.date.today()
+db.execute("INSERT INTO study_plans(user_id, status, target_words, start_date, end_date, daily_new, created_at)"
+           " VALUES(?, 'active', 30, ?, ?, 19, datetime('now'))", (uid, t.isoformat(), (t+datetime.timedelta(days=30)).isoformat()))
+pid = db.execute("SELECT id FROM study_plans WHERE user_id=? AND status='active'", (uid,)).fetchone()['id']
+words = [r['word_id'] for r in db.execute(
+    "SELECT DISTINCT word_id FROM word_quiz JOIN words ON words.id=word_quiz.word_id"
+    " WHERE words.emoji IS NOT NULL ORDER BY word_id LIMIT 30")]
+assert len(words) == 30, f'词不够: {len(words)}'
+db.executemany("INSERT INTO plan_words(plan_id, word_id, seq) VALUES(?,?,?)",
+               [(pid, w, i+1) for i, w in enumerate(words)])
+# 104 个 plan 外 due 词（复刻 11-14 mily 现场：实发 60 + 尾巴 44 = 104 > 80 节流线）
+due = [r[0] for r in db.execute(
+    'SELECT id FROM words WHERE id NOT IN (SELECT word_id FROM plan_words WHERE plan_id=?)'
+    ' ORDER BY id LIMIT 104', (pid,)).fetchall()]
+assert len(due) == 104, f'词不够: {len(due)}'
+db.executemany("INSERT OR REPLACE INTO user_word_state(user_id,word_id,state,stage,first_learned_date,next_review_date,wrong_count,verify_count) VALUES(?,?,'learning',2,?,?,0,0)",
+               [(uid, w, (t-datetime.timedelta(days=7)).isoformat(), t.isoformat()) for w in due])
+db.commit()
+print(uname)
+EOF
+)
+export DG_THR_USER=$THR_USER
+node tests/test-dayguard.js throttle 19    # 104 < 110(NEW_THROTTLE_AT) 不触发，满额19（80线时代 15 → FAIL）
+python3 -c "
+import sqlite3, datetime
+db = sqlite3.connect('$DB')
+u = db.execute(\"SELECT id FROM users WHERE username='$THR_USER'\").fetchone()[0]
+pid = db.execute(\"SELECT id FROM study_plans WHERE user_id=? AND status='active'\", (u,)).fetchone()[0]
+t = datetime.date.today().isoformat()
+# 场景2：再插 26 个 due（104→130，模拟缺勤2天积压）→ ceil(19×110/130)=17 缓降
+more = [r[0] for r in db.execute(
+    'SELECT id FROM words WHERE id NOT IN (SELECT word_id FROM plan_words WHERE plan_id=?)'
+    ' ORDER BY id LIMIT 26 OFFSET 104', (pid,)).fetchall()]
+assert len(more) == 26, f'词不够: {len(more)}'
+db.executemany(\"INSERT OR REPLACE INTO user_word_state(user_id,word_id,state,stage,first_learned_date,next_review_date,wrong_count,verify_count) VALUES(?,?,'learning',2,?,?,0,0)\",
+               [(u, w, (datetime.date.today()-datetime.timedelta(days=7)).isoformat(), t) for w in more])
+db.commit()"
+node tests/test-dayguard.js throttle 17    # ceil(19×110/130)=17
+python3 -c "
+import sqlite3
+db = sqlite3.connect('$DB')
+u = db.execute(\"SELECT id FROM users WHERE username='$THR_USER'\").fetchone()[0]
+db.execute('DELETE FROM user_word_state WHERE user_id=?', (u,))
+db.execute('DELETE FROM plan_words WHERE plan_id IN (SELECT id FROM study_plans WHERE user_id=?)', (u,))
+db.execute('DELETE FROM study_plans WHERE user_id=?', (u,))
+db.execute('DELETE FROM audit_schedule WHERE user_id=?', (u,))
+db.execute('DELETE FROM user_quiz_used WHERE user_id=?', (u,))
+db.execute('DELETE FROM users WHERE id=?', (u,))
+db.commit()"
+
 echo "===== 造完成态（daily_logs score=100 report_sent=1）====="
 USED_BEFORE=$(python3 -c "
 import sqlite3,sys

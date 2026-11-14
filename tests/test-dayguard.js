@@ -159,6 +159,23 @@ const ok = (name, cond, extra) => {
     ok('旧全局关卡记忆已迁移至 per-user key 且旧 key 删除',
       mig.perUser && mig.perUser.includes('111') && mig.old === null, JSON.stringify(mig));
 
+  } else if (process.argv[2] === 'throttle') {
+    /* 积压节流软着陆（11-14 mily 9词事故回归）：due_n>80 时新词按比例放缓而非减半。
+     * argv[3]=期望 new 数 = ceil(daily_new×80/due_n)；减半逻辑下为 19//2=9 → FAIL */
+    const expect = parseInt(process.argv[3], 10);
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.__vm);
+    await page.evaluate(async (u) => {
+      const v = window.__vm;
+      v.loginForm = { username: u, password: 'test123' };
+      await v.doLogin();
+    }, process.env.DG_THR_USER);
+    await page.waitForFunction(() => window.__vm && window.__vm.today, null, { timeout: 15000 });
+    await page.waitForTimeout(1500);
+    const r = await page.evaluate(async () => await (await fetch('/api/today')).json());
+    ok(`节流软着陆：当日 new=${expect}（按比例放缓，非减半）`,
+       (r.new || []).length === expect, `new=${(r.new || []).length} due_remaining=${r.due_remaining}`);
+
   } else { // done 阶段
     await page.goto(BASE);
     await page.waitForFunction(() => window.__vm);

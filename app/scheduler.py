@@ -32,7 +32,9 @@ INTERVALS = [2, 5, 12]           # stage-1 → 间隔天数（从每次复习当
 REST_DAYS = 12                   # 计划尾部停投新词的天数（最后一批词的 D+12 复习会落到计划期之后，
                                  # 由复习管道继续消化——复习查询不筛 plan，不随计划结束停止）
 REVIEW_CAP = 60                  # 单日复习上限（积压分日消化，不改动调度状态；稳态需求≈3×daily_new）
-NEW_THROTTLE_AT = 80             # 到期复习积压超过此值 → 当日新词减半（先还债再扩新）
+NEW_THROTTLE_AT = 110            # 到期复习积压超过此值 → 当日新词按比例放缓（先还债再扩新）。
+                                 # v3.3.6 定 110=稳态义务(3×19=57)+尖峰余量：间隔链[2,5,12]周期
+                                 # 对齐的单日尖峰(实测104)不误伤，满额19；缺勤2天(≈140+)才触发缓降
 AUDIT_N = 5                      # 掌握词每日抽检数
 POS_RE = re.compile(r"^((?:n|v|adj|adv|prep|conj|pron|num|art|int|vt|vi|aux|abbr|modal)\.)")
 
@@ -762,12 +764,16 @@ def get_today_queue(user_id):
             # →误结算积分+误发日报（11-03 mily 中途退出重开即踩此雷）
             learned_new = log["new_done"] if log else 0
             new_allowance = max(0, plan["daily_new"] - learned_new)
-        # 积压调节：到期复习过多时当日新词减半（先还债再扩新，防缺勤后滚雪球）
+        # 积压调节：到期复习过多时当日新词按比例放缓（先还债再扩新，防缺勤后滚雪球）。
+        # v3.3.6 软着陆替代减半：还债速度=REVIEW_CAP-复习义务(3×new)，按比例放缓
+        # 以最小丢词维持同样还债速度（减半 19→9 与 19→15 同样 3 天还清，丢词 30 vs 4，
+        # 11-14 mily 9词事故）。ceil 保证渐进：due 略超线时无损，随积压加深线性收缩。
         due_n = db.execute("""SELECT COUNT(*) c FROM user_word_state
                               WHERE user_id=? AND state='learning' AND next_review_date<=?""",
                            (user_id, t_str)).fetchone()["c"]
         if due_n > NEW_THROTTLE_AT:
-            new_allowance //= 2
+            new_allowance = min(new_allowance,
+                                math.ceil(new_allowance * NEW_THROTTLE_AT / due_n))
         # 进关后重开不补位（11-12 mily 事故）：当日已有 gate 埋点=已进入关卡测验，
         # REVIEW_CAP 截断的尾巴 due 词不再补进队列——否则阶段倒退（退出在 gate4、
         # 重开被拉回复习做当日没见过的词，观感"从头开始"）。尾巴词如数排明天。
