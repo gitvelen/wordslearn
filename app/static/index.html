@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="单词星球">
-<link rel="stylesheet" href="/style.css?v=b30">
+<link rel="stylesheet" href="/style.css?v=b31">
 </head>
 <body>
 <div id="app">
@@ -332,7 +332,7 @@
       <div class="stat-row">
         <div class="stat"><b>{{today.doneNew}}</b><span>新学单词</span></div>
         <div class="stat"><b>{{today.doneReview}}</b><span>复习通过</span></div>
-        <div class="stat" v-if="today.doneQuiz"><b>{{isJunior ? '三' : '五'}}关</b><span>全过 🏅</span></div>
+        <div class="stat" v-if="today.doneQuiz"><b>{{isJunior ? '三' : '六'}}关</b><span>全过 🏅</span></div>
         <div class="stat" v-if="me && me.progress"><b>{{me.progress.streak}}</b><span>连续天数</span></div>
       </div>
       <p v-if="me && me.progress" class="sub">已学会 {{me.progress.learned_total}} 个单词（牢牢掌握 {{me.progress.dist.mastered}} 个），明天继续加油！💪</p>
@@ -342,13 +342,14 @@
 
   <!-- 热身轮：昨日词快闪（不提交不调度） -->
   <template v-else-if="curItem.type==='warmup'">
-    <div class="phase-tag">晨间热身 · 昨天的词 {{curItem._wi}} / {{today.warmup.length}}</div>
+    <div class="phase-tag">晨间热身 · 昨天的词 {{curItem._wi}} / {{today.warmupTotal || today.warmup.length}}</div>
     <div class="bar slim"><div class="bar-fill" :style="{width: todayPct+'%'}"></div></div>
     <div class="card quiz-card">
       <div v-if="curItem.item.quiz" class="quiz-hint">{{quizLabel(curItem)}}</div>
       <div v-if="!curItem.item.quiz || quizShowWord(curItem)" class="word-xl" @click="playWord(curItem.item.word)">{{curItem.item.word}}</div>
-      <div v-if="curItem.item.quiz && curItem.item.quiz.quiz_type==='listen_zh'" class="quiz-hint">👂 不看拼写，听音作答</div>
-      <button class="btn round" @click="playWord(curItem.item.word)">🔊</button>
+      <div v-if="curItem.item.quiz && (curItem.item.quiz.quiz_type==='listen_zh' || curItem.item.quiz.quiz_type==='listen_def')" class="quiz-hint">👂 不看拼写，听音作答</div>
+      <button v-if="!curItem.item.quiz || curItem.item.quiz.quiz_type!=='listen_def'" class="btn round" @click="playWord(curItem.item.word)">🔊</button>
+      <button v-else class="btn round" @click="replayQuizAudio(curItem)">🔊</button>
     </div>
     <div class="quiz-grid" v-if="curItem.item.quiz">
       <button v-for="(opt,i) in curItem.item.quiz.options" :key="i" class="btn opt big"
@@ -433,9 +434,10 @@
         <div v-if="curItem.item.quiz.quiz_type==='emoji'" class="word-emoji xl">{{curItem.item.quiz.stem}}</div>
         <div v-else-if="quizStemText(curItem)" class="quiz-stem"
              :class="{'word-xl': curItem.item.quiz.quiz_type!=='cloze'}">{{quizStemText(curItem)}}</div>
-        <div v-if="curItem.item.quiz.quiz_type==='listen_zh' || curItem.item.quiz.quiz_type==='spell'"
+        <div v-if="curItem.item.quiz.quiz_type==='listen_zh' || curItem.item.quiz.quiz_type==='spell'
+                     || curItem.item.quiz.quiz_type==='listen_def'"
              class="quiz-hint">👂 听音作答</div>
-        <button v-if="!quizMuted(curItem)" class="btn round" @click="playWord(curItem.item.word)">🔊</button>
+        <button v-if="!quizMuted(curItem)" class="btn round" @click="replayQuizAudio(curItem)">🔊</button>
         <!-- 拼写：每字母一格（杜绝输入法联想上屏），空格/连字符显示为分隔 -->
         <div v-if="quizShowSpell(curItem) && !(curItem._scaffold && today.spellReveal)" class="spell-row">
           <template v-for="(s, si) in spellSlots(curItem)" :key="si">
@@ -674,6 +676,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b30"></script>
+<script src="/app.js?v=b31"></script>
 </body>
 </html>

@@ -215,7 +215,8 @@ SENSE_PROMPT = """你是儿童英语词典编辑，为 6-9 岁中国孩子（上
 对下面每个词产出 1-3 个义项（单一概念的词只给 1 个，不要硬凑），JSON 数组输出，每个元素：
 {{"word":"...","senses":[{{"pos":"n.|v.|adj.|adv.|prep.|conj.|pron.|num.|art.|int.|aux.|phr.","definition_zh":"核心义中文≤12字","definition_en":"儿童友好英文释义≤14词","example_en":"例句≤10个英文词且必须包含该词","example_zh":"例句中文翻译"}}]}}
 
-硬约束：例句用小学常用词；不收酒/武器/赌博/毒品/暴力/政治义项；definition_zh 彼此有区分度；
+硬约束：义项按儿童教材常用度降序排列（第 1 个=最常用义，孩子首学只看它）；
+例句用小学常用词；不收酒/武器/赌博/毒品/暴力/政治义项；definition_zh 彼此有区分度；
 只输出 JSON 数组，不要其他文字。词典参考释义（可能有噪音，仅参考）：{refs}"""
 
 _EXC = re.compile(r"[.,!?;:\"()]")
@@ -339,16 +340,114 @@ def _zh_senses(zh):
     return {s.strip() for s in re.split(r"[;；/]", zh or "") if s.strip()}
 
 
-def gen_quizzes_for_word(db, word_row):
-    """按词生成全部题型题。只处理无题词——已有题库题（主库 v2.8 修正版）绝不覆盖。"""
+# listen_def 干扰排除用：def_en token 剥停用词（与 gen_def_quiz.py 同口径）
+DEF_STOP = {"a", "an", "the", "of", "to", "in", "on", "for", "with", "and", "or",
+            "is", "are", "be", "am", "was", "were", "that", "this", "it", "its",
+            "as", "at", "by", "from", "you", "your", "not", "no", "very", "can",
+            "will", "do", "does", "did", "have", "has", "had", "one", "some",
+            "something", "someone", "who", "what", "when", "where", "there"}
+
+
+def _def_norm(s):
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9' ]+", " ", (s or "").casefold())).strip()
+
+
+def _def_tokens(s):
+    return {t for t in re.findall(r"[a-z']+", (s or "").casefold())
+            if t not in DEF_STOP and len(t) > 1}
+
+
+def _gen_listen_def(db, word_row, senses):
+    """listen_def（听英文释义选单词）在线生成：每干净义一题，idx=sense_order 原值。
+    def 维度排除完整实现（同释义/Jaccard≥0.6 剥停用词/干扰变形在题干/反向污染）；
+    zh 义项交集与同族用在线简化口径，全库由 audit_quiz_ambiguity 兜底。
+    释义含目标词形（污染义）跳过——听音直接报答案（离线 gen_def_quiz 同规则）。
+    返回 emit 同款 6 元组；无干净义/干扰不足返回 []。"""
     wid, w = word_row["id"], word_row["word"]
-    senses = db.execute("""SELECT sense_order, pos, definition_zh, example_en FROM word_senses
-                           WHERE word_id=? ORDER BY sense_order""", (wid,)).fetchall()
+    frq = word_row["frq"] or 999999
+    _, tforms = _lemma_forms(w)
+    talts = [re.escape(f) for f in tforms if not f.startswith("\\")]
+    base = _norm_word(w)
+    if " " in base:
+        parts = base.split()
+        talts.append(r"\s+".join(re.escape(p) + r"\w{0,3}" for p in parts[:-1])
+                     + r"\s+" + re.escape(parts[-1]))
+    tpat = re.compile(r"\b(?:" + "|".join(sorted(talts, key=len, reverse=True)) + r")\b", re.I)
+    t_plain = {f for f in tforms if not f.startswith("\\") and " " not in f}
+    my_zh = set().union(*(_zh_senses(s["definition_zh"]) for s in senses)) if senses else set()
+
+    out = []
+    for s in senses:
+        den = (s["definition_en"] or "").strip()
+        if not den or tpat.search(den):
+            continue
+        stem_tokens = {t for t in re.findall(r"[a-z']+", den.casefold())}
+        tgt_norm, tgt_tokens = _def_norm(den), _def_tokens(den)
+        # 候选池：同词性、frq 邻近，一次取全部义供 def 维度检查
+        cands = {}
+        for r in db.execute("""SELECT DISTINCT wd.id, wd.word, wd.frq FROM word_senses ss
+                               JOIN words wd ON wd.id=ss.word_id
+                               WHERE ss.pos=? AND wd.word != ?
+                               ORDER BY ABS(COALESCE(wd.frq,999999)-?) LIMIT 80""",
+                            (s["pos"] or "n.", w, frq)):
+            cands[r["id"]] = {"word": r["word"], "frq": r["frq"], "zh": set(), "dens": [], "toks": []}
+        if cands:
+            for r in db.execute(f"""SELECT word_id, definition_zh, definition_en FROM word_senses
+                                    WHERE word_id IN ({','.join('?' * len(cands))})""",
+                                tuple(cands)):
+                c = cands[r["word_id"]]
+                c["zh"] |= _zh_senses(r["definition_zh"])
+                if r["definition_en"]:
+                    c["dens"].append(r["definition_en"])
+                    c["toks"].append(_def_tokens(r["definition_en"]))
+        ok_cands = []
+        for c in cands.values():
+            if _same_family(w, c["word"]) or (my_zh & c["zh"]):
+                continue                                    # 同族 / zh 义项交集
+            if tgt_norm in {_def_norm(d) for d in c["dens"]}:
+                continue                                    # 同释义（双正确）
+            if any(len(t & tgt_tokens) / max(1, len(t | tgt_tokens)) >= 0.6 for t in c["toks"]):
+                continue                                    # Jaccard≥0.6
+            _, cforms = _lemma_forms(c["word"])
+            if {f for f in cforms if " " not in f} & stem_tokens:
+                continue                                    # 干扰（含变形）在题干
+            if any(tpat.search(d) for d in c["dens"]):
+                continue                                    # 反向污染
+            ok_cands.append(c["word"])
+        if len(set(ok_cands)) < 3:
+            continue                                        # 干扰枯竭宁缺毋滥（缺题关跳过）
+        import random as _r
+        _r.seed(hash(f"{w}|{s['sense_order']}") & 0xFFFFFFFF)
+        opts = _r.sample(ok_cands, 3) + [w]
+        _r.shuffle(opts)
+        out.append(("listen_def", "learn", s["sense_order"], den,
+                    json.dumps(opts, ensure_ascii=False), w))
+    return out
+
+
+def gen_quizzes_for_word(db, word_row):
+    """按词生成全部题型题。已有题库题（主库 v2.8 修正版）绝不覆盖；
+    已有题但缺 listen_def 且有干净义时仅补该题型（防部署窗口期录的词永不获 def 题，
+    对抗审查 P1-4）。"""
+    wid, w = word_row["id"], word_row["word"]
+    senses = db.execute("""SELECT sense_order, pos, definition_zh, definition_en, example_en
+                           FROM word_senses WHERE word_id=? ORDER BY sense_order""", (wid,)).fetchall()
     if not senses:
         return 0
     has = db.execute("SELECT 1 FROM word_quiz WHERE word_id=? LIMIT 1", (wid,)).fetchone()
+    has_def = db.execute("""SELECT 1 FROM word_quiz WHERE word_id=? AND quiz_type='listen_def'
+                            LIMIT 1""", (wid,)).fetchone()
     if has:
-        return 0
+        if has_def:
+            return 0
+        rows = _gen_listen_def(db, word_row, senses)     # 补缺模式：只补 listen_def
+        if not rows:
+            return 0
+        db.executemany("""INSERT OR IGNORE INTO word_quiz(word_id, quiz_type, stage, idx, stem, options, answer)
+                          VALUES(?,?,?,?,?,?,?)""",
+                       [(wid, *r) for r in rows])
+        db.commit()
+        return len(rows)
     zh1, pos1, ex1 = senses[0]["definition_zh"], senses[0]["pos"] or "n.", senses[0]["example_en"]
     frq = word_row["frq"] or 999999
 
@@ -420,9 +519,10 @@ def gen_quizzes_for_word(db, word_row):
     if len(opts) >= 4:
         random.shuffle(opts)
         emit("word_zh", "confirm", w, opts, zh1)
-    # d2: zh_word×2
+    # d2: zh_word×2（干扰必须是英文词：dz() 是中文义池，误用会让 answer 不在选项——
+    # 2026-11-15 审计暴露 have lunch/do homework 短语词存量 8 题全错，此处修源头）
     for _ in range(2):
-        opts = dz() + [zh1]
+        opts = dw() + [w]
         if len(opts) >= 4:
             random.shuffle(opts)
             emit("zh_word", "d2", zh1, opts, w)
@@ -448,16 +548,18 @@ def gen_quizzes_for_word(db, word_row):
             if len(opts) >= 4:
                 random.shuffle(opts)
                 emit("cloze", "d5", stem, opts, w)
-    opts = dz() + [zh1]
+    opts = dw() + [w]
     if len(opts) >= 4:
         random.shuffle(opts)
         emit("zh_word", "d5", zh1, opts, w)
     # d12: spell + zh_word
     emit("spell", "d12", w, [], w)
-    opts = dz() + [zh1]
+    opts = dw() + [w]
     if len(opts) >= 4:
         random.shuffle(opts)
         emit("zh_word", "d12", zh1, opts, w)
+    # listen_def（第 6 关·听释义；无干净义词整组跳过，该关自动缺题跳关）
+    quizzes.extend(_gen_listen_def(db, word_row, senses))
 
     db.execute("DELETE FROM word_quiz WHERE word_id=?", (wid,))
     db.execute("DELETE FROM user_quiz_used WHERE quiz_id NOT IN (SELECT id FROM word_quiz)")
@@ -485,10 +587,12 @@ async def _tts_one(text, dest, rate=None):
     return False
 
 
-def gen_tts_for_word(word, example=None):
-    """单词+例句音频（幂等，缺啥补啥）。返回 (word_ok, sent_ok)。"""
+def gen_tts_for_word(word, example=None, defs=None):
+    """单词+例句+释义音频（幂等，缺啥补啥）。defs: [definition_en,...] 全部义。
+    返回 (word_ok, sent_ok)。def 音失败不阻塞（前端 speakTTS(stem) 回退）。"""
     AUDIO = BASE / "data" / "audio"
     (AUDIO / "sent").mkdir(parents=True, exist_ok=True)
+    (AUDIO / "def").mkdir(parents=True, exist_ok=True)
 
     async def run():
         w_ok = True
@@ -500,6 +604,10 @@ def gen_tts_for_word(word, example=None):
             sfile = AUDIO / "sent" / f"{word}__1.mp3"
             if not sfile.exists() or sfile.stat().st_size < 800:
                 s_ok = await _tts_one(example, sfile, rate="-8%")
+        for i, text in enumerate(defs or [], start=1):
+            dfile = AUDIO / "def" / f"{word}__{i}.mp3"
+            if not dfile.exists() or dfile.stat().st_size < 800:
+                await _tts_one(text, dfile, rate="-8%")
         return w_ok, s_ok
 
     try:
@@ -556,9 +664,11 @@ def run_library_pipeline(lib_id):
         for r in db.execute("""SELECT w.id, w.word, w.definition_zh, w.frq, w.emoji FROM library_words lw
                                JOIN words w ON w.id=lw.word_id WHERE lw.library_id=?""", (lib_id,)).fetchall():
             n = gen_quizzes_for_word(db, r)
-            ex = db.execute("""SELECT example_en FROM word_senses WHERE word_id=? AND sense_order=1""",
-                            (r["id"],)).fetchone()
-            gen_tts_for_word(r["word"], ex["example_en"] if ex else None)
+            ss = db.execute("""SELECT example_en, definition_en FROM word_senses WHERE word_id=?
+                               ORDER BY sense_order""", (r["id"],)).fetchall()
+            gen_tts_for_word(r["word"],
+                             ss[0]["example_en"] if ss else None,
+                             [x["definition_en"] for x in ss if x["definition_en"]])
             if n:
                 print(f"[pipeline] {r['word']}: {n} 题 + 音频")
         db.commit()

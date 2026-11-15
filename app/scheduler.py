@@ -119,14 +119,18 @@ def get_quiz(db, word_id, word, definition_zh, stage, user_id=None, junior=False
     return _gen_fallback_quiz(db, word, definition_zh, stage)
 
 
-def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None, mark_used=True, fresh_only=False):
+def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None, mark_used=True,
+                  fresh_only=False, idx=None):
     """按题型精确取题：排除已用，耗尽默认复用，题库缺该题型返回 None。
     mark_used=False 供借题（用词关）而不消耗正式复习的防重复配额。
     fresh_only=True（v3.2 评测抽题）：耗尽不复用旧题，返回 None 交上层降级——
-    判卷的题绝不能是刚练过的题。"""
-    rows = db.execute("""SELECT id, quiz_type, stem, options, answer FROM word_quiz
+    判卷的题绝不能是刚练过的题。
+    idx（listen_def 专用）：精确取某释义号的题（idx=sense_order 原值）。"""
+    rows = db.execute("""SELECT id, quiz_type, idx, stem, options, answer FROM word_quiz
                          WHERE word_id=? AND stage=? AND quiz_type=?""",
                       (word_id, stage, quiz_type)).fetchall()
+    if idx is not None:
+        rows = [r for r in rows if r["idx"] == idx]
     if not rows:
         return None
     used = set()
@@ -142,12 +146,14 @@ def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None, mark_used=True, f
         db.execute("INSERT OR IGNORE INTO user_quiz_used(user_id, quiz_id) VALUES(?,?)",
                    (user_id, r["id"]))
     return {"quiz_id": r["id"], "quiz_type": r["quiz_type"], "stage": stage,
-            "stem": r["stem"], "options": json.loads(r["options"]), "answer": r["answer"]}
+            "idx": r["idx"], "stem": r["stem"],
+            "options": json.loads(r["options"]), "answer": r["answer"]}
 
 
 def get_learn_quizzes(db, user_id, word_id, word, definition_zh, junior, emoji=None):
     """新词首学题（v4.2 多角度 4 题，全部不计调度）：
     standard: word_zh(形→义) + listen_zh(音→义) + zh_word(义→形) + spell(音→形·产出)
+              + listen_def(听英文释义选词·义1，第 6 关用；v3.4)
     junior:   word_zh + listen_zh + emoji(听音选词·视觉)；无 emoji 词退化 zh_word。
     题库缺某题型则跳过；全缺时兜底现算 1 题。"""
     seq = ["word_zh", "listen_zh", "zh_word", "spell"] if not junior else \
@@ -161,6 +167,13 @@ def get_learn_quizzes(db, user_id, word_id, word, definition_zh, junior, emoji=N
             q = _gen_fallback_quiz(db, word, definition_zh, "learn", t)
             if q:
                 out.append(q)
+    if not junior:
+        # listen_def·义1（第 6 关）。绝不走 fallback 现算：兜底会把 stem 生成单词本身，
+        # playDef 朗读=直接报答案（假掌握，静默伤害）——缺题词（全污染 13 词/干扰不足）
+        # 第 6 关自动跳过（前端 buildQueue 无题词跳关已有机制）
+        q = _quiz_by_type(db, word_id, "learn", "listen_def", user_id, idx=1)
+        if q:
+            out.append(q)
     if not out:
         q = _gen_fallback_quiz(db, word, definition_zh, "learn")
         return [q] if q else []
@@ -783,12 +796,17 @@ def get_today_queue(user_id):
             (user_id, t_str)).fetchone() is not None
         # 热身轮：昨天首学的词（快闪巩固，不提交不调度）。
         # v3.2.1 只在当日首段会话出：当日已有学习提交（new/review）后重开不再重放热身——
-        # 中途退出重开的孩子不应把 19 题热身再做一遍
+        # 中途退出重开的孩子不应把 19 题热身再做一遍。
+        # v3.4 补 warmup 哨兵：孩子只做完热身就退出时 daily_logs 无记录，重开整段重放
+        # （多题化后 ~27 题）；当日 quiz_log 已有 warmup 作答埋点即视为已出过
         yesterday = (t - timedelta(days=1)).isoformat()
         acted = db.execute("""SELECT new_done, review_done FROM daily_logs
                               WHERE user_id=? AND date=?""", (user_id, t_str)).fetchone()
+        warm_done = db.execute(
+            "SELECT 1 FROM quiz_log WHERE user_id=? AND date=? AND phase='warmup' LIMIT 1",
+            (user_id, t_str)).fetchone() is not None
         warmup_items = []
-        if not (acted and (acted["new_done"] > 0 or (acted["review_done"] or 0) > 0)):
+        if not (warm_done or (acted and (acted["new_done"] > 0 or (acted["review_done"] or 0) > 0))):
             warmup = db.execute("""
                 SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
                 FROM user_word_state s JOIN words w ON w.id=s.word_id
@@ -796,8 +814,24 @@ def get_today_queue(user_id):
                 ORDER BY w.id""", (user_id, yesterday)).fetchall()
             for r in warmup:
                 item = _word_brief(db, r, user_id, junior, with_senses=False)
-                item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
-                                        "confirm", user_id, junior) or None
+                # v3.4 热身多题：standard 多义词先出全部剩余释义的 listen_def（义2..n，
+                # 按 sense_order；再巩固窗口换义听），单义词/缺题词维持 confirm word_zh 快闪。
+                # 按 idx>=2 实际存在行取（污染义跳过生成后 idx 有洞，不能按连续整数推）。
+                # 练习不记账（与判卷/练习分离一致）——直接 SELECT 构造，不走 _quiz_by_type。
+                quizzes = []
+                if not junior:
+                    for q in db.execute("""SELECT id, idx, stem, options, answer FROM word_quiz
+                                           WHERE word_id=? AND quiz_type='listen_def'
+                                             AND stage='learn' AND idx>=2 ORDER BY idx""",
+                                        (r["id"],)).fetchall():
+                        quizzes.append({"quiz_id": q["id"], "quiz_type": "listen_def",
+                                        "stage": "learn", "idx": q["idx"], "stem": q["stem"],
+                                        "options": json.loads(q["options"]), "answer": q["answer"]})
+                if not quizzes:
+                    cq = get_quiz(db, r["id"], r["word"], r["definition_zh"],
+                                  "confirm", user_id, junior)
+                    quizzes = [cq] if cq else []
+                item["quizzes"] = quizzes
                 warmup_items.append(item)
         new_words = db.execute("""
             SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji

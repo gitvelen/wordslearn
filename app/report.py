@@ -24,10 +24,11 @@ SMTP_CONF = DB_PATH.parent / "smtp.json"          # app/data/smtp.json
 SMTP_SKIP_USERS = ("test", "jrsmoke")             # 测试账号：照常结算积分，但不发真邮件（防 e2e/冒烟骚扰家长邮箱）
 SMTP_SKIP_PREFIX = "e2e_"                        # e2e 临时用户前缀
 
-GATE_NAMES_STD = {1: "认词", 2: "听音", 3: "回想", 4: "听写", 5: "用词"}
+GATE_NAMES_STD = {1: "认词", 2: "听音", 3: "回想", 4: "听写", 5: "用词", 6: "听释义"}
 GATE_NAMES_JR = {1: "认词", 2: "听音", 3: "选词"}
 TYPE_LABEL = {"word_zh": "看词选义", "listen_zh": "听音选义", "zh_word": "中文选词",
-              "cloze": "句子挖空", "spell": "听写拼写", "emoji": "听音选词", "sense": "选义项"}
+              "cloze": "句子挖空", "spell": "听写拼写", "emoji": "听音选词", "sense": "选义项",
+              "listen_def": "听释义选词"}
 
 SCORE_FULL = 100       # 完成当日任务当天即满分
 SCORE_WRONG_COST = 1   # 闯关首答每错一题扣分

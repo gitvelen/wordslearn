@@ -21,8 +21,9 @@ def conf():
     return None
 
 
-def chat(prompt, system=None, max_tokens=4000, timeout=120):
-    """messages 调用；content 为 thinking+text 混合块，取全部 text 拼接。失败抛异常。"""
+def chat(prompt, system=None, max_tokens=4000, timeout=120, temperature=None):
+    """messages 调用；content 为 thinking+text 混合块，取全部 text 拼接。失败抛异常。
+    temperature=None 不传（用服务端默认）；判定类任务传 0 保一致。"""
     c = conf()
     if not c:
         raise RuntimeError("LLM 未配置（data/llm.json）")
@@ -30,10 +31,12 @@ def chat(prompt, system=None, max_tokens=4000, timeout=120):
     if system:
         msgs.append({"role": "system", "content": system})
     msgs.append({"role": "user", "content": prompt})
+    body = {"model": c["model"], "max_tokens": max_tokens, "messages": msgs}
+    if temperature is not None:
+        body["temperature"] = temperature
     req = urllib.request.Request(
         c["base_url"].rstrip("/") + "/v1/messages",
-        data=json.dumps({"model": c["model"], "max_tokens": max_tokens,
-                         "messages": msgs}).encode(),
+        data=json.dumps(body).encode(),
         headers={"Content-Type": "application/json", "x-api-key": c["api_key"],
                  "anthropic-version": "2023-06-01"})
     with urllib.request.urlopen(req, timeout=timeout) as r:

@@ -3,6 +3,12 @@
    今日任务 = 热身轮（昨日词，不提交）→ 新词卡片连播 → 复习组 → 分关测验（刷新可恢复）
    音频原则：每题进题自动读一遍，答后不重播；zh_word/cloze 禁朗读（防听音猜答案） */
 const AUDIO_VER = 'v2';   // 音频文件 immutable 缓存的失效开关：批量重生成音频后 bump
+const DEF_AUDIO_VER = 'v1';   // 释义音（audio/def/）独立版本串——只增不改存量音频，不动 AUDIO_VER
+// 关卡序列（v3.4 唯一定义源；此前 buildQueue/gateName/gateRetry 三处硬编码同步漏改风险高）：
+// standard 六关（第 6 关·听释义=listen_def 义1）；junior 三关不加（三年级及之后才接触英英）
+const GATES_STD = [['word_zh', '认词'], ['listen_zh', '听音'], ['zh_word', '回想'],
+                   ['spell', '听写'], ['_reinforce', '用词'], ['listen_def', '听释义']];
+const GATES_JR = [['word_zh', '认词'], ['listen_zh', '听音'], ['_pick', '选词']];
 const app = Vue.createApp({
   data() {
     return {
@@ -674,7 +680,18 @@ const app = Vue.createApp({
       standard 五关：认词/听音/回想/听写/用词(组词)；junior 三关：认词/听音/选词。 */
       const q = [];
       let wi = 0;
-      for (const w of this.today.warmup) q.push({ type: 'warmup', item: w, _wi: ++wi });
+      // v3.4 热身多题：standard 多义词的 quizzes[]（剩余释义 listen_def 各一道）逐题入队
+      // （每题一个队列项，item.quiz 指向当题——warmupAnswer 无需感知多题）；
+      // 单义词 quizzes=[confirm word_zh]；无题词纯快闪过卡。序号 _wi 按题计。
+      for (const w of this.today.warmup) {
+        const qs = (w.quizzes && w.quizzes.length) ? w.quizzes : [];
+        if (qs.length) {
+          qs.forEach(qz => q.push({ type: 'warmup', item: { ...w, quiz: qz }, _wi: ++wi }));
+        } else {
+          q.push({ type: 'warmup', item: w, _wi: ++wi });
+        }
+      }
+      this.today.warmupTotal = wi;
       // 新卡乱序呈现（v3.2）：库模式同日新词常来自同一教材单元（语义近似互扰，
       // Tinkham/Waring），洗牌只影响呈现顺序——后端按 plan seq 分配、learnedToday
       // 重建均不受影响
@@ -693,10 +710,7 @@ const app = Vue.createApp({
       // 重做只费时间且产生双批埋点（积分双扣的根源）。localStorage 仅本设备生效，
       // 跨设备/清缓存退化为全量重做（无数据损害）
       const mem = this._gateMem();
-      const gates = junior
-        ? [['word_zh', '认词'], ['listen_zh', '听音'], ['_pick', '选词']]
-        : [['word_zh', '认词'], ['listen_zh', '听音'], ['zh_word', '回想'],
-           ['spell', '听写'], ['_reinforce', '用词']];
+      const gates = junior ? GATES_JR : GATES_STD;   // v3.4 收拢为顶部常量（三处硬编码同步风险）
       gates.forEach(([t, name], gi) => {
         const doneSet = new Set(mem[gi + 1] || []);
         const items = [];
@@ -706,6 +720,8 @@ const app = Vue.createApp({
           if (t === '_reinforce') quiz = n.reinforce;
           else if (t === '_pick') quiz = (n.quizzes || []).find(x => x.quiz_type === 'emoji')
               || (n.quizzes || []).find(x => x.quiz_type === 'zh_word');
+          else if (t === 'listen_def') quiz = (n.quizzes || []).find(
+              x => x.quiz_type === 'listen_def' && x.idx === 1);   // 第 6 关只出义1（idx=2+ 留给次日热身）
           else quiz = (n.quizzes || []).find(x => x.quiz_type === t);
           if (quiz) items.push({ type: 'quiz', item: { ...n, quiz }, _level: gi + 1 });
         });
@@ -770,11 +786,19 @@ const app = Vue.createApp({
     todayPhaseDone() { return this.today && this.today.qIdx >= this.today.queue.length; },
     autoPlayItem(w) {
       const word = w.item && w.item.word;
-      if (w.type === 'warmup' && w.item.quiz && w.item.quiz.quiz_type === 'listen_zh') { this.playWord(word); return; }
-      if ((w.type === 'review' || w.type === 'quiz') && w.item.quiz &&
-          (w.item.quiz.quiz_type === 'listen_zh' || w.item.quiz.quiz_type === 'spell'
-           || w.item.quiz.quiz_type === 'emoji')) {
+      const qz = w.item && w.item.quiz;
+      if (w.type === 'warmup' && qz && qz.quiz_type === 'listen_zh') { this.playWord(word); return; }
+      if (w.type === 'warmup' && qz && qz.quiz_type === 'listen_def') {
+        this.playDef(word, qz.idx, qz.stem); return;   // 热身·剩余释义听音
+      }
+      if ((w.type === 'review' || w.type === 'quiz') && qz &&
+          (qz.quiz_type === 'listen_zh' || qz.quiz_type === 'spell'
+           || qz.quiz_type === 'emoji')) {
         this.playWord(word);   // 听音/听写/选词关：进入即自动读题
+        return;
+      }
+      if ((w.type === 'review' || w.type === 'quiz') && qz && qz.quiz_type === 'listen_def') {
+        this.playDef(word, qz.idx, qz.stem);   // 第 6 关·听释义：进入即播释义音频
         return;
       }
       if (w.type === 'newcard') {
@@ -788,18 +812,25 @@ const app = Vue.createApp({
     },
     // 题干/题型渲染辅助
     quizShowWord(w) {
-      // listen_zh 不显示词（听音答题）；spell 只显示输入框；其余显示题干
+      // listen_zh/listen_def 不显示词（听音答题）；spell 只显示输入框；其余显示题干
       const q = w.item.quiz;
       if (!q) return true;
-      return q.quiz_type !== 'listen_zh';
+      return q.quiz_type !== 'listen_zh' && q.quiz_type !== 'listen_def';
     },
     quizShowSpell(w) {
       return w.item.quiz && w.item.quiz.quiz_type === 'spell';
     },
-    // 答案含目标词读音的题型（看中文选英文/句子挖空）：朗读=报答案，禁 🔊
+    // 答案含目标词读音的题型（看中文选英文/句子挖空）：朗读=报答案，禁 🔊。
+    // listen_def 不禁（🔊 显示）但 click 走 replayQuizAudio 重播释义音，绝不播词音
     quizMuted(w) {
       const t = w && w.item && w.item.quiz && w.item.quiz.quiz_type;
       return t === 'zh_word' || t === 'cloze';
+    },
+    // 🔊 重听分派（v3.4）：热身与 quiz 模板两处统一用它——listen_def 播 playWord 即泄答案
+    replayQuizAudio(w) {
+      const q = w && w.item && w.item.quiz;
+      if (q && q.quiz_type === 'listen_def') this.playDef(w.item.word, q.idx, q.stem);
+      else if (w && w.item) this.playWord(w.item.word);
     },
     quizStemText(w) {
       const q = w.item.quiz;
@@ -809,19 +840,20 @@ const app = Vue.createApp({
       if (q.quiz_type === 'sense') return w.item.word;          // 词 → 选正确义项
       if (q.quiz_type === 'word_zh') return w.item.word;        // 词 → 选释义
       if (q.quiz_type === 'emoji') return '';                   // emoji 大图 + 听音（模板单独渲染）
+      if (q.quiz_type === 'listen_def') return '';              // 纯听音（显示文字=考阅读不考听力）
       return '';
     },
     quizLabel(w) {
       const t = w.item.quiz && w.item.quiz.quiz_type;
       return { 'word_zh': '选出正确意思', 'listen_zh': '听一听，选出意思', 'zh_word': '哪个单词是这个意思？',
                'cloze': '选出句子中缺少的词', 'sense': '选出这个词在这句话里的意思', 'spell': '听一听，拼写这个单词',
-               'emoji': '听一听，选出这个单词' }[t] || '选出正确答案';
+               'emoji': '听一听，选出这个单词',
+               'listen_def': '听英文释义，选出这个单词' }[t] || '选出正确答案';
     },
     // ---------- v2.1 关卡测验：统一答题（答对自动过 900ms；答错弹词条卡后继续）----------
     gateName(level) {
-      const junior = this.isJunior;
-      const names = junior ? ['认词', '听音', '选词'] : ['认词', '听音', '回想', '听写', '用词'];
-      return names[level - 1] || '闯关';
+      const gates = this.isJunior ? GATES_JR : GATES_STD;   // v3.4 与 buildQueue/gateRetry 同源
+      return (gates[level - 1] && gates[level - 1][1]) || '闯关';
     },
     isGateItem(w) { return w && w.type === 'quiz'; },
 
@@ -1035,12 +1067,12 @@ const app = Vue.createApp({
         for (const n of (this.today.newAll || this.today.new)) {
           if (!wrongIds.includes(n.id)) continue;
           let quiz = null;
-          const t = this.isJunior
-            ? ['word_zh', 'listen_zh', '_pick'][level - 1]
-            : ['word_zh', 'listen_zh', 'zh_word', 'spell', '_reinforce'][level - 1];
+          const t = (this.isJunior ? GATES_JR : GATES_STD)[level - 1][0];   // v3.4 单一定义源
           if (t === '_reinforce') quiz = n.reinforce;
           else if (t === '_pick') quiz = (n.quizzes || []).find(x => x.quiz_type === 'emoji')
               || (n.quizzes || []).find(x => x.quiz_type === 'zh_word');
+          else if (t === 'listen_def') quiz = (n.quizzes || []).find(
+              x => x.quiz_type === 'listen_def' && x.idx === 1);
           else quiz = (n.quizzes || []).find(x => x.quiz_type === t);
           if (quiz) retry.push({ type: 'quiz', item: { ...n, quiz }, _level: level, _retry: true,
             // 听写补测支架（v3.2）：原题硬重测通过率仅 37%（看完卡仍拼不出），
@@ -1187,10 +1219,63 @@ const app = Vue.createApp({
     },
     audioUrl(word) { return '/audio/' + encodeURIComponent(word) + '.mp3?v=' + AUDIO_VER; },
     sentUrl(word, order) { return '/audio/sent/' + encodeURIComponent(word) + '__' + order + '.mp3?v=' + AUDIO_VER; },
+    defUrl(word, order) { return '/audio/def/' + encodeURIComponent(word) + '__' + order + '.mp3?v=' + DEF_AUDIO_VER; },
+    // 释义音频播放（v3.4 listen_def）：仿 playWord 的接管+6s 起播超时，onerror/超时
+    // 回退浏览器 TTS 读 stem 原文（不复制 playSentence 无超时的弱网悬挂缺陷）
+    playDef(word, order, text) {
+      this._takeoverAudio();
+      const a = new Audio(this.defUrl(word, order));
+      a._settled = false;
+      this._curAudio = a;
+      const fallback = () => {
+        if (a._settled) return;
+        a._settled = true;
+        this._fbTimer = null;
+        try { a.pause(); } catch (e) {}
+        if (text) this.speakTTS(text);
+      };
+      const timer = setTimeout(fallback, 6000);
+      this._fbTimer = timer;
+      a.onerror = fallback;
+      a.play()
+        .then(() => {
+          if (!a._settled) {
+            a._settled = true;
+            clearTimeout(timer);
+            if (this._fbTimer === timer) this._fbTimer = null;
+          }
+        })
+        .catch(fallback);
+      return a;
+    },
     prefetchAudio() {
-      // 预取后续 4 题的单词音频：队列在前端已知，弱网下进题即播
+      // 预取后续 4 题的单词音频：队列在前端已知，弱网下进题即播。
+      // v3.4 释义音预载（体验丝滑关键路径）：热身是每日第一环节——登录构建队列后
+      // 立即预载全部热身 def 音；第 6 关在五关之后——前台做前几关期间后台已拉好当日词义1
       if (!this.today) return;
       this._pf = this._pf || {};
+      this._pfDef = this._pfDef || {};
+      const defNeed = [];
+      for (const w of (this.today.warmup || [])) {
+        (w.quizzes || []).forEach(qz => {
+          if (qz.quiz_type === 'listen_def') defNeed.push([w.word, qz.idx]);
+        });
+      }
+      [...(this.today.new || []), ...(this.today.learnedToday || [])].forEach(n => {
+        const qz = (n.quizzes || []).find(x => x.quiz_type === 'listen_def' && x.idx === 1);
+        if (qz) defNeed.push([n.word, 1]);
+      });
+      defNeed.forEach(([w, i]) => {
+        const k = w + '__' + i;
+        if (!this._pfDef[k]) {
+          this._pfDef[k] = 1;
+          try {
+            const p = new Audio(this.defUrl(w, i));
+            p.preload = 'auto';
+            p.load();
+          } catch (e) {}
+        }
+      });
       for (let k = 1; k <= 4; k++) {
         const it = this.todayQueue[this.today.qIdx + k];
         const w = it && it.item && it.item.word;
