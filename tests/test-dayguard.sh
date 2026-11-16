@@ -1,10 +1,11 @@
 #!/bin/bash
 # 隔夜复活/同日重开守卫 e2e 编排（v2.7.5）
-# 前置：/tmp/wl-dayguard 测试服务已跑在 8091（库为生产副本、无 smtp.json）
-# 用法：bash tests/test-dayguard.sh
+# 前置：测试服务已跑（库为生产副本、无 smtp.json）
+# 用法：DG_BASE=http://localhost:8092 DG_DB=/tmp/wl-taudit/data/wordslearn.db bash tests/test-dayguard.sh
+#   （默认 8091 + /tmp/wl-dayguard，与 test-listen-def.sh 的 LD_DB 同款 env 覆盖）
 set -e
 cd "$(dirname "$0")/.."
-DB=/tmp/wl-dayguard/data/wordslearn.db
+DB=${DG_DB:-/tmp/wl-dayguard/data/wordslearn.db}
 DG_USER=$(python3 - "$DB" <<'EOF'
 import sqlite3, uuid, bcrypt, datetime, sys
 db = sqlite3.connect(sys.argv[1]); db.row_factory = sqlite3.Row
@@ -27,7 +28,8 @@ print(uname)
 EOF
 )
 echo "测试用户: $DG_USER"
-export DG_USER DG_TODAY=$(date +%F) DG_BASE=http://localhost:8091
+export DG_USER DG_TODAY=$(date +%F)
+export DG_BASE=${DG_BASE:-http://localhost:8091}
 
 echo "===== main 阶段（复活守卫）====="
 node tests/test-dayguard.js main

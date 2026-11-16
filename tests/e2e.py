@@ -94,9 +94,10 @@ check('重复建计划被拒', s == 400)
 # ---- today：4 题链 + 巩固题 ----
 s, r = api(cj, '/api/today')
 n0 = r['new'][0]
-check('新词首学 4 题（word_zh/listen_zh/zh_word/spell）',
-      [q['quiz_type'] for q in n0['quizzes']] == ['word_zh', 'listen_zh', 'zh_word', 'spell'],
-      [q['quiz_type'] for q in n0['quizzes']])
+_types = [q['quiz_type'] for q in n0['quizzes']]
+check('新词首学 4 题链（v3.4 有 def 题的词追加 listen_def 义1）',
+      _types[:4] == ['word_zh', 'listen_zh', 'zh_word', 'spell'] and _types[4:] in ([], ['listen_def']),
+      _types)
 check('巩固题 = d5 zh_word 借用（v3.2：cloze 收归 stage-2 评测独占）',
       bool(n0['reinforce']) and n0['reinforce']['quiz_type'] == 'zh_word',
       n0['reinforce'] and n0['reinforce']['quiz_type'])
@@ -201,7 +202,8 @@ check('抽检完成标记 done=1', sched and sched['done'] == 1)
 s, r = api(cj, '/api/today')
 check('当日抽检完成后不再重出', not [rv for rv in r['review'] if rv.get('audit')])
 
-# ---- 积压调节：到期复习 >80 → 当日新词减半；复习上限 60 ----
+# ---- 积压调节（v3.3.6 软着陆）：due<110 不节流发满额；复习上限 60 ----
+# （深度节流行为由 dayguard throttle 阶段覆盖：104due 发满 19、130due 缓降 17）
 rows = db.execute("SELECT id FROM words WHERE id NOT IN "
                   "(SELECT word_id FROM user_word_state WHERE user_id=?) LIMIT 85", (uid,)).fetchall()
 for w in rows:
@@ -209,7 +211,7 @@ for w in rows:
                "VALUES(?,?, 'learning', 1, ?)", (uid, w['id'], TODAY_STR))
 db.commit()
 s, r = api(cj, '/api/today')
-check('积压>80 → 当日新词减半', len(r['new']) <= 2, len(r['new']))
+check('积压 85 < 110 → 新词不节流发满额（v3.3.6：节流线 110）', len(r['new']) == 3, len(r['new']))
 check('复习上限 60 生效（85 到期只出 60）', 60 <= len(r['review']) <= 65, len(r['review']))
 check('due_remaining=85-60（v3.2.1 完成屏"排明天"提示）', r.get('due_remaining') == 25, r.get('due_remaining'))
 

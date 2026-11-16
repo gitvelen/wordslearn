@@ -56,7 +56,8 @@ EOF
 )
 LD_USER=$(echo $OUT | cut -d' ' -f1)
 LD_JR_USER=$(echo $OUT | cut -d' ' -f2)
-export LD_USER LD_JR_USER DG_BASE=http://localhost:8091
+export LD_USER LD_JR_USER
+export DG_BASE=${DG_BASE:-http://localhost:8091}
 echo "测试用户: std=$LD_USER jr=$LD_JR_USER"
 
 echo "===== gate 阶段（第 6 关下发/跳关/音频抓包/会话记忆/兜底）====="

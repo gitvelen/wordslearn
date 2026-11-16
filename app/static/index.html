@@ -198,7 +198,7 @@
       <input type="number" v-model.number="planForm.target_words" min="10" max="3000">
     </label>
     <label>打算用多少天？
-      <input type="number" v-model.number="planForm.days" min="7" max="365">
+      <input type="number" v-model.number="planForm.days" min="14" max="365">
     </label>
     <p class="hint">每天新学约 {{dailyNewPreview}} 个（最后12天留作总复习）</p>
     <button class="btn primary big" @click="createPlan" :disabled="busy">开始！</button>

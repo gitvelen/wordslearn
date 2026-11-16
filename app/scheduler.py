@@ -95,19 +95,23 @@ def _gen_fallback_quiz(db, word, definition_zh, stage, quiz_type="word_zh"):
             "stem": word, "options": opts, "answer": short}
 
 
-def get_quiz(db, word_id, word, definition_zh, stage, user_id=None, junior=False, mark_used=True):
+def get_quiz(db, word_id, word, definition_zh, stage, user_id=None, junior=False, mark_used=True, used=None):
     """取该词该阶段一道题：预生成题库优先（排除该用户已用），耗尽允许复用旧题
     （复习场景间隔≥3天重复出题可接受），无题库则现算兜底。
-    mark_used=False 供巩固轮借用 d5/d2 题而不消耗正式复习的防重复配额。"""
+    mark_used=False 供巩固轮借用 d5/d2 题而不消耗正式复习的防重复配额。
+    used：调用方（get_today_queue）预取的该用户已用题集——一次请求内多次取题
+    不再各自全量拉 user_quiz_used（19 新词+60 复习的队列构建 = 170+ 次全表扫，
+    11-16 实测占 /api/today 300ms 中的 230ms，且随历史线性恶化）。"""
     rows = db.execute("""SELECT q.id, q.quiz_type, q.stem, q.options, q.answer FROM word_quiz q
                          WHERE q.word_id=? AND q.stage=?""", (word_id, stage)).fetchall()
     if junior:
         rows = [r for r in rows if r["quiz_type"] in JUNIOR_TYPES]
     if rows:
-        used = set()
-        if user_id:
-            used = {r["quiz_id"] for r in db.execute(
-                "SELECT quiz_id FROM user_quiz_used WHERE user_id=?", (user_id,))}
+        if used is None:
+            used = set()
+            if user_id:
+                used = {r["quiz_id"] for r in db.execute(
+                    "SELECT quiz_id FROM user_quiz_used WHERE user_id=?", (user_id,))}
         fresh = [r for r in rows if r["id"] not in used]
         pool = fresh or rows
         r = random.choice(pool)
@@ -120,12 +124,13 @@ def get_quiz(db, word_id, word, definition_zh, stage, user_id=None, junior=False
 
 
 def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None, mark_used=True,
-                  fresh_only=False, idx=None):
+                  fresh_only=False, idx=None, used=None):
     """按题型精确取题：排除已用，耗尽默认复用，题库缺该题型返回 None。
     mark_used=False 供借题（用词关）而不消耗正式复习的防重复配额。
     fresh_only=True（v3.2 评测抽题）：耗尽不复用旧题，返回 None 交上层降级——
     判卷的题绝不能是刚练过的题。
-    idx（listen_def 专用）：精确取某释义号的题（idx=sense_order 原值）。"""
+    idx（listen_def 专用）：精确取某释义号的题（idx=sense_order 原值）。
+    used：调用方预取的已用题集（语义同 get_quiz，防同请求重复全量拉取）。"""
     rows = db.execute("""SELECT id, quiz_type, idx, stem, options, answer FROM word_quiz
                          WHERE word_id=? AND stage=? AND quiz_type=?""",
                       (word_id, stage, quiz_type)).fetchall()
@@ -133,10 +138,11 @@ def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None, mark_used=True,
         rows = [r for r in rows if r["idx"] == idx]
     if not rows:
         return None
-    used = set()
-    if user_id:
-        used = {r["quiz_id"] for r in db.execute(
-            "SELECT quiz_id FROM user_quiz_used WHERE user_id=?", (user_id,))}
+    if used is None:
+        used = set()
+        if user_id:
+            used = {r["quiz_id"] for r in db.execute(
+                "SELECT quiz_id FROM user_quiz_used WHERE user_id=?", (user_id,))}
     pool = [r for r in rows if r["id"] not in used]
     if fresh_only and not pool:
         return None
@@ -150,7 +156,7 @@ def _quiz_by_type(db, word_id, stage, quiz_type, user_id=None, mark_used=True,
             "options": json.loads(r["options"]), "answer": r["answer"]}
 
 
-def get_learn_quizzes(db, user_id, word_id, word, definition_zh, junior, emoji=None):
+def get_learn_quizzes(db, user_id, word_id, word, definition_zh, junior, emoji=None, used=None):
     """新词首学题（v4.2 多角度 4 题，全部不计调度）：
     standard: word_zh(形→义) + listen_zh(音→义) + zh_word(义→形) + spell(音→形·产出)
               + listen_def(听英文释义选词·义1，第 6 关用；v3.4)
@@ -160,7 +166,7 @@ def get_learn_quizzes(db, user_id, word_id, word, definition_zh, junior, emoji=N
           ["word_zh", "listen_zh", "emoji" if emoji else "zh_word"]
     out = []
     for t in seq:
-        q = _quiz_by_type(db, word_id, "learn", t, user_id)
+        q = _quiz_by_type(db, word_id, "learn", t, user_id, used=used)
         if q:
             out.append(q)
         elif t != "emoji":                 # emoji 无现算干扰源；其余缺题按题型现算（v3.1）
@@ -171,7 +177,7 @@ def get_learn_quizzes(db, user_id, word_id, word, definition_zh, junior, emoji=N
         # listen_def·义1（第 6 关）。绝不走 fallback 现算：兜底会把 stem 生成单词本身，
         # playDef 朗读=直接报答案（假掌握，静默伤害）——缺题词（全污染 13 词/干扰不足）
         # 第 6 关自动跳过（前端 buildQueue 无题词跳关已有机制）
-        q = _quiz_by_type(db, word_id, "learn", "listen_def", user_id, idx=1)
+        q = _quiz_by_type(db, word_id, "learn", "listen_def", user_id, idx=1, used=used)
         if q:
             out.append(q)
     if not out:
@@ -180,16 +186,17 @@ def get_learn_quizzes(db, user_id, word_id, word, definition_zh, junior, emoji=N
     return out
 
 
-def _new_word_item(db, r, user_id, junior):
+def _new_word_item(db, r, user_id, junior, used=None):
     """新词条目装配：词卡信息 + 首学题 + 用词关题（new 与 learned_today 共用）。"""
     item = _word_brief(db, r, user_id, junior)
     item["quizzes"] = get_learn_quizzes(db, user_id, r["id"], r["word"],
-                                        r["definition_zh"], junior, r["emoji"])
+                                        r["definition_zh"], junior, r["emoji"], used=used)
     # 用词关题（v3.2）：只借 d5 zh_word（义→形，不耗配额）。不再借 cloze——d5 每词仅 1 道
     # cloze 收归 stage-2(D+7) 正式评测独占（旧实现 D+0/D+2 100% 同题，晋级判据被污染）。
     # 无 d5 zh_word 的词该关自动跳过（前端 buildQueue 对 reinforce=None 已兼容）。
     item["reinforce"] = (
-        None if junior else _quiz_by_type(db, r["id"], "d5", "zh_word", user_id, mark_used=False))
+        None if junior else _quiz_by_type(db, r["id"], "d5", "zh_word", user_id,
+                                          mark_used=False, used=used))
     return item
 
 
@@ -296,14 +303,15 @@ def confirm_pool(user_id, size):
         user = db.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
         if not user or not need_confirm(db, user):
             return []
+        grades = _confirm_grades(user["grade"])
         rows = db.execute("""
             SELECT w.id, w.word, w.phonetic_uk, w.definition_zh FROM words w
             JOIN word_levels l ON l.word_id=w.id AND l.grade_code IN (%s)
             WHERE NOT EXISTS (SELECT 1 FROM user_word_state s
                               WHERE s.user_id=? AND s.word_id=w.id)
             GROUP BY w.id
-            ORDER BY COALESCE(w.frq, 999999), w.id LIMIT ?""" % ",".join("?" * 2),
-            (*_confirm_grades(user["grade"]), user_id, size)).fetchall()
+            ORDER BY COALESCE(w.frq, 999999), w.id LIMIT ?""" % ",".join("?" * len(grades)),
+            (*grades, user_id, size)).fetchall()
         return [dict(r) for r in rows]
     finally:
         db.close()
@@ -770,12 +778,10 @@ def get_today_queue(user_id):
         cutoff = (date.fromisoformat(plan["end_date"]) - timedelta(days=REST_DAYS)).isoformat()
         new_allowance = 0
         if t_str <= cutoff:
-            log = db.execute("SELECT new_done FROM daily_logs WHERE user_id=? AND date=?",
-                             (user_id, t_str)).fetchone()
             # 勿复用 done：它已表示"当日完成态"(bool)，此处仅是已学新词数。
             # 复用会让响应返回 done=19 之类 truthy，前端误判"当日已完成"→补发完成事件
             # →误结算积分+误发日报（11-03 mily 中途退出重开即踩此雷）
-            learned_new = log["new_done"] if log else 0
+            learned_new = dl["new_done"] if dl else 0
             new_allowance = max(0, plan["daily_new"] - learned_new)
         # 积压调节：到期复习过多时当日新词按比例放缓（先还债再扩新，防缺勤后滚雪球）。
         # v3.3.6 软着陆替代减半：还债速度=REVIEW_CAP-复习义务(3×new)，按比例放缓
@@ -800,13 +806,15 @@ def get_today_queue(user_id):
         # v3.4 补 warmup 哨兵：孩子只做完热身就退出时 daily_logs 无记录，重开整段重放
         # （多题化后 ~27 题）；当日 quiz_log 已有 warmup 作答埋点即视为已出过
         yesterday = (t - timedelta(days=1)).isoformat()
-        acted = db.execute("""SELECT new_done, review_done FROM daily_logs
-                              WHERE user_id=? AND date=?""", (user_id, t_str)).fetchone()
         warm_done = db.execute(
             "SELECT 1 FROM quiz_log WHERE user_id=? AND date=? AND phase='warmup' LIMIT 1",
             (user_id, t_str)).fetchone() is not None
         warmup_items = []
-        if not (warm_done or (acted and (acted["new_done"] > 0 or (acted["review_done"] or 0) > 0))):
+        # 该用户已用题集一次预取（下方全部取题共用——原先逐词全量拉，队列构建
+        # O(词数×已用题数)，11-16 实测 mily 2640 已用 × 174 次取题 = 230ms 纯浪费）
+        used = {r[0] for r in db.execute(
+            "SELECT quiz_id FROM user_quiz_used WHERE user_id=?", (user_id,))}
+        if not (warm_done or (dl and (dl["new_done"] > 0 or (dl["review_done"] or 0) > 0))):
             warmup = db.execute("""
                 SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
                 FROM user_word_state s JOIN words w ON w.id=s.word_id
@@ -829,7 +837,7 @@ def get_today_queue(user_id):
                                         "options": json.loads(q["options"]), "answer": q["answer"]})
                 if not quizzes:
                     cq = get_quiz(db, r["id"], r["word"], r["definition_zh"],
-                                  "confirm", user_id, junior)
+                                  "confirm", user_id, junior, used=used)
                     quizzes = [cq] if cq else []
                 item["quizzes"] = quizzes
                 warmup_items.append(item)
@@ -842,7 +850,7 @@ def get_today_queue(user_id):
             ORDER BY p.seq LIMIT ?""", (plan["id"], user_id, new_allowance)).fetchall()
         new_items = []
         for r in new_words:
-            new_items.append(_new_word_item(db, r, user_id, junior))
+            new_items.append(_new_word_item(db, r, user_id, junior, used=used))
         # 今日已学词（first_learned_date=今天）：前端刷新后据此重建关卡（中途退出不丢测验）
         learned_words = db.execute("""
             SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
@@ -850,7 +858,7 @@ def get_today_queue(user_id):
             JOIN user_word_state s ON s.user_id=? AND s.word_id=w.id
             WHERE p.plan_id=? AND s.first_learned_date=?
             ORDER BY p.seq""", (user_id, plan["id"], t_str)).fetchall()
-        learned_items = [_new_word_item(db, r, user_id, junior) for r in learned_words]
+        learned_items = [_new_word_item(db, r, user_id, junior, used=used) for r in learned_words]
         review = [] if gate_started else db.execute("""
             SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji, s.stage
             FROM user_word_state s JOIN words w ON w.id=s.word_id
@@ -862,7 +870,7 @@ def get_today_queue(user_id):
             stage_key = STAGE_BY_REVIEW.get(r["stage"], "d2")
             if junior:
                 item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
-                                        stage_key, user_id, junior) or None
+                                        stage_key, user_id, junior, used=used) or None
             else:
                 # v3.2 晋级证据阶梯：每级用该间隔下最诚实（猜测底噪最低）且未练过的题。
                 # stage-1(D+2) d2 zh_word 再认；stage-2(D+7) d5 cloze 语境（独占 fresh，
@@ -872,21 +880,22 @@ def get_today_queue(user_id):
                 # 取题即标会在"作答前刷新/重开"时烧掉唯一 fresh 题，毕业门静默降级 MCQ
                 if r["stage"] == 1:
                     item["quiz"] = (
-                        _quiz_by_type(db, r["id"], "d2", "zh_word", user_id, mark_used=False)
+                        _quiz_by_type(db, r["id"], "d2", "zh_word", user_id,
+                                      mark_used=False, used=used)
                         or get_quiz(db, r["id"], r["word"], r["definition_zh"],
-                                    "d2", user_id, junior)) or None
+                                    "d2", user_id, junior, used=used)) or None
                 elif r["stage"] == 2:
                     item["quiz"] = (
                         _quiz_by_type(db, r["id"], "d5", "cloze", user_id,
-                                      fresh_only=True, mark_used=False)
+                                      fresh_only=True, mark_used=False, used=used)
                         or get_quiz(db, r["id"], r["word"], r["definition_zh"],
-                                    "d5", user_id, junior)) or None
+                                    "d5", user_id, junior, used=used)) or None
                 else:
                     item["quiz"] = (
                         _quiz_by_type(db, r["id"], "d12", "spell", user_id,
-                                      fresh_only=True, mark_used=False)
+                                      fresh_only=True, mark_used=False, used=used)
                         or get_quiz(db, r["id"], r["word"], r["definition_zh"],
-                                    "d12", user_id, junior)) or None
+                                    "d12", user_id, junior, used=used)) or None
             review_items.append(item)
         # 掌握词每日抽检（方案A）：当日排样一次，done 标记防重出；答错由 submit_answer 打回 D+2。
         # 进关后重开（gate_started）整段跳过：抽检词混进队列同样是阶段倒退；当日样本作废
@@ -912,7 +921,8 @@ def get_today_queue(user_id):
             for r in audit_rows:
                 item = _word_brief(db, r, user_id, junior, with_senses=False)
                 item["quiz"] = get_quiz(db, r["id"], r["word"], r["definition_zh"],
-                                        random.choice(("d2", "d5", "d12")), user_id, junior) or None
+                                        random.choice(("d2", "d5", "d12")), user_id,
+                                        junior, used=used) or None
                 item["audit"] = True
                 review_items.append(item)
         db.commit()   # get_quiz 的 user_quiz_used 标记与抽检排样都要落盘（v2.6 修复：此前只读路径不 commit 全部回滚）

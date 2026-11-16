@@ -12,7 +12,8 @@ import unittest.mock as mock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app'))
 import report  # noqa: E402
 
-DB = os.path.join(os.path.dirname(__file__), '..', 'app', 'data', 'wordslearn.db')
+DB = os.environ.get('WL_DB') or os.path.join(os.path.dirname(__file__), '..', 'app', 'data', 'wordslearn.db')
+os.environ.setdefault('WL_DB', DB)   # report 模块经 database.get_db() 也指向同一库（默认生产，勿在生产跑）
 TODAY = datetime.date.today().isoformat()
 
 
@@ -29,16 +30,19 @@ def main():
     uid = db.execute("INSERT INTO users(username,password_hash) VALUES('wl_rt', ?)",
                      (_bcrypt.hashpw(b'x', _bcrypt.gensalt()).decode(),)).lastrowid
     wid = db.execute("SELECT id FROM words LIMIT 1").fetchone()['id']
-    # 造当日数据：2 复习（1 错）+ 关卡 2 首答（1 错）+ 1 补测（对）
+    wid2 = db.execute("SELECT id FROM words WHERE id != ? LIMIT 1", (wid,)).fetchone()['id']
+    # 造当日数据：2 复习（1 错）+ 关卡 2 首答（1 错，两词——v3.2.1 起 (word_id,level) 去重，
+    # 同词同关的第二条首答会被当"重开双批"丢弃）+ 1 补测（对）
     # → 积分 = 100 - 1×1 = 99（补测不返分）
     db.execute("INSERT INTO daily_logs(user_id, date, new_done, review_done) VALUES(?,?,1,2) "
                "ON CONFLICT(user_id, date) DO UPDATE SET new_done=1, review_done=2, report_sent=0, score=NULL", (uid, TODAY))
     db.execute("DELETE FROM quiz_log WHERE user_id=? AND date=?", (uid, TODAY))
-    for phase, level, correct, retry in (('learn', None, 1, 0), ('review', None, 0, 0),
-                                         ('review', None, 1, 0),
-                                         ('gate', 4, 1, 0), ('gate', 4, 0, 0), ('gate', 4, 1, 1)):
+    for phase, level, correct, retry, w in (('learn', None, 1, 0, wid), ('review', None, 0, 0, wid),
+                                            ('review', None, 1, 0, wid),
+                                            ('gate', 4, 1, 0, wid), ('gate', 4, 0, 0, wid2),
+                                            ('gate', 4, 1, 1, wid2)):
         db.execute("INSERT INTO quiz_log(user_id, date, phase, level, word_id, quiz_type, correct, retry) "
-                   "VALUES(?,?,?,?,?,?,?,?)", (uid, TODAY, phase, level, wid, 'spell', correct, retry))
+                   "VALUES(?,?,?,?,?,?,?,?)", (uid, TODAY, phase, level, w, 'spell', correct, retry))
     db.commit()
     db.close()
 

@@ -343,7 +343,11 @@ def report_preview(request: Request, date: str = "", user: str = ""):
     u = auth.current_user(request)
     uid, day = u["id"], (date or None)
     if user and u["username"] == "velen":      # 家长账号可查孩子
-        r = database.get_db().execute("SELECT id FROM users WHERE username=?", (user,)).fetchone()
+        db = database.get_db()
+        try:
+            r = db.execute("SELECT id FROM users WHERE username=?", (user,)).fetchone()
+        finally:
+            db.close()
         if r:
             uid = r["id"]
     rep = report.build_daily_report(uid, day)
