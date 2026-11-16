@@ -20,6 +20,12 @@ def verify_password(pw: str, hashed: str) -> bool:
 
 def login(username, password, ip):
     now = time.time()
+    # 过期条目防累积：_fail 只在同 IP 再失败时覆盖自身，从不主动清——
+    # 公网扫描器换着源 IP 撞登录会无限占内存（重启才清零）。阈值触发式清理，
+    # 正常家庭流量（个位数条目）永远不进入此分支，行为不变
+    if len(_fail) > 1024:
+        for stale in [k for k, (_, ts) in _fail.items() if now - ts >= 900]:
+            del _fail[stale]
     rec = _fail.get(ip)
     if rec and rec[0] >= 8 and now - rec[1] < 900:
         raise HTTPException(429, "尝试次数过多，请15分钟后再试")
