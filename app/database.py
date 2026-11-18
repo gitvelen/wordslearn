@@ -107,6 +107,9 @@ CREATE TABLE IF NOT EXISTS daily_logs (
 );
 
 -- v2.2 学习行为埋点：全部作答（含不进调度的热身/关卡测验），供每日学习报告聚合
+-- v5 过程埋点列（全可选，旧客户端/旧行为 NULL）：latency_ms 锚点=题目呈现或末次音频结束
+-- （含自动播题的 listen/spell 类）→提交，重听时长不混入（重听次数在 audio_plays 单独记）；
+-- blocked_taps 桶口径=自上一题提交以来的撞锁点击（含反馈窗连点/锁定期抢点，随下题提交带走）
 CREATE TABLE IF NOT EXISTS quiz_log (
   id         INTEGER PRIMARY KEY,
   user_id    INTEGER NOT NULL REFERENCES users(id),
@@ -117,9 +120,28 @@ CREATE TABLE IF NOT EXISTS quiz_log (
   quiz_type  TEXT DEFAULT '',                    -- word_zh/listen_zh/zh_word/cloze/spell/emoji/card
   correct    INTEGER NOT NULL,
   retry      INTEGER DEFAULT 0,                  -- gate 关末补测标记
+  latency_ms   INTEGER,                          -- 作答耗时（客户端 Date.now 差值，不受时钟同步影响）
+  audio_plays  INTEGER DEFAULT 0,                -- 本题用户主动点播次数（自动首播不计）
+  typed        TEXT,                             -- spell 最终输入串（错误模式分析）
+  backspaces   INTEGER DEFAULT 0,                -- spell 退格次数
+  empty_submits INTEGER DEFAULT 0,               -- spell 空提交次数
+  blocked_taps INTEGER DEFAULT 0,                -- 撞锁点击（见上桶口径）
   ts         TEXT DEFAULT (datetime('now','localtime'))      -- 会话时长估算用
 );
 CREATE INDEX IF NOT EXISTS idx_quizlog_user_date ON quiz_log(user_id, date);
+
+-- v5 会话/系统事件埋点：只记时间戳，语义留给分析（分段=分析期 gap 切分，非采集期判定）。
+-- type: session_start|session_end|app_hidden|app_visible|idle_visible|audio_fallback|
+--       day_resurrect|wrong_card_view|word_view；detail JSON（idle_visible:{ms} 等）
+CREATE TABLE IF NOT EXISTS event_log (
+  id      INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date    TEXT NOT NULL,
+  type    TEXT NOT NULL,
+  detail  TEXT,
+  ts      TEXT DEFAULT (datetime('now','localtime'))
+);
+CREATE INDEX IF NOT EXISTS idx_eventlog_user_date ON event_log(user_id, date);
 
 -- v2.6 掌握词每日抽检排样：当日抽样一次（done 标记防重出；答错由 submit_answer 打回 D+2）
 CREATE TABLE IF NOT EXISTS audit_schedule (
@@ -227,6 +249,13 @@ def _migrate(conn):
     sp_cols = [r["name"] for r in conn.execute("PRAGMA table_info(study_plans)")]
     if "library_id" not in sp_cols:
         conn.execute("ALTER TABLE study_plans ADD COLUMN library_id INTEGER")
+    # v5 过程埋点列（存量库补列；新库由 SCHEMA 直接建全）
+    ql_cols = [r["name"] for r in conn.execute("PRAGMA table_info(quiz_log)")]
+    for col, ddl in (("latency_ms", "INTEGER"), ("audio_plays", "INTEGER DEFAULT 0"),
+                     ("typed", "TEXT"), ("backspaces", "INTEGER DEFAULT 0"),
+                     ("empty_submits", "INTEGER DEFAULT 0"), ("blocked_taps", "INTEGER DEFAULT 0")):
+        if col not in ql_cols:
+            conn.execute(f"ALTER TABLE quiz_log ADD COLUMN {col} {ddl}")
 
 
 # v3.3.5 时间戳统一 Asia/Shanghai：datetime('now') 存 UTC，与 date.today() 的 CST 日期

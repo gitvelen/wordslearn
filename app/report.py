@@ -93,11 +93,15 @@ def record_quiz(user_id, entries):
             if phase not in ("warmup", "gate", "review", "learn"):
                 continue
             db.execute("""INSERT INTO quiz_log(user_id, date, phase, level, word_id,
-                                                 quiz_type, correct, retry)
-                          VALUES(?,?,?,?,?,?,?,?)""",
+                                                 quiz_type, correct, retry,
+                                                 latency_ms, audio_plays, typed,
+                                                 backspaces, empty_submits, blocked_taps)
+                          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                        (user_id, t, phase, e.get("level"), e.get("word_id"),
                         e.get("quiz_type") or "", 1 if e.get("correct") else 0,
-                        1 if e.get("retry") else 0))
+                        1 if e.get("retry") else 0,
+                        e.get("latency_ms"), e.get("audio_plays"), e.get("typed"),
+                        e.get("backspaces"), e.get("empty_submits"), e.get("blocked_taps")))
         db.commit()
     finally:
         db.close()
@@ -113,6 +117,44 @@ def _word_defs(db, word_ids):
             r = db.execute("SELECT definition_zh FROM words WHERE id=?", (wid,)).fetchone()
         out[wid] = (r["definition_zh"] or "").split(" | ")[0] if r else ""
     return out
+
+
+def _absent_seconds(db, user_id, day, t0, t1):
+    """离席秒数（与答题跨度 [t0,t1] 求交）：app_hidden→app_visible 配对（未闭合截到 t1）
+    + idle_visible 事件（detail.ms 时长，结束≈事件 ts，起点=ts−ms；<90s 噪声不扣）。
+    前端在 hidden 前终结 idle 段，两来源理论上不重叠；防御性钳制不超过跨度。
+    时钟：ts 为服务端 localtime，ms 为客户端差值——差值不依赖时钟同步。"""
+    from datetime import datetime, timedelta
+    rows = db.execute("""SELECT type, ts, detail FROM event_log
+                         WHERE user_id=? AND date=? AND type IN ('app_hidden','app_visible','idle_visible')
+                         ORDER BY id""", (user_id, day)).fetchall()
+    intervals, hidden_start = [], None
+    for r in rows:
+        try:
+            ts = datetime.fromisoformat(r["ts"])
+        except ValueError:
+            continue
+        if r["type"] == "app_hidden":
+            hidden_start = ts
+        elif r["type"] == "app_visible":
+            if hidden_start:
+                intervals.append((hidden_start, ts))
+                hidden_start = None
+        else:   # idle_visible：事件在交互恢复时发出，ts≈结束时刻
+            try:
+                ms = int((json.loads(r["detail"] or "{}")).get("ms") or 0)
+            except ValueError:
+                ms = 0
+            if ms >= 90000:
+                intervals.append((ts - timedelta(milliseconds=ms), ts))
+    if hidden_start:
+        intervals.append((hidden_start, t1))
+    total = 0.0
+    for a, b in intervals:
+        lo, hi = max(a, t0), min(b, t1)
+        if hi > lo:
+            total += (hi - lo).total_seconds()
+    return min(total, max(0.0, (t1 - t0).total_seconds()))
 
 
 def _round_rows(rows):
@@ -186,13 +228,23 @@ def build_daily_report(user_id, day=None):
             lbl = {"warmup": "热身", "review": "复习", "learn": "新学", "audit": "抽检"}.get(r["phase"]) \
                 or f"第{r['level']}关"
             wrong_map.setdefault(r["word"], {"def": defs.get(r["word_id"], ""), "rounds": []})["rounds"].append(lbl)
-        # 会话时长（首末作答时间差，含卡片提交；跨长时间挂起会高估，仅供参考）
+        # 会话时长（v5 真实口径）：首末作答跨度 − 离席（app_hidden + idle_visible），
+        # 无事件数据的旧日期回退跨度口径（高估，仅供参考）；分段=作答 gap>15min 切段
         minutes = None
+        segments = 1
         if qrows:
-            t0, t1 = qrows[0]["ts"], qrows[-1]["ts"]
+            from datetime import datetime as _dt
             try:
-                from datetime import datetime
-                minutes = max(1, round((datetime.fromisoformat(t1) - datetime.fromisoformat(t0)).total_seconds() / 60))
+                t0 = _dt.fromisoformat(qrows[0]["ts"])
+                t1 = _dt.fromisoformat(qrows[-1]["ts"])
+                absent = _absent_seconds(db, user_id, day, t0, t1)
+                minutes = max(1, round(((t1 - t0).total_seconds() - absent) / 60))
+                prev = t0
+                for r in qrows[1:]:
+                    cur = _dt.fromisoformat(r["ts"])
+                    if (cur - prev).total_seconds() > 15 * 60:
+                        segments += 1
+                    prev = cur
             except ValueError:
                 pass
         # 近 7 日趋势
@@ -228,7 +280,7 @@ def build_daily_report(user_id, day=None):
         return {"user": uname, "date": day, "streak": streak, "junior": junior,
                 "new_done": log["new_done"] if log else 0,
                 "review_done": (log["review_done"] if log else 0) or 0,
-                "minutes": minutes, "rounds": rounds,
+                "minutes": minutes, "segments": segments, "rounds": rounds,
                 "score": score if score is not None else score_detail["total"],
                 "settled": score is not None,   # 完成事件结算过（未结算=当日未完成，分值仅为估算）
                 "score_detail": score_detail,
@@ -305,7 +357,7 @@ def render_html(rep):
 <tr><td style="padding:12px 10px;text-align:center"><b style="font-size:20px">{rep['new_done']}</b><br><span style="font-size:12px;color:#888">新学单词</span></td>
 <td style="padding:12px 10px;text-align:center"><b style="font-size:20px">{rep['review_done']}</b><br><span style="font-size:12px;color:#888">复习通过</span></td>
 <td style="padding:12px 10px;text-align:center"><b style="font-size:20px">{total_ok}/{total_n}</b><br><span style="font-size:12px;color:#888">总答题</span></td>
-<td style="padding:12px 10px;text-align:center"><b style="font-size:20px">{rep['minutes'] or '—'}</b><br><span style="font-size:12px;color:#888">用时(分)</span></td></tr></table>
+<td style="padding:12px 10px;text-align:center"><b style="font-size:20px">{rep['minutes'] or '—'}</b><br><span style="font-size:12px;color:#888">用时(分){(' · ' + str(rep['segments']) + '段') if rep.get('segments', 1) > 1 else ''}</span></td></tr></table>
 <h3 style="font-size:15px;margin:16px 0 6px">📚 今日新词（{len(rep['new_words'])} 个）</h3>
 <div style="font-size:13px;line-height:1.9;background:#fff;border-radius:10px;padding:10px 14px">{new_html}</div>
 <h3 style="font-size:15px;margin:16px 0 6px">🔁 今日复习（{len(rep['review_words'])} 个）</h3>

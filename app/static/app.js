@@ -114,6 +114,11 @@ const app = Vue.createApp({
   watch: {
     curItem(w) {
       if (!w) return;
+      // v5 过程埋点计数器重置（换题即换桶）：t0 锚点先落在题面呈现，自动播题的题在
+      // 音频 ended 时改锚（见 autoPlayItem/_anchorAudio）——latency=听后决策耗时，
+      // 重听时长不混入（audio_plays 单独记）。blocked_taps 不在此清零：桶口径=
+      // 自上一题提交以来的撞锁点击，随下一题提交带走（反馈窗连点发生在提交之后）。
+      this._t0 = Date.now(); this._plays = 0; this._bs = 0; this._es = 0;
       // 新词卡片注视期：至少听完一遍自动朗读（2.5s）才能翻下一张。
       // 放在 learnIntro 判断之前——首张卡在解锁屏期间就已进入，同样要锁。
       if (w.type === 'newcard') {
@@ -145,7 +150,26 @@ const app = Vue.createApp({
     // 内存里仍是旧一天的队列。pageshow(persisted)/visibilitychange 时比对服务端日期，
     // 跨日强制整页刷新（v2.2 刷新恢复已支持从中途状态重建）。
     window.addEventListener('pageshow', (e) => { if (e.persisted) this.dayCheck(); });
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) this.dayCheck(); });
+    // v5 会话事件：hidden 用 beacon（切后台后 fetch 可能被杀）；可见恢复走普通请求。
+    // bfcache 复活不算新 session（_sessionSent 标记在内存跨复活存续，整页重载才重置）
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (this._idleStart) this._touchActivity(Date.now());   // 挂起前终结 idle 段
+        if (this.today) this.sendBeaconEvent('app_hidden', {});
+      } else {
+        if (this.today) this.sendEvent('app_visible', {});
+        this.dayCheck();
+      }
+    });
+    window.addEventListener('pagehide', () => {
+      if (this._idleStart) this._touchActivity(Date.now());   // 收尾未终结的 idle 段
+      if (this.today) this.sendBeaconEvent('session_end', this._progressSnapshot());
+    });
+    // v5 撞锁点击 + 空闲检测（被动捕获层：disabled 按钮不派发 click，touch 事件仍可达）
+    document.addEventListener('touchstart', (e) => this._tapActivity(e), { capture: true, passive: true });
+    document.addEventListener('mousedown', (e) => this._tapActivity(e), true);
+    document.addEventListener('keydown', () => this._keyActivity(), true);
+    this._touchActivity(Date.now());   // 启动空闲计时
     try {
       const me = await this.api('/api/me');
       this.me = me; this.user = me.user; this.route();
@@ -633,6 +657,10 @@ const app = Vue.createApp({
         doneNew: 0, doneReview: 0, doneQuiz: 0, requeuedCount: 0, dueLeft: 0, baseDone: 0,
         gateWrong: {},
       };
+      if (!this._sessionSent) {   // v5：整页加载周期一个 session（bfcache 复活不重发）
+        this._sessionSent = true;
+        this.sendEvent('session_start', { done: r.done === true ? 1 : 0 });
+      }
       if (r.done === true) {   // 严格等于：防御服务端再传出 truthy 非 bool（11-03 done=19 误判事故）
         // 当日已完成（服务端 daily_logs 判定）：直呈完成屏，不重建可重放队列
         // ——同日重开/隔夜复活若重建队列，会把旧内容整个再做一遍（10-27 事故）
@@ -666,7 +694,10 @@ const app = Vue.createApp({
       try {
         const r = await fetch('/api/date');
         const j = await r.json();
-        if (j.date && j.date !== this.today.date) location.reload();
+        if (j.date && j.date !== this.today.date) {
+          this.sendBeaconEvent('day_resurrect', { client_date: this.today.date, server_date: j.date });
+          location.reload();
+        }
       } catch (e) {}
     },
 
@@ -787,20 +818,23 @@ const app = Vue.createApp({
     autoPlayItem(w) {
       const word = w.item && w.item.word;
       const qz = w.item && w.item.quiz;
-      if (w.type === 'warmup' && qz && qz.quiz_type === 'listen_zh') { this.playWord(word); return; }
-      if (w.type === 'warmup' && qz && qz.quiz_type === 'listen_def') {
-        this.playDef(word, qz.idx, qz.stem); return;   // 热身·剩余释义听音
-      }
-      if ((w.type === 'review' || w.type === 'quiz') && qz &&
-          (qz.quiz_type === 'listen_zh' || qz.quiz_type === 'spell'
-           || qz.quiz_type === 'emoji')) {
-        this.playWord(word);   // 听音/听写/选词关：进入即自动读题
-        return;
-      }
-      if ((w.type === 'review' || w.type === 'quiz') && qz && qz.quiz_type === 'listen_def') {
-        this.playDef(word, qz.idx, qz.stem);   // 第 6 关·听释义：进入即播释义音频
-        return;
-      }
+      this._autoplay = true;   // 自动播题不计 audio_plays（只记用户主动点播）
+      try {
+        if (w.type === 'warmup' && qz && qz.quiz_type === 'listen_zh') { this.playWord(word); return; }
+        if (w.type === 'warmup' && qz && qz.quiz_type === 'listen_def') {
+          this.playDef(word, qz.idx, qz.stem); return;   // 热身·剩余释义听音
+        }
+        if ((w.type === 'review' || w.type === 'quiz') && qz &&
+            (qz.quiz_type === 'listen_zh' || qz.quiz_type === 'spell'
+             || qz.quiz_type === 'emoji')) {
+          this.playWord(word);   // 听音/听写/选词关：进入即自动读题
+          return;
+        }
+        if ((w.type === 'review' || w.type === 'quiz') && qz && qz.quiz_type === 'listen_def') {
+          this.playDef(word, qz.idx, qz.stem);   // 第 6 关·听释义：进入即播释义音频
+          return;
+        }
+      } finally { this._autoplay = false; }
       if (w.type === 'newcard') {
         this.playWord(word);
         if (this.isJunior) {
@@ -899,7 +933,9 @@ const app = Vue.createApp({
       if (this.locking || this.cardLocked) return;
       this.locking = true;
       try {
-        await this.api('/api/answer', { method: 'POST', body: { word_id: this.curItem.item.id, phase: 'learn', correct: true, quiz_type: 'card' } });
+        await this.api('/api/answer', { method: 'POST', body: Object.assign(
+          { word_id: this.curItem.item.id, phase: 'learn', correct: true, quiz_type: 'card' },
+          this._telemetry()) });
         this.today.doneNew++;
         await this.advance();
       } finally { this.locking = false; }
@@ -963,6 +999,8 @@ const app = Vue.createApp({
       }
     },
     spellCellKey(e, i) {
+      // v5 过程埋点：退格计数（犹豫/修正行为，与最终对错交叉分析）
+      if (e.key === 'Backspace') this._bs = (this._bs || 0) + 1;
       // 空格上按退格 → 回上一格（继续删）
       if (e.key === 'Backspace' && !this.today.spellCells[i]) {
         const cells = [...document.querySelectorAll('.spell-cell')];
@@ -981,6 +1019,7 @@ const app = Vue.createApp({
       if (!w || !w.item.quiz) return;
       const typed = (this.today.spellCells || []).join('').trim();
       if (!typed) {   // 空提交不判错：防误触回车把没答的题记成错词
+        this._es = (this._es || 0) + 1;   // v5：急躁/放弃的行为计数（随本题最终提交带走）
         this.showToast('先听一听，把单词拼出来吧', 'info');
         return;
       }
@@ -1011,9 +1050,11 @@ const app = Vue.createApp({
         this._requeuePhase({ ...w, _requeued: true });
         this.openWordDetail(w.item.id, 'wrong');   // 弹卡：点「记住了，继续」即推进
       }
-      this.api('/api/answer', { method: 'POST', body: { word_id: w.item.id, phase: w.item.audit ? 'audit' : 'review',
-        correct: ok, quiz_type: (w.item.quiz && w.item.quiz.quiz_type) || '',
-        quiz_id: (w.item.quiz && w.item.quiz.quiz_id) || null } });   // v3.2.1 作答时记账（取题不标）
+      this.api('/api/answer', { method: 'POST', body: Object.assign(
+        { word_id: w.item.id, phase: w.item.audit ? 'audit' : 'review',
+          correct: ok, quiz_type: (w.item.quiz && w.item.quiz.quiz_type) || '',
+          quiz_id: (w.item.quiz && w.item.quiz.quiz_id) || null },   // v3.2.1 作答时记账（取题不标）
+        this._telemetry(isSpell ? String(picked ?? '') : null)) });
     },
 
     // 关卡测验题：不进调度；答错记入关末重测
@@ -1045,9 +1086,79 @@ const app = Vue.createApp({
     postQuizLog(extra) {
       const w = this.curItem;
       if (!w || !w.item) return;
+      const qz = w.item.quiz;
+      const typed = (qz && qz.quiz_type === 'spell')
+        ? (this.today.spellCells || []).join('').trim() : null;
       this.api('/api/quiz_log', { method: 'POST', body: { entries: [Object.assign({
-        word_id: w.item.id, quiz_type: (w.item.quiz && w.item.quiz.quiz_type) || '',
-      }, extra)] } }).catch(() => {});
+        word_id: w.item.id, quiz_type: (qz && qz.quiz_type) || '',
+      }, extra, this._telemetry(typed))] } }).catch(() => {});
+    },
+
+    // ---------- v5 过程埋点 ----------
+    // 撞锁点击检测：锁都是 :disabled（disabled 按钮不派发 click），只能在 document 捕获层
+    // 收 touchstart/mousedown（iOS 对 disabled 元素仍派发 touch 事件）。
+    _suppressed() {
+      if (this.wordDetail) return !!this.detailLocked;   // 弹层开着：只在注视锁期内计
+      return !!(this.today && (this.cardLocked || this.today.answered));
+    },
+    _tapActivity(e) {
+      const now = Date.now();
+      if (e.type === 'touchstart') this._lastTouchAt = now;
+      else if (now - (this._lastTouchAt || 0) < 1000) return;   // iOS 合成鼠标事件去重
+      if (this._suppressed()) this._taps = (this._taps || 0) + 1;
+      this._touchActivity(now);
+    },
+    _keyActivity() { this._touchActivity(Date.now()); },
+    _touchActivity(now) {   // 空闲检测：90s 无交互→idle 起点=最后活动时刻（定时器即+90s触发）
+      if (this._idleStart) {
+        const ms = now - this._idleStart;
+        if (ms >= 90000 && this.today) this.sendEvent('idle_visible', { ms });
+        this._idleStart = null;
+      }
+      clearTimeout(this._idleTimer);
+      this._idleTimer = setTimeout(() => { this._idleStart = Date.now() - 90000; }, 90000);
+    },
+    _telemetry(typed) {   // 组装本题过程字段（提交时调用）；blocked_taps 清零=桶交给下一题
+      const t = {
+        latency_ms: this._t0 ? Math.max(0, Date.now() - this._t0) : null,
+        audio_plays: this._plays || 0,
+        blocked_taps: this._taps || 0,
+      };
+      if (typed != null) { t.typed = typed; t.backspaces = this._bs || 0; t.empty_submits = this._es || 0; }
+      this._taps = 0;
+      return t;
+    },
+    _countPlay() {   // 用户主动点播计数（自动播题/词条弹层内的播放不计入当前题）
+      if (!this._autoplay && !this.wordDetail) this._plays = (this._plays || 0) + 1;
+    },
+    _audioAnchored() {   // 仅听音类当前题按"末次音频结束"锚定 latency；卡片=进卡时长、弹层播放不锚
+      if (this.wordDetail) return false;
+      const w = this.curItem;
+      const t = w && w.item && w.item.quiz && w.item.quiz.quiz_type;
+      return (w && (w.type === 'warmup' || w.type === 'review' || w.type === 'quiz'))
+          && (t === 'listen_zh' || t === 'spell' || t === 'emoji' || t === 'listen_def');
+    },
+    _fbEvent(word) {   // 音频回退 TTS（系统健康度）：同词同会话只报一次
+      if (!this._fbSent) this._fbSent = new Set();
+      if (this._fbSent.has(word)) return;
+      this._fbSent.add(word);
+      this.sendEvent('audio_fallback', { word });
+    },
+    sendEvent(type, detail) {
+      this.api('/api/event', { method: 'POST', body: { type, detail: detail || {} } }).catch(() => {});
+    },
+    sendBeaconEvent(type, detail) {   // pagehide/hidden 专用：fetch 不保证完成，beacon 由浏览器托管
+      try {
+        navigator.sendBeacon('/api/event',
+          new Blob([JSON.stringify({ type, detail: detail || {} })], { type: 'text/plain' }));
+      } catch (e) {}
+    },
+    _progressSnapshot() {
+      if (!this.today) return {};
+      const w = this.curItem;
+      return { qidx: this.today.qIdx || 0, total: (this.today.queue || []).length,
+               phase: w ? w.type : (this.todayPhaseDone() ? 'done' : ''),
+               done: this.todayPhaseDone() ? 1 : 0, blocked_taps: this._taps || 0 };
     },
 
     // 关末结算：错词同题型重测（测到对为止）
@@ -1192,14 +1303,18 @@ const app = Vue.createApp({
     playWord(word) {
       // 单音频管理：播新的先接管旧的（杜绝重叠双读）；远程加载悬挂 6s 超时转 TTS（杜绝无声卡死，
       // 但尽量等 mp3——超时越短越容易换成各设备音色不一的系统 TTS）
+      this._countPlay();
       this._takeoverAudio();
       const a = new Audio(this.audioUrl(word));
       a._settled = false;
       this._curAudio = a;
+      a.addEventListener('ended', () => { if (this._audioAnchored()) this._t0 = Date.now(); });
       const fallback = () => {
         if (a._settled) return;
         a._settled = true;
         this._fbTimer = null;
+        this._t0 = Date.now();          // TTS 起播即近似锚定（onend 到手后再校准）
+        this._fbEvent(word);            // v5 系统健康度：音频回退 TTS（按词节流）
         try { a.pause(); } catch (e) {}
         this.speakTTS(word);
       };
@@ -1223,14 +1338,18 @@ const app = Vue.createApp({
     // 释义音频播放（v3.4 listen_def）：仿 playWord 的接管+6s 起播超时，onerror/超时
     // 回退浏览器 TTS 读 stem 原文（不复制 playSentence 无超时的弱网悬挂缺陷）
     playDef(word, order, text) {
+      this._countPlay();
       this._takeoverAudio();
       const a = new Audio(this.defUrl(word, order));
       a._settled = false;
       this._curAudio = a;
+      a.addEventListener('ended', () => { if (this._audioAnchored()) this._t0 = Date.now(); });
       const fallback = () => {
         if (a._settled) return;
         a._settled = true;
         this._fbTimer = null;
+        this._t0 = Date.now();          // TTS 起播即近似锚定（onend 到手后再校准）
+        this._fbEvent(word);            // v5 系统健康度：释义音回退 TTS（按词节流）
         try { a.pause(); } catch (e) {}
         if (text) this.speakTTS(text);
       };
@@ -1304,6 +1423,7 @@ const app = Vue.createApp({
     speakTTS(text) {
       if (!('speechSynthesis' in window)) return;
       const u = new SpeechSynthesisUtterance(text);
+      u.onend = () => { this._t0 = Date.now(); };   // v5：TTS 兜底播完校准 latency 锚（iOS 支持不稳，尽力而为）
       u.lang = 'en-US'; u.rate = 0.85; u.voice = this.pickTTSVoice();
       // iOS：cancel 后同步 speak 会静默丢句；resume + 短延迟是标准 workaround
       try { speechSynthesis.resume(); } catch (e) {}
@@ -1341,6 +1461,7 @@ const app = Vue.createApp({
       try {
         const d = await this.api('/api/word_detail?id=' + wordId);
         this.wordDetail = d; this.detailMode = mode || 'view';
+        this._wdT0 = Date.now();   // v5：弹层停留计时（纠错投入 / 主动查看）
         // 答错场景：按钮 1s 强制注视期（防肌肉记忆秒点，纠错失效）
         this.detailLocked = mode === 'wrong';
         if (this.detailLocked) setTimeout(() => { this.detailLocked = false; }, 1000);
@@ -1348,6 +1469,12 @@ const app = Vue.createApp({
     },
     closeWordDetail() {
       const wasWrong = this.detailMode === 'wrong';
+      const wd = this.wordDetail;
+      if (wd && this._wdT0) {   // v5：停留时长落事件（wrong=纠错投入 / view=主动查看）
+        this.sendEvent(wasWrong ? 'wrong_card_view' : 'word_view',
+                       { word_id: wd.id, ms: Date.now() - this._wdT0 });
+        this._wdT0 = null;
+      }
       this.wordDetail = null; this.detailMode = 'view';
       // 答错场景点「记住了，继续」= 关闭 + 推进下一题（两次点击合并为一次）
       if (wasWrong && this.today && this.today.answered) {
