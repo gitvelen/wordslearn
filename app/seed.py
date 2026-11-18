@@ -358,6 +358,49 @@ def seed_forms():
     print(f"词形: {n} 词")
 
 
+def seed_anchors():
+    """音节切分+搭配锚导入（v4.3）：data/parsed/gen_out/word_anchors.jsonl
+    每行: {word, syllables:[..]|null, collocations:[{en,zh}]|null}——按词整体覆盖。
+    导入前对每行复跑硬校验（防线前移，防 jsonl 被手改坏；不过则拒绝导入该行并报错）。"""
+    import json
+    f = BASE.parent / "data" / "parsed" / "gen_out" / "word_anchors.jsonl"
+    if not f.exists():
+        print("缺 data/parsed/gen_out/word_anchors.jsonl（先跑 gen_anchors.py）"); return
+    init_db()
+    db = get_db()
+    n = bad = 0
+    for line in f.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        d = json.loads(line)
+        wid = db.execute("SELECT id FROM words WHERE word=?", (d["word"],)).fetchone()
+        if not wid:
+            continue
+        # 硬校验（与 gen_anchors.py 一致的轻量复检）
+        syl, col = d.get("syllables"), d.get("collocations")
+        if syl is not None:
+            ok = (isinstance(syl, list) and len(syl) >= 2
+                  and all(isinstance(s, str) and s for s in syl)
+                  and "".join(syl) == d["word"])
+            if not ok:
+                print(f"  拒绝 {d['word']}: 切分校验不过 {syl}"); bad += 1; continue
+        if col is not None:
+            ok = (isinstance(col, list) and 1 <= len(col) <= 2
+                  and all(isinstance(c, dict) and c.get("en") and c.get("zh")
+                          and len(c["zh"]) <= 10 for c in col))
+            if not ok:
+                print(f"  拒绝 {d['word']}: 搭配校验不过 {col}"); bad += 1; continue
+        db.execute("UPDATE words SET syllables=?, collocations=? WHERE id=?",
+                   (None if syl is None else json.dumps(syl, ensure_ascii=False),
+                    None if col is None else json.dumps(col, ensure_ascii=False),
+                    wid["id"]))
+        n += 1
+    db.commit()
+    db.close()
+    print(f"锚点: {n} 词导入，{bad} 行被拒（须为 0，否则回 gen 修复）")
+
+
 def seed_phonetic():
     """音标补丁导入（ECDICT 等）：data/parsed/phonetic_patch.jsonl
     每行: {word, phonetic_uk, phonetic_us}——只覆盖空缺，不覆盖已有值。"""
@@ -441,8 +484,10 @@ if __name__ == "__main__":
         seed_phonetic()
     elif cmd == "forms":
         seed_forms()
+    elif cmd == "anchors":
+        seed_anchors()
     elif cmd == "enrich":
         seed_enrich()
     else:
-        print("用法: python seed.py words|users|audio|emoji|frq|senses|quiz|forms|phonetic|enrich")
+        print("用法: python seed.py words|users|audio|emoji|frq|senses|quiz|forms|anchors|phonetic|enrich")
         sys.exit(1)

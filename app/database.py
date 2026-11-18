@@ -19,7 +19,9 @@ CREATE TABLE IF NOT EXISTS words (
   mp3           TEXT,
   frq           INTEGER,             -- COCA 词频排名（ECDICT），越小越高频，池排序用
   emoji         TEXT,
-  forms         TEXT                 -- 词形变化 JSON（ECDICT exchange）：{"p":"过去式",...}
+  forms         TEXT,                -- 词形变化 JSON（ECDICT exchange）：{"p":"过去式",...}
+  syllables     TEXT,                -- 音节切分 JSON 数组（v4.3）：["op","por","tu","ni","ty"]；NULL=单音节/短语/未生成/被丢弃
+  collocations  TEXT                 -- 高频搭配 JSON 数组（v4.3）：[{"en":"make a decision","zh":"做决定"}]；NULL=无
 );
 
 CREATE TABLE IF NOT EXISTS word_levels (
@@ -196,6 +198,10 @@ def _migrate(conn):
         conn.execute("ALTER TABLE words ADD COLUMN emoji TEXT")
     if "forms" not in words_cols:
         conn.execute("ALTER TABLE words ADD COLUMN forms TEXT")
+    if "syllables" not in words_cols:
+        conn.execute("ALTER TABLE words ADD COLUMN syllables TEXT")
+    if "collocations" not in words_cols:
+        conn.execute("ALTER TABLE words ADD COLUMN collocations TEXT")
     uws_cols = [r["name"] for r in conn.execute("PRAGMA table_info(user_word_state)")]
     if "verify_count" not in uws_cols:
         conn.execute("ALTER TABLE user_word_state ADD COLUMN verify_count INTEGER DEFAULT 0")

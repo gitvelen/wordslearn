@@ -745,7 +745,10 @@ def _word_brief(db, r, user_id, junior, with_senses=True):
     """词基础信息 + 义项列表（新卡片展示用）。r 需含 words 表各列。"""
     item = {"id": r["id"], "word": r["word"], "phonetic_uk": r["phonetic_uk"],
             "phonetic_us": r["phonetic_us"], "definition_zh": r["definition_zh"],
-            "mp3": r["mp3"], "emoji": r["emoji"]}
+            "mp3": r["mp3"], "emoji": r["emoji"],
+            # v4.3 新字段用 .get()：SELECT 漏列时降级为"不展示"而非 /api/today 500
+            "syllables": dict(r).get("syllables"),
+            "collocations": dict(r).get("collocations")}
     if with_senses:
         senses = db.execute("""SELECT sense_order, pos, definition_zh, definition_en,
                                       example_en, example_zh FROM word_senses
@@ -816,7 +819,8 @@ def get_today_queue(user_id):
             "SELECT quiz_id FROM user_quiz_used WHERE user_id=?", (user_id,))}
         if not (warm_done or (dl and (dl["new_done"] > 0 or (dl["review_done"] or 0) > 0))):
             warmup = db.execute("""
-                SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
+                SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji,
+                       w.syllables, w.collocations
                 FROM user_word_state s JOIN words w ON w.id=s.word_id
                 WHERE s.user_id=? AND s.first_learned_date=?
                 ORDER BY w.id""", (user_id, yesterday)).fetchall()
@@ -842,7 +846,8 @@ def get_today_queue(user_id):
                 item["quizzes"] = quizzes
                 warmup_items.append(item)
         new_words = db.execute("""
-            SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
+            SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji,
+                   w.syllables, w.collocations
             FROM plan_words p JOIN words w ON w.id=p.word_id
             WHERE p.plan_id=? AND NOT EXISTS (
                 SELECT 1 FROM user_word_state s WHERE s.user_id=? AND s.word_id=w.id
@@ -853,14 +858,16 @@ def get_today_queue(user_id):
             new_items.append(_new_word_item(db, r, user_id, junior, used=used))
         # 今日已学词（first_learned_date=今天）：前端刷新后据此重建关卡（中途退出不丢测验）
         learned_words = db.execute("""
-            SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
+            SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji,
+                   w.syllables, w.collocations
             FROM plan_words p JOIN words w ON w.id=p.word_id
             JOIN user_word_state s ON s.user_id=? AND s.word_id=w.id
             WHERE p.plan_id=? AND s.first_learned_date=?
             ORDER BY p.seq""", (user_id, plan["id"], t_str)).fetchall()
         learned_items = [_new_word_item(db, r, user_id, junior, used=used) for r in learned_words]
         review = [] if gate_started else db.execute("""
-            SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji, s.stage
+            SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji,
+                   w.syllables, w.collocations, s.stage
             FROM user_word_state s JOIN words w ON w.id=s.word_id
             WHERE s.user_id=? AND s.state='learning' AND s.next_review_date<=?
             ORDER BY s.next_review_date, w.id LIMIT ?""", (user_id, t_str, REVIEW_CAP)).fetchall()
@@ -902,7 +909,8 @@ def get_today_queue(user_id):
         db.execute("DELETE FROM audit_schedule WHERE user_id=? AND date<?", (user_id, t_str))
         audit_rows = []
         if not gate_started:
-            audit_rows = db.execute("""SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji
+            audit_rows = db.execute("""SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us, w.definition_zh, w.mp3, w.emoji,
+                                              w.syllables, w.collocations
                                        FROM audit_schedule a JOIN words w ON w.id=a.word_id
                                        WHERE a.user_id=? AND a.date=? AND a.done=0 ORDER BY a.rowid""",
                                      (user_id, t_str)).fetchall()
@@ -911,7 +919,8 @@ def get_today_queue(user_id):
                                        (user_id, t_str)).fetchone()["c"]
                 if not has_today:   # 首次加载才抽样（全部完成后重开不重抽）
                     audit_rows = db.execute("""SELECT w.id, w.word, w.phonetic_uk, w.phonetic_us,
-                                                      w.definition_zh, w.mp3, w.emoji
+                                                      w.definition_zh, w.mp3, w.emoji,
+                                                      w.syllables, w.collocations
                                                FROM user_word_state s JOIN words w ON w.id=s.word_id
                                                WHERE s.user_id=? AND s.state='mastered'
                                                ORDER BY RANDOM() LIMIT ?""",
@@ -954,18 +963,24 @@ def _bump_log(db, user_id, field):
 
 
 # ---------- 答题状态机 ----------
-def submit_answer(user_id, word_id, phase, correct, quiz_type="", quiz_id=None):
+def submit_answer(user_id, word_id, phase, correct, quiz_type="", quiz_id=None, tele=None):
     """phase: 'learn'=新词首学, 'review'=复习测试, 'audit'=掌握词抽检。
     首学 2 题 / 热身轮 / 当日重现轮均不调用此接口——只有「进入下一个新词」与复习首答才提交。
     同时写 quiz_log（学习日报数据源；quiz_type 由前端带回）。
     quiz_id（v3.2.1）：评测题作答时记账——取题不标（防作答前刷新/重开烧掉唯一 fresh 题，
-    spell 毕业门静默降级 MCQ），首答提交时才落 user_quiz_used。旧客户端不带则不标（退化无害）。"""
+    spell 毕业门静默降级 MCQ），首答提交时才落 user_quiz_used。旧客户端不带则不标（退化无害）。
+    tele（v5 过程埋点）：{latency_ms, audio_plays, typed, backspaces, empty_submits,
+    blocked_taps}，仅落 quiz_log 列，不参与任何调度判定。"""
     db = get_db()
     try:
         t = _today()
-        db.execute("""INSERT INTO quiz_log(user_id, date, phase, word_id, quiz_type, correct)
-                      VALUES(?,?,?,?,?,?)""",
-                   (user_id, t.isoformat(), phase, word_id, quiz_type or "", 1 if correct else 0))
+        tele = tele or {}
+        db.execute("""INSERT INTO quiz_log(user_id, date, phase, word_id, quiz_type, correct,
+                      latency_ms, audio_plays, typed, backspaces, empty_submits, blocked_taps)
+                      VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+                   (user_id, t.isoformat(), phase, word_id, quiz_type or "", 1 if correct else 0,
+                    tele.get("latency_ms"), tele.get("audio_plays"), tele.get("typed"),
+                    tele.get("backspaces"), tele.get("empty_submits"), tele.get("blocked_taps")))
         if quiz_id:
             db.execute("INSERT OR IGNORE INTO user_quiz_used(user_id, quiz_id) VALUES(?,?)",
                        (user_id, quiz_id))

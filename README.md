@@ -70,6 +70,16 @@
 2. **关卡会话记忆 key**: `wl_gate_v1_<username>`（v3.3.4 起带用户名，防共享设备换号串号；v3.2.1 的全局 `wl_gate_v1` 同日自动迁移）。上文 v3.2.1 §1 的 key 描述以本节为准。
 3. v3.3 日历报告+专注锁、v3.3.5 时间戳全链路统一 Asia/Shanghai（5 表 DEFAULT localtime + 存量 +8h 幂等迁移）、v3.3.6 积压节流软着陆（节流线 110=稳态义务+尖峰余量，超线按 `ceil(new×110/due)` 比例缓降，替代旧减半）、v3.3.4 进关后重开不补位 + 进度条当日基数。
 
+## v4.3 增量（2026-11-17：音节切分 + 搭配锚定，规格 data/parsed/ANCHORS_SPEC.md）
+
+**动因（mily 数据分析 10-26~11-17）**：spell 错误率 32.2% 且随词长陡增（9字母 66%、补测 56.1%、opportunity 13/13 全错）＝长词无音节块编码策略；cloze review 38.8%（gate 18.4%）＝抽象词/功能词（upon/deal/perhaps）无语义锚。均不增加题量，纯数据+展示层增强。
+
+1. **数据**: words 表加 `syllables`（JSON 数组，·分隔展示）/`collocations`（`[{en,zh}]`≤2条）两列，幂等 ALTER 迁移。短语词（含空格/连字符 256 词）与两源音节不一致词（66 词，fire/button 类词典vs教学分歧）一律 NULL——宁缺毋滥。
+2. **生成管线五层质量链**（gen_anchors.py）: ①硬校验（块拼接逐字符还原+块数==n，程序保证）②音节数双源交叉（**cmudict ARPAbet 元音计数主锚**×ECDICT IPA 解析，无解析歧义）③LLM 双跑一致（run1 规则式/run2 示例式，temperature=0）④不一致 judge 仲裁（带判例 prompt）⑤anchors_review.csv 人工核验清单（JUDGED/DROPPED/MANUAL 全量+AGREE 随机100，逐条签字后才 seed）。搭配双跑交集投票（key=归一串∪剥首尾冠词串）+成分词超纲校验（主库∪eng_50k 前5000）+必须匹配义1。
+3. **展示三点**（junior 均不显示，与音标策略一致）: 首学卡切分行（🧩 音标下方）+搭配行（💡 义项区后）；wordDetail 答错弹层同构；spell 补测支架揭示态用切分形式（`syllAnswer()` 无切分回退整词）。**spell 作答中零提示**（保题型效度）。
+4. **调度零改动**: word_quiz 30300 行零改动（部署前后 checksum）；scheduler 仅 6 处 SELECT 加列，`_word_brief` 新字段 `dict(r).get()`（漏列降级为不展示而非 /api/today 500）。回滚开关＝`UPDATE words SET syllables=NULL, collocations=NULL` 一句话全下线。缓存戳 b32。
+5. **观察指标**（D0=数据上线日，2 周复盘）: spell 补测错误率（基线 56.1%）、9+字母词错误率（66%）、cloze review（38.8%）、card→首题间隔（quiz_log.ts，认知过载监测）。guardrail：spell 错误率不降反升 → 判定展示干扰，数据回滚。
+
 ## 数据源与已知局限
 
 - 小学: koolearn 上海牛津词表（**粗分级**: P13=1-3年级段 728词, P45=4-5年级段），详情页含音标/中英释义/英英/例句/真人mp3

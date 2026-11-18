@@ -1365,6 +1365,26 @@ const app = Vue.createApp({
         return Object.entries(o).map(([k, v]) => `${L[k] || k} ${v}`).join(' · ');
       } catch (e) { return ''; }
     },
+    syllText(w) {
+      // v4.3 音节切分 words.syllables JSON（["op","por","tu","ni","ty"]）；≥2 块才展示
+      if (!w || !w.syllables) return '';
+      try {
+        const a = JSON.parse(w.syllables);
+        return Array.isArray(a) && a.length >= 2 ? a.join('·') : '';
+      } catch (e) { return ''; }
+    },
+    syllAnswer(w) {
+      // spell 补测支架揭示态：有切分用切分形式（块编码辅助），无则回退整词
+      return this.syllText(w) || (w && w.quiz && w.quiz.answer) || '';
+    },
+    collocLines(w) {
+      // v4.3 搭配锚 words.collocations JSON（[{en,zh}]，≤2 条）
+      if (!w || !w.collocations) return [];
+      try {
+        const a = JSON.parse(w.collocations);
+        return Array.isArray(a) ? a.filter(c => c && c.en && c.zh) : [];
+      } catch (e) { return []; }
+    },
 
     // ---------- 跟读（junior，录音回放自比，不打分）----------
     async startRecord() {

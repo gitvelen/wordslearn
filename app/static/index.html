@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="单词星球">
-<link rel="stylesheet" href="/style.css?v=b31">
+<link rel="stylesheet" href="/style.css?v=b32">
 </head>
 <body>
 <div id="app">
@@ -371,6 +371,8 @@
       <div class="word-xl" @click="playWord(curItem.item.word)">{{curItem.item.word}}</div>
       <div v-if="!isJunior && (curItem.item.phonetic_uk || curItem.item.phonetic_us)"
            class="phonetic" @click="playWord(curItem.item.word)">🔈 {{curItem.item.phonetic_uk || curItem.item.phonetic_us}}</div>
+      <!-- v4.3 音节切分（多音节词才有；辅助按块编码拼写） -->
+      <div v-if="!isJunior && syllText(curItem.item)" class="syll-row">🧩 {{syllText(curItem.item)}}</div>
       <button class="btn" @click="playWord(curItem.item.word)">🔊 再听一次</button>
       <!-- 义项全量平铺（词典式完备；junior 低负荷只展示核心义） -->
       <template v-if="curItem.item.senses && curItem.item.senses.length">
@@ -386,6 +388,7 @@
       <template v-else>
         <div class="def-zh">{{curItem.item.definition_zh}}</div>
       </template>
+      <div v-for="(c,ci) in collocLines(curItem.item)" :key="'colloc'+ci" class="colloc-row">💡 {{c.en}}　{{c.zh}}</div>
       <div v-if="wordFormsText(curItem.item)" class="forms-row">🔄 {{wordFormsText(curItem.item)}}</div>
       <!-- 跟读（junior）：录音回放自比，不打分 -->
       <div v-if="isJunior" class="readaloud">
@@ -451,7 +454,7 @@
         </div>
         <!-- 听写补测支架（v3.2）：先看完整拼写+听音，再进默写（原题硬重测通过率仅37%） -->
         <div v-if="curItem._scaffold && today.spellReveal" class="sense-block" style="text-align:center;margin-top:10px">
-          <div class="word-xl">{{curItem.item.quiz.answer}}</div>
+          <div class="word-xl">{{syllAnswer(curItem.item)}}</div>
           <button class="btn primary big" style="margin-top:12px" @click="spellRevealDone">记住了，重新默写 →</button>
         </div>
       </template>
@@ -652,6 +655,7 @@
       <button class="btn ghost mini" @click="closeWordDetail">✕</button>
     </div>
     <div class="word-xl" @click="playWord(wordDetail.word)">{{wordDetail.word}}</div>
+    <div v-if="!isJunior && syllText(wordDetail)" class="syll-row">🧩 {{syllText(wordDetail)}}</div>
     <div v-if="!isJunior && wordDetail.phonetic_uk" class="phonetic">🔈 {{wordDetail.phonetic_uk}}</div>
     <button class="btn" @click="playWord(wordDetail.word)">🔊 听发音</button>
     <div v-for="s in (isJunior ? wordDetail.senses.slice(0,1) : wordDetail.senses)"
@@ -662,6 +666,7 @@
         <button class="btn ghost mini" @click="playSentence(wordDetail.word, s.sense_order, s.example_en)">🔈</button></div>
       <div v-if="s.example_zh" class="example-zh">{{s.example_zh}}</div>
     </div>
+    <div v-for="(c,ci) in collocLines(wordDetail)" :key="'wdc'+ci" class="colloc-row">💡 {{c.en}}　{{c.zh}}</div>
     <div v-if="wordFormsText(wordDetail)" class="forms-row">🔄 {{wordFormsText(wordDetail)}}</div>
     <button v-if="detailMode==='wrong'" class="btn primary big" :disabled="detailLocked" @click="closeWordDetail">记住了，继续 →</button>
   </div>
@@ -676,6 +681,6 @@
 </div>
 </div>
 <script src="/vue.global.prod.js"></script>
-<script src="/app.js?v=b31"></script>
+<script src="/app.js?v=b32"></script>
 </body>
 </html>

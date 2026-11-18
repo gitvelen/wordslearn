@@ -218,6 +218,18 @@ check('due_remaining=85-60（v3.2.1 完成屏"排明天"提示）', r.get('due_r
 # ---- word_detail ----
 s, r = api(cj, '/api/word_detail?id=%d' % wid)
 check('word_detail 含义项', s == 200 and r['word'] and isinstance(r['senses'], list) and 'forms' in r)
+# v4.3 锚点字段：键存在且值可解析（词未 seed 数据时为 null；seed 后须合法 JSON）
+import json as _json
+check('word_detail 含 syllables/collocations 键', 'syllables' in r and 'collocations' in r)
+for _f in ('syllables', 'collocations'):
+    if r.get(_f) is not None:
+        check(f'word_detail {_f} 是合法 JSON', isinstance(_json.loads(r[_f]), (list, dict)), r[_f])
+s, r = api(cj, '/api/today')
+for _sec in ('new', 'review', 'warmup'):
+    if r.get(_sec):
+        check(f'/api/today {_sec} 词条带锚点键', all('syllables' in w and 'collocations' in w
+              for w in r[_sec] if isinstance(w, dict)))
+        break
 
 # ---- streak：纯复习日也续 ----
 db.execute("UPDATE daily_logs SET new_done=0 WHERE user_id=? AND date=?", (uid, TODAY_STR))

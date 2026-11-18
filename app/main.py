@@ -1,4 +1,5 @@
 """wordslearn FastAPI 入口"""
+import json
 import secrets
 from datetime import date
 from pathlib import Path
@@ -98,6 +99,13 @@ class AnswerIn(BaseModel):
     correct: bool
     quiz_type: str = ""   # 学习日报埋点用（spell/zh_word/...）
     quiz_id: int | None = None   # v3.2.1 评测题作答时记账（取题不标，防刷新烧 fresh 题）
+    # v5 过程埋点（全可选，旧客户端不带）：分析用，不进任何调度判定
+    latency_ms: int | None = None       # 题目呈现/末次音频结束 → 提交（客户端差值）
+    audio_plays: int | None = None      # 本题用户主动点播次数
+    typed: str | None = None            # spell 最终输入串
+    backspaces: int | None = None       # spell 退格次数
+    empty_submits: int | None = None    # spell 空提交次数
+    blocked_taps: int | None = None     # 撞锁点击（自上一题提交以来的桶）
 
 class ConfirmSubmitIn(BaseModel):
     known_ids: list   # 速选「认识」的词 ID
@@ -293,16 +301,19 @@ def answer(body: AnswerIn, request: Request):
     user = auth.current_user(request)
     if body.phase not in ("learn", "review", "audit"):
         raise HTTPException(400, "phase 必须是 learn、review 或 audit")
+    tele = {"latency_ms": body.latency_ms, "audio_plays": body.audio_plays,
+            "typed": body.typed, "backspaces": body.backspaces,
+            "empty_submits": body.empty_submits, "blocked_taps": body.blocked_taps}
     try:
         scheduler.submit_answer(user["id"], body.word_id, body.phase, body.correct,
-                                body.quiz_type, body.quiz_id)
+                                body.quiz_type, body.quiz_id, tele)
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"ok": True}
 
 
 class QuizLogIn(BaseModel):
-    entries: list   # [{word_id, phase, level?, quiz_type?, correct, retry?}]
+    entries: list   # [{word_id, phase, level?, quiz_type?, correct, retry?, ...过程埋点字段}]
 
 
 @app.post("/api/quiz_log")
@@ -310,6 +321,38 @@ def quiz_log(body: QuizLogIn, request: Request):
     """热身/关卡测验埋点（不进调度，仅入 quiz_log 供学习日报聚合）。"""
     user = auth.current_user(request)
     report.record_quiz(user["id"], body.entries)
+    return {"ok": True}
+
+
+# v5 会话/系统事件埋点：sendBeacon 只能发 CORS-safelisted 类型（text/plain），
+# 不走 Pydantic body——手动读 raw body 解析 JSON。只 INSERT 无状态无副作用。
+EVENT_TYPES = {"session_start", "session_end", "app_hidden", "app_visible", "idle_visible",
+               "audio_fallback", "day_resurrect", "wrong_card_view", "word_view"}
+
+
+@app.post("/api/event")
+async def event(request: Request):
+    user = auth.current_user(request)
+    try:
+        body = json.loads(await request.body() or b"{}")
+    except ValueError:
+        raise HTTPException(400, "bad json")
+    if not isinstance(body, dict):
+        raise HTTPException(400, "bad body")
+    etype = str(body.get("type") or "")
+    if etype not in EVENT_TYPES:
+        raise HTTPException(400, f"unknown event type: {etype}")
+    detail = body.get("detail")
+    if not isinstance(detail, dict):
+        detail = {}
+    detail_json = json.dumps(detail, ensure_ascii=False)[:2000]
+    db = database.get_db()
+    try:
+        db.execute("INSERT INTO event_log(user_id, date, type, detail) VALUES(?,?,?,?)",
+                   (user["id"], date.today().isoformat(), etype, detail_json))
+        db.commit()
+    finally:
+        db.close()
     return {"ok": True}
 
 
@@ -375,7 +418,8 @@ def word_detail(request: Request, id: int):
     db = database.get_db()
     try:
         w = db.execute("""SELECT id, word, phonetic_uk, phonetic_us, definition_zh,
-                                 mp3, emoji, forms FROM words WHERE id=?""", (id,)).fetchone()
+                                 mp3, emoji, forms, syllables, collocations
+                          FROM words WHERE id=?""", (id,)).fetchone()
         if not w:
             raise HTTPException(404, "词条不存在")
         senses = db.execute("""SELECT sense_order, pos, definition_zh, definition_en,
